@@ -14,7 +14,8 @@ export async function authenticate(request:Request){
  const db=database();const {data,error}=await db.auth.getUser(token);
  if(error||!data.user)throw new ApiError("Sua sessão expirou. Entre novamente.",401);
  let profile=await db.from("academy_profiles").select("*").eq("id",data.user.id).maybeSingle();
- if(!profile.data){
+ let currentProfile: Profile | null = (profile.data as Profile) ?? null;
+ if(!currentProfile){
   const isDaniel=data.user.email?.toLowerCase()==="daniel@sacdemaria.com.br";
   const name=(data.user.user_metadata?.name as string)||data.user.email?.split("@")[0]||"Colaborador";
   const dept=(data.user.user_metadata?.department as string)||"Geral";
@@ -22,12 +23,12 @@ export async function authenticate(request:Request){
    id:data.user.id,name,email:data.user.email!,department:dept,
    role:isDaniel?"admin":"student",status:isDaniel?"active":"pending"
   }).select().single();
-  profile={data:created,error:null};
+  currentProfile=(created as Profile)??null;
  }
- if(profile.error||!profile.data||profile.data.status!=="active"){
+ if(!currentProfile||currentProfile.status!=="active"){
   throw new ApiError("Seu cadastro foi realizado com sucesso e está aguardando liberação do administrador. Fale com Daniel para ativar seu acesso.",403);
  }
- return {db,me:profile.data as Profile};
+ return {db,me:currentProfile};
 }
 function ensure(result:{error:unknown}){if(result.error)throw new ApiError("Não foi possível consultar o banco. Confira a configuração ou tente novamente.",503);}
 export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
@@ -56,7 +57,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   const done=(progress.data??[]).filter(r=>r.user_id===p.id&&r.done&&courses.some(c=>c.id===r.course_id&&c.version===r.version&&c.lessons.some(l=>l.id===r.lesson_id&&l.type!=="quiz"))).length;
   return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter(x=>x.user_id===p.id&&x.season===season).reduce((n,x)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0};
  });
- const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="course"&&r.draft).map(r=>r.draft):[],articles:(resources.data??[]).filter(r=>r.kind==="article"&&r.published).map(r=>r.published as Article),articleDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="article"&&r.draft).map(r=>r.draft):[],people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],
+ const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="course"&&r.draft).map(r=>r.draft):[],articles:(resources.data??[]).filter(r=>r.kind==="article"&&r.published).map(r=>r.published as Article),articleDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="article"&&r.draft).map(r=>r.draft):[],people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
   attempts:(attempts.data??[]).sort((a,b)=>a.submitted_at.localeCompare(b.submitted_at)).map(a=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed})),
   xpEvents:(xp.data??[]).filter(x=>x.user_id===me.id).map(x=>({id:x.id,amount:x.amount,season:x.season,label:x.label}))};
  return {state,me:{id:me.id,name:me.name,email:me.email,role:me.role}};

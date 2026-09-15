@@ -40,5 +40,5 @@ export const initialState: AcademyState = {
     { id: "julia", name: "Júlia Lima", email: "julia@example.com", department: "Comercial", managerId: "daniel", role: "student", status: "active", xp: 1680, progress: 54 },
   ],
   completed: { "doc-windows": ["win-1", "win-2"], "multiscan": ["scan-1"] }, bookmarks: ["atendimento"], attempts: [],
-  xpEvents: [{ id: "demo-start", amount: 1320, season: "2026", label: "Trajetória ilustrativa" }], readNotices: [],
+  xpEvents: [{ id: "demo-start", amount: 1320, season: "2026", label: "Trajetória ilustrativa" }], readNotices: [], notifications: [],
 };
