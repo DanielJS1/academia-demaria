@@ -30,3 +30,7 @@ Abra:
 ## Observação
 
 O legado ainda está disponível em `.legacy/`, mas foi movido para fora do caminho principal para evitar confusão durante o desenvolvimento do novo produto.
+
+## Piloto com contas reais
+
+A integração com Supabase está em `platform/`. Consulte [Ativar o piloto](platform/ATIVAR-PILOTO.md) antes do primeiro acesso. A migração e o administrador inicial precisam ser configurados no projeto Supabase.

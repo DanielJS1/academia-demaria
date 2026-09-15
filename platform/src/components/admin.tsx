@@ -1,39 +1,132 @@
 "use client";
+
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, BookOpen, CheckCircle2, ClipboardCheck, Eye, FileText, Pencil, Plus, Search, Settings2, Users } from "lucide-react";
+import { BookOpen, ClipboardCheck, FileText, Plus, Search, Settings2, Users } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
-import { EmptyState, PageHeading } from "./shared";
-import { initials, normalize } from "@/lib/utils";
-import { publishReview, type Attempt } from "@/lib/model";
-const tabs = [{ id: "cursos", label: "Cursos", icon: BookOpen }, { id: "pessoas", label: "Pessoas", icon: Users }, { id: "conhecimento", label: "Conhecimento", icon: FileText }, { id: "correcoes", label: "Correções", icon: ClipboardCheck }, { id: "configuracoes", label: "Cadastros", icon: Settings2 }];
+import { PageHeading } from "./shared";
+import { AdminCourses } from "./admin/admin-courses";
+import { AdminPeople } from "./admin/admin-people";
+import { AdminArticles } from "./admin/admin-articles";
+import { AdminReviews } from "./admin/admin-reviews";
+import { AdminConfig, ConfigList } from "./admin/admin-config";
+
+export { AdminCourses } from "./admin/admin-courses";
+export { AdminPeople } from "./admin/admin-people";
+export { AdminArticles } from "./admin/admin-articles";
+export { AdminReviews } from "./admin/admin-reviews";
+export { AdminConfig, ConfigList } from "./admin/admin-config";
+
+const tabs = [
+  { id: "cursos", label: "Cursos", icon: BookOpen },
+  { id: "pessoas", label: "Pessoas", icon: Users },
+  { id: "conhecimento", label: "Conhecimento", icon: FileText },
+  { id: "correcoes", label: "Correções", icon: ClipboardCheck },
+  { id: "configuracoes", label: "Cadastros", icon: Settings2 },
+];
+
 export function Admin({ initialTab = "cursos" }: { initialTab?: string }) {
-  const { state } = useAcademy(); const [tab, setTab] = useState(tabs.some(item => item.id === initialTab) ? initialTab : "cursos"); const [search, setSearch] = useState("");
-  const courses = [...state.courses, ...state.courseDrafts.filter(draft => !state.courses.some(course => course.id === draft.id))];
-  const articles = [...state.articles, ...state.articleDrafts.filter(draft => !state.articles.some(article => article.id === draft.id))];
+  const { state } = useAcademy();
+  const [tab, setTab] = useState(tabs.some(item => item.id === initialTab) ? initialTab : "cursos");
+  const [search, setSearch] = useState("");
+
   const countPending = state.attempts.filter(attempt => attempt.status === "pending").length;
   const resource = ["cursos", "pessoas", "conhecimento"].includes(tab) ? tab : null;
-  return <div className="page-enter"><PageHeading eyebrow="CONSTRUA NOVAS POSSIBILIDADES" title="Cuidar do conhecimento." description="Um espaço para criar, organizar e acompanhar cada jornada.">{resource && <Button asChild><Link href={`/admin/${resource}/novo`}><Plus size={16}/>{tab === "cursos" ? "Criar curso" : tab === "pessoas" ? "Cadastrar pessoa" : "Criar artigo"}</Link></Button>}</PageHeading><div className="admin-stats">{[{ label: "Cursos publicados", value: state.courses.filter(course => course.status === "published").length, hint: "Prontos para explorar", icon: BookOpen }, { label: "Pessoas cadastradas", value: state.people.length, hint: "Contas de demonstração", icon: Users }, { label: "Materiais publicados", value: state.articles.filter(article => article.status === "published").length, hint: "Conhecimento compartilhado", icon: FileText }, { label: "Aguardando correção", value: countPending, hint: "Um feedback faz diferença", icon: ClipboardCheck }].map(item => <div className="panel stat-card" key={item.label}><span>{item.label}<item.icon size={17}/></span><strong>{item.value}</strong><small>{item.hint}</small></div>)}</div><div className="tabs">{tabs.map(item => <button key={item.id} className={tab === item.id ? "selected" : ""} aria-pressed={tab === item.id} onClick={() => { setTab(item.id); setSearch(""); }}><item.icon size={16}/>{item.label}{item.id === "correcoes" && countPending > 0 ? ` (${countPending})` : ""}</button>)}</div>{resource && <div className="filter-bar"><div className="field-search"><Search size={17}/><input aria-label="Pesquisar registros" placeholder="Buscar pelo nome..." value={search} onChange={event => setSearch(event.target.value)}/></div><span className="pill">Ambiente local</span></div>}
-    {tab === "cursos" && <div className="table-wrap"><table><thead><tr><th>CURSO</th><th>PRODUTO</th><th>STATUS</th><th>ATIVIDADES</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{courses.filter(course => normalize(course.title).includes(normalize(search))).map(course => <tr key={course.id}><td><Link href={`/admin/cursos/${course.id}`}><strong>{course.title}</strong><small>{course.category} · v{course.version}</small></Link></td><td>{course.product}</td><td><span className={`pill ${course.status === "published" ? "green" : "amber"}`}>{course.status === "published" ? "Publicado" : "Rascunho"}</span>{state.courseDrafts.some(draft => draft.id === course.id) && course.status === "published" && <small>Alterações em rascunho</small>}</td><td>{course.lessons.length}</td><td><div className="table-actions"><Button asChild variant="ghost" size="icon"><Link href={`/aprender/${course.id}/aula?previa=1`} aria-label={`Prévia de ${course.title}`}><Eye size={16}/></Link></Button><Button asChild variant="secondary" size="sm"><Link href={`/admin/cursos/${course.id}`}><Pencil size={13}/> Editar</Link></Button></div></td></tr>)}</tbody></table>{!courses.filter(course => normalize(course.title).includes(normalize(search))).length && <EmptyState title="Nenhum curso encontrado" description="Ajuste a pesquisa ou crie seu primeiro curso."/>}</div>}
-    {tab === "pessoas" && <><div className="table-wrap"><table><thead><tr><th>PESSOA</th><th>SETOR</th><th>PERFIL</th><th>SITUAÇÃO</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{state.people.filter(person => normalize(person.name).includes(normalize(search))).map(person => <tr key={person.id}><td><div className="table-person"><span className="avatar">{initials(person.name)}</span><div><strong>{person.name}</strong><small>{person.email}</small></div></div></td><td>{person.department}</td><td>{person.role === "admin" ? "Administrador" : person.role === "manager" ? "Gestor" : "Colaborador"}</td><td><span className={`pill ${person.status === "active" ? "green" : "amber"}`}>{person.status === "active" ? "Exemplo ativo" : person.status === "pending" ? "Convite não enviado" : "Inativo"}</span></td><td><Button asChild variant="ghost" size="icon"><Link href={`/admin/pessoas/${person.id}`} aria-label={`Editar ${person.name}`}><Pencil size={16}/></Link></Button></td></tr>)}</tbody></table></div><div className="info-note">Os cadastros são locais. Esta versão não cria acessos reais nem envia convites por e-mail.</div></>}
-    {tab === "conhecimento" && <div className="table-wrap"><table><thead><tr><th>MATERIAL</th><th>PRODUTO</th><th>STATUS</th><th>VERSÃO</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{articles.filter(article => normalize(article.title).includes(normalize(search))).map(article => <tr key={article.id}><td><strong>{article.title}</strong><small>{article.category}</small></td><td>{article.product}</td><td><span className={`pill ${article.status === "published" ? "green" : "amber"}`}>{article.status === "published" ? "Publicado" : "Rascunho"}</span>{state.articleDrafts.some(draft => draft.id === article.id) && article.status === "published" && <small>Alterações em rascunho</small>}</td><td>v{article.revision}</td><td><Button asChild variant="secondary" size="sm"><Link href={`/admin/conhecimento/${article.id}`}><Pencil size={13}/> Editar</Link></Button></td></tr>)}</tbody></table></div>}
-    {tab === "correcoes" && <Reviews/>}{tab === "configuracoes" && <div className="config-columns"><ConfigList kind="departments" title="Setores e departamentos" description="Organize as equipes e seus relatórios."/><ConfigList kind="products" title="Produtos e assuntos" description="Organize o catálogo e a biblioteca."/></div>}
-  </div>;
-}
-function ConfigList({ kind, title, description }: { kind: "departments" | "products"; title: string; description: string }) {
-  const { state, update, notify } = useAcademy(); const [value, setValue] = useState(""); const [editing, setEditing] = useState("");
-  const save = (event: React.FormEvent) => { event.preventDefault(); const name = value.trim(); if (!name || state[kind].some(item => normalize(item) === normalize(name) && item !== editing)) { notify("Use um nome diferente dos cadastros existentes."); return; } update(current => ({ ...current, [kind]: editing ? current[kind].map(item => item === editing ? name : item) : [...current[kind], name], ...(editing && kind === "departments" ? { people: current.people.map(person => person.department === editing ? { ...person, department: name } : person) } : {}), ...(editing && kind === "products" ? { courses: current.courses.map(course => course.product === editing ? { ...course, product: name } : course), courseDrafts: current.courseDrafts.map(course => course.product === editing ? { ...course, product: name } : course), articles: current.articles.map(article => article.product === editing ? { ...article, product: name } : article), articleDrafts: current.articleDrafts.map(article => article.product === editing ? { ...article, product: name } : article) } : {}) })); setValue(""); setEditing(""); notify("Cadastro atualizado nesta demonstração."); };
-  return <section className="panel form-panel"><h2>{title}</h2><p>{description}</p>{state[kind].map(item => <div className="config-item" key={item}><span>{item}</span><Button variant="ghost" size="icon" aria-label={`Renomear ${item}`} onClick={() => { setEditing(item); setValue(item); }}><Pencil size={14}/></Button></div>)}<form className="inline-form" onSubmit={save}><input className="input" aria-label={editing ? `Novo nome de ${editing}` : `Adicionar em ${title}`} placeholder={editing ? "Novo nome" : "Novo cadastro"} required maxLength={80} value={value} onChange={event => setValue(event.target.value)}/><Button type="submit" size="sm">{editing ? "Salvar" : "Adicionar"}</Button></form>{editing && <Button variant="ghost" size="sm" onClick={() => { setEditing(""); setValue(""); }}>Cancelar alteração</Button>}</section>;
-}
-function Reviews() {
-  const { state } = useAcademy(); const [selected, setSelected] = useState("");
-  const attempt = state.attempts.find(item => item.id === selected);
-  if (attempt) return <ReviewForm key={attempt.id} attempt={attempt} close={() => setSelected("")}/>;
-  if (!state.attempts.length) return <EmptyState icon={<ClipboardCheck size={30}/>} title="Cada evolução merece um bom feedback." description="As avaliações enviadas na sala de aula aparecerão aqui para correção."><Button asChild variant="secondary"><Link href="/aprender">Explorar cursos <ArrowRight size={15}/></Link></Button></EmptyState>;
-  return <div className="table-wrap"><table><thead><tr><th>AVALIAÇÃO</th><th>ALUNO</th><th>SITUAÇÃO</th><th>RESULTADO</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{[...state.attempts].reverse().map(item => <tr key={item.id}><td><strong>{item.courseTitle}</strong><small>Versão {item.courseVersion} · {new Date(item.submittedAt).toLocaleDateString("pt-BR")}</small></td><td>Daniel · demonstração</td><td><span className={`pill ${item.status === "approved" ? "green" : "amber"}`}>{item.status === "pending" ? "Aguardando correção" : item.status === "approved" ? "Aprovado" : "Nova tentativa"}</span></td><td>{item.score ?? "—"}</td><td><Button size="sm" variant="secondary" onClick={() => setSelected(item.id)}>{item.status === "pending" ? "Corrigir" : "Ver resultado"}</Button></td></tr>)}</tbody></table></div>;
-}
-function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void }) {
-  const { update, notify } = useAcademy(); const [score, setScore] = useState(attempt.score?.toString() || ""); const [feedback, setFeedback] = useState(attempt.feedback); const pending = attempt.status === "pending";
-  return <section className="panel form-panel"><Button variant="ghost" size="sm" onClick={close}>← Voltar às correções</Button><h2 style={{ marginTop: 19 }}>{attempt.courseTitle}</h2><p>Daniel · tentativa de demonstração · nota mínima {attempt.passingScore}%</p>{attempt.questions.map((question, index) => <div className="feedback" key={question.id}><strong>{index + 1}. {question.prompt}</strong><p style={{ margin: "9px 0" }}>Resposta: {attempt.answers[question.id]}</p>{question.type === "choice" && <small>Gabarito da versão enviada: {question.correct}</small>}</div>)}<form onSubmit={event => { event.preventDefault(); update(current => publishReview(current, attempt.id, Number(score), feedback.trim())); notify("Resultado publicado na demonstração."); close(); }}><div className="form-grid"><label className="field"><span>Nota final (0 a 100)</span><input type="number" min={0} max={100} required step={1} value={score} disabled={!pending} onChange={event => setScore(event.target.value)}/></label><div className="info-note" style={{ alignSelf: "start" }}>Aprovação libera o XP uma única vez. A nota final é publicada pelo avaliador.</div></div><label className="field"><span>Feedback para o aluno</span><textarea rows={4} required value={feedback} disabled={!pending} onChange={event => setFeedback(event.target.value)} maxLength={5000}/></label>{pending && <Button type="submit"><CheckCircle2 size={16}/> Publicar resultado</Button>}</form>{attempt.status === "retry" && attempt.retryPolicy === "admin" && !attempt.retryAllowed && <Button style={{ marginTop: 15 }} onClick={() => { update(current => ({ ...current, attempts: current.attempts.map(item => item.id === attempt.id ? { ...item, retryAllowed: true } : item) })); notify("Nova tentativa liberada."); }}>Liberar nova tentativa</Button>}</section>;
+
+  return (
+    <div className="page-enter">
+      <PageHeading
+        eyebrow="CONSTRUA NOVAS POSSIBILIDADES"
+        title="Cuidar do conhecimento."
+        description="Um espaço para criar, organizar e acompanhar cada jornada."
+      >
+        {resource && (
+          <Button asChild>
+            <Link href={`/admin/${resource}/novo`}>
+              <Plus size={16} />
+              {tab === "cursos" ? "Criar curso" : tab === "pessoas" ? "Cadastrar pessoa" : "Criar artigo"}
+            </Link>
+          </Button>
+        )}
+      </PageHeading>
+
+      <div className="admin-stats">
+        {[
+          {
+            label: "Cursos publicados",
+            value: state.courses.filter(course => course.status === "published").length,
+            hint: "Prontos para explorar",
+            icon: BookOpen,
+          },
+          {
+            label: "Pessoas cadastradas",
+            value: state.people.length,
+            hint: "Contas de demonstração",
+            icon: Users,
+          },
+          {
+            label: "Materiais publicados",
+            value: state.articles.filter(article => article.status === "published").length,
+            hint: "Conhecimento compartilhado",
+            icon: FileText,
+          },
+          {
+            label: "Aguardando correção",
+            value: countPending,
+            hint: "Um feedback faz diferença",
+            icon: ClipboardCheck,
+          },
+        ].map(item => (
+          <div className="panel stat-card" key={item.label}>
+            <span>
+              {item.label}
+              <item.icon size={17} />
+            </span>
+            <strong>{item.value}</strong>
+            <small>{item.hint}</small>
+          </div>
+        ))}
+      </div>
+
+      <div className="tabs">
+        {tabs.map(item => (
+          <button
+            key={item.id}
+            className={tab === item.id ? "selected" : ""}
+            aria-pressed={tab === item.id}
+            onClick={() => {
+              setTab(item.id);
+              setSearch("");
+            }}
+          >
+            <item.icon size={16} />
+            {item.label}
+            {item.id === "correcoes" && countPending > 0 ? ` (${countPending})` : ""}
+          </button>
+        ))}
+      </div>
+
+      {resource && (
+        <div className="filter-bar">
+          <div className="field-search">
+            <Search size={17} />
+            <input
+              aria-label="Pesquisar registros"
+              placeholder="Buscar pelo nome..."
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+            />
+          </div>
+          <span className="pill">Ambiente local</span>
+        </div>
+      )}
+
+      {tab === "cursos" && <AdminCourses search={search} />}
+      {tab === "pessoas" && <AdminPeople search={search} />}
+      {tab === "conhecimento" && <AdminArticles search={search} />}
+      {tab === "correcoes" && <AdminReviews />}
+      {tab === "configuracoes" && <AdminConfig />}
+    </div>
+  );
 }

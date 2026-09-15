@@ -1,0 +1,248 @@
+/* Media Queries & Responsiveness */
+
+@media (min-width: 1600px) {
+  .main-content { padding: 40px 45px; }
+  .hero { min-height: 320px; }
+  .hero-copy { padding: 35px 38px; }
+  .hero h2 { font-size: 41px; }
+  .hero p { font-size: 12px; }
+  .hero-foot { font-size: 9px; }
+  .hero-eyebrow { font-size: 9px; }
+  .hero-art { width: 44%; }
+  .course-art { height: 185px; }
+  .course-card h3 { font-size: 15px; }
+  .welcome-grid { grid-template-columns: minmax(0, 1fr) 300px; }
+  .journey-ring { margin: 20px auto 12px; }
+  .journey-card { padding-top: 25px; }
+  .nav-item { font-size: 13px; }
+  .page-heading h1 { font-size: 28px; }
+}
+
+@media (max-width: 1250px) {
+  .sidebar { width: 210px; padding: 24px 13px 16px; }
+  .app-content { margin-left: 210px; }
+  .brand { gap: 5px; }
+  .brand strong { font-size: 18px; }
+  .brand small { font-size: 5.5px; }
+  .topbar { padding: 0 24px; gap: 15px; }
+  .topbar .demo-tag { display: none; }
+  .main-content { padding: 25px; }
+  .welcome-grid { grid-template-columns: minmax(0, 1fr) 245px; gap: 17px; }
+  .hero h2 { font-size: 29px; }
+  .hero-copy { padding: 28px 23px; }
+  .hero-art { width: 42%; opacity: 0.9; }
+  .hero-gem { width: 110px; height: 130px; }
+  .hero-gem svg { width: 70px; }
+  .chip-xp { left: 1%; font-size: 7px; }
+  .chip-level { right: 2%; padding: 9px; }
+  .hero-foot { font-size: 6px; }
+  .metric-tag { display: none; }
+  .metric-strip { padding: 16px 12px; gap: 12px; }
+  .metric-strip strong { font-size: 15px; }
+  .metric-strip small { font-size: 8px; }
+  .course-grid { gap: 13px; }
+  .course-card-body { padding: 14px; }
+  .course-card h3 { font-size: 12px; }
+  .course-art { height: 148px; }
+  .art-edition { display: none; }
+  .profile > span:last-child { display: none; }
+  .global-search { max-width: 260px; }
+  .knowledge-callout h2 { font-size: 21px; }
+  .knowledge-callout { padding: 23px; }
+  .ranking-card { padding: 20px; }
+  .player-grid { grid-template-columns: minmax(0, 1fr) 245px; }
+  .editor-grid { grid-template-columns: minmax(0, 1fr) 250px; }
+  .detail-grid { gap: 22px; }
+  .detail-intro h1 { font-size: 26px; }
+  .detail-metrics { gap: 10px; font-size: 9px; }
+}
+
+@media (max-width: 1020px) {
+  .sidebar { width: 190px; }
+  .app-content { margin-left: 190px; }
+  .brand strong { font-size: 16px; }
+  .brand small { font-size: 5px; }
+  .brand-official { width: 38px; height: 38px; }
+  .nav-item { font-size: 11px; padding: 11px; gap: 9px; }
+  .global-search kbd { display: none; }
+  .breadcrumb > span, .breadcrumb > svg { display: none; }
+  .welcome-grid { grid-template-columns: minmax(0, 1fr) 220px; }
+  .hero-art { opacity: 0.4; width: 48%; }
+  .hero-copy { padding: 25px 21px; }
+  .hero h2 { font-size: 28px; }
+  .journey-card { padding: 19px 14px 0; }
+  .journey-stats { gap: 3px; }
+  .hero-foot { font-size: 7px; max-width: 210px; }
+  .hero-foot > span:last-child { max-width: 140px; }
+  .metric-strip > div { gap: 6px; padding-right: 6px; }
+  .metric-icon { width: 24px; }
+  .metric-strip strong { font-size: 14px; }
+  .metric-strip strong em { font-size: 8px; }
+  .metric-strip small { font-size: 7px; }
+  .course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-courses .course-card:nth-child(3) { display: none; }
+  .dashboard-bottom { gap: 16px; }
+  .knowledge-callout h2 { font-size: 22px; }
+  .bottom-note p { display: none; }
+  .article-grid { grid-template-columns: repeat(2, 1fr); }
+  .filter-bar { flex-wrap: wrap; }
+  .field-search { min-width: 200px; }
+  .select-field select { min-width: 130px; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .art-large { height: 250px; }
+  .detail-intro { padding-top: 0; }
+  .player-grid { grid-template-columns: 1fr; }
+  .curriculum { position: static; }
+  .editor-grid { grid-template-columns: 1fr; }
+  .editor-aside { position: static; }
+  .editor-aside .course-art { height: 180px; }
+  .admin-stats { grid-template-columns: repeat(2, 1fr); }
+  .main-footer { padding: 10px 25px 20px; flex-direction: column; font-size: 8px; }
+  .topbar-actions { gap: 4px; }
+  .topbar { gap: 13px; }
+  .global-search input { font-size: 10px; }
+}
+
+@media (max-width: 760px) {
+  .sidebar { visibility: hidden; transform: translateX(-100%); width: 242px; transition: transform 0.2s; }
+  .sidebar.is-open { visibility: visible; transform: translateX(0); }
+  .app-content { margin-left: 0; }
+  .nav-scrim { position: fixed; inset: 0; background: #17102466; border: 0; z-index: 39; }
+  .mobile-menu { display: inline-flex; }
+  .brand strong { font-size: 20px; }
+  .brand small { font-size: 6.5px; }
+  .brand-official { width: 50px; height: 42px; }
+  .nav-item { font-size: 13px; }
+  .topbar { height: 64px; padding: 0 16px; gap: 12px; }
+  .breadcrumb { gap: 7px; }
+  .breadcrumb strong { font-size: 10px; }
+  .global-search { display: none; }
+  .topbar-actions { margin-left: auto; gap: 7px; }
+  .topbar-divider { margin: 0; }
+  .main-content { padding: 24px 18px; }
+  .page-heading { margin-bottom: 21px; align-items: flex-start; }
+  .page-heading h1 { font-size: 23px; letter-spacing: -0.7px; }
+  .page-heading p { font-size: 11px; max-width: 320px; }
+  .season-pill { font-size: 8px; padding: 6px 9px; white-space: nowrap; }
+  .page-heading .season-pill svg { display: none; }
+  .welcome-grid { grid-template-columns: 1fr; }
+  .hero { min-height: 300px; }
+  .hero-copy { padding: 28px; }
+  .hero-art { opacity: 0.9; width: 45%; }
+  .hero h2 { font-size: 34px; }
+  .hero p { max-width: 260px; }
+  .hero-foot { max-width: none; font-size: 7px; }
+  .hero-foot > span:last-child { max-width: 180px; }
+  .journey-card { display: none; }
+  .metric-strip { padding: 16px 9px; gap: 4px; margin-bottom: 28px; }
+  .metric-strip > div { flex-direction: column; align-items: flex-start; padding-left: 10px; gap: 9px; }
+  .metric-strip strong { font-size: 14px; }
+  .metric-strip strong em { display: block; font-size: 9px; margin-top: 3px; }
+  .metric-strip small { font-size: 8px; }
+  .metric-strip a { display: none; }
+  .metric-icon { height: 20px; }
+  .dashboard-bottom { grid-template-columns: 1fr; margin-top: 26px; }
+  .knowledge-callout { padding: 25px; }
+  .knowledge-callout h2 { font-size: 26px; }
+  .knowledge-callout p { font-size: 11px; }
+  .knowledge-callout .coming-label { font-size: 9px; }
+  .ranking-card .ranking-row { padding: 13px 0; }
+  .ranking-name strong { font-size: 12px; }
+  .ranking-name small { font-size: 9px; }
+  .ranking-xp { font-size: 12px; }
+  .ranking-subtitle { font-size: 9px; }
+  .ranking-card h2 { font-size: 16px; }
+  .section-heading h2 { font-size: 16px; }
+  .section-heading p { font-size: 10px; }
+  .text-link { font-size: 9px; }
+  .course-card h3 { font-size: 12px; }
+  .course-art { height: 146px; }
+  .art-composition { transform: scale(0.9); }
+  .art-brand { font-size: 8px; left: 12px; }
+  .art-product { font-size: 10px; left: 12px; }
+  .bookmark-button { opacity: 1; width: 25px; height: 25px; }
+  .course-card-meta { font-size: 7px; flex-wrap: wrap; }
+  .required-label { display: none; }
+  .catalog-banner { padding: 18px; gap: 11px; }
+  .catalog-banner strong { font-size: 12px; }
+  .catalog-banner p { font-size: 10px; }
+  .catalog-count { display: none; }
+  .round-heading-icon { display: none; }
+  .filter-bar { gap: 8px; }
+  .filter-bar .field-search { flex-basis: 100%; }
+  .select-field { flex: 1; }
+  .select-field select { min-width: 0; width: 100%; }
+  .select-standalone { min-width: 120px; }
+  .results-label > span { display: none; }
+  .article-grid { grid-template-columns: 1fr; }
+  .knowledge-hero h1 { font-size: 29px; }
+  .knowledge-hero p { font-size: 11px; }
+  .knowledge-hero { margin-top: 5px; }
+  .article-page .panel { padding: 23px; }
+  .article-page h1 { font-size: 25px; }
+  .article-meta { gap: 9px; }
+  .reading-card { padding: 23px; }
+  .reading-card h2 { font-size: 21px; }
+  .activity-summary h1 { font-size: 22px; }
+  .activity-actions { flex-wrap: wrap; }
+  .detail-section { padding: 20px; }
+  .detail-intro h1 { font-size: 27px; }
+  .form-panel { padding: 20px; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .config-columns { grid-template-columns: 1fr; }
+  .about-grid { grid-template-columns: 1fr; }
+  .admin-stats { gap: 10px; }
+  .stat-card { padding: 16px; }
+  .stat-card > span { font-size: 9px; }
+  .stat-card strong { font-size: 25px; }
+  .heading-actions .button { font-size: 10px; padding: 9px 11px; }
+  .tabs { gap: 21px; }
+  .milestones { grid-template-columns: repeat(3, 1fr); gap: 9px; }
+  .evolution-hero { padding: 23px; gap: 20px; flex-wrap: wrap; }
+  .evolution-emblem { width: 76px; height: 88px; border-radius: 20px; }
+  .evolution-emblem svg { width: 48px; }
+  .evolution-hero h2 { font-size: 24px; }
+  .evolution-xp { margin-left: 0; width: 100%; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #ffffff1f; padding-top: 12px; }
+  .evolution-xp strong { font-size: 26px; }
+  .evolution-hero .progress-track { min-width: 170px; }
+  .main-footer { padding: 6px 18px 22px; }
+  .toast { font-size: 11px; }
+  .notification-panel { right: -57px; width: 300px; }
+  .prose { font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .hero-art { opacity: 0.35; width: 49%; }
+  .hero-copy { padding: 25px; }
+  .hero h2 { font-size: 31px; }
+  .course-grid { gap: 10px; }
+  .course-card-body { padding: 12px; }
+  .course-card h3 { font-size: 11px; }
+  .course-duration { gap: 8px; font-size: 7px; }
+  .art-composition { transform: scale(0.78); }
+  .art-product { font-size: 9px; }
+  .art-corner { display: none; }
+  .page-heading h1 { font-size: 21px; }
+  .season-pill { font-size: 7px; }
+  .season-pill > span { display: none; }
+  .section-heading { gap: 9px; }
+  .section-heading h2 { font-size: 14px; }
+  .hero-foot { font-size: 6px; }
+  .metric-strip small { font-size: 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *:before, *:after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (min-width: 1021px) {
+  .editor-aside {
+    max-height: calc(100dvh - 115px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}

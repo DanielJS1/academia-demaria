@@ -1,0 +1,26 @@
+# Codex and AI ignore rules
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+*.log
+.next/
+node_modules/
+out/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+.git/
+.legacy/
+
+# Media & Binary Assets
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico
+*.mp4
+*.woff
+*.woff2
+*.ttf

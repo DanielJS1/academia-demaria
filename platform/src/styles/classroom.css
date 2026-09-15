@@ -1,0 +1,258 @@
+/* Player & Classroom */
+.player-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 285px;
+  gap: 23px;
+}
+
+.video-frame {
+  aspect-ratio: 16 / 9;
+  background: #20172f;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.video-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.video-placeholder {
+  position: relative;
+  z-index: 2;
+  color: #d4c7e9;
+  text-align: center;
+  max-width: 370px;
+  padding: 20px;
+}
+
+.video-placeholder > svg {
+  color: #a58ec8;
+  margin: 0 auto 16px;
+}
+
+.video-placeholder h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.video-placeholder p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #b8a7d0;
+}
+
+.video-placeholder a {
+  display: inline-flex;
+  margin-top: 16px;
+  color: #c9eddf;
+  font-size: 11px;
+}
+
+.reading-card {
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  min-height: 345px;
+}
+
+.reading-card h2 {
+  font-size: 24px;
+  letter-spacing: -0.6px;
+  margin-bottom: 22px;
+}
+
+.prose {
+  font-size: 13px;
+  line-height: 1.95;
+  color: var(--muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.prose h2 {
+  color: var(--ink);
+}
+
+.activity-summary {
+  padding: 24px 0;
+}
+
+.activity-summary h1 {
+  font-size: 23px;
+  letter-spacing: -0.6px;
+  margin-top: 7px;
+}
+
+.activity-summary p {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 10px;
+}
+
+.activity-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+/* Curriculum sidebar */
+.curriculum {
+  padding: 20px;
+  align-self: start;
+  position: sticky;
+  top: 101px;
+}
+
+.curriculum h2 {
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.curriculum > p {
+  color: var(--muted);
+  font-size: 9px;
+  margin-bottom: 12px;
+}
+
+.lesson-button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 9px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+
+.lesson-button:hover {
+  background: var(--surface2);
+}
+
+.lesson-button.current {
+  background: var(--lavender);
+  color: var(--primary);
+}
+
+.lesson-button > span {
+  flex: 1;
+}
+
+.lesson-button small {
+  display: block;
+  font-size: 8px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.lesson-button > svg {
+  color: var(--muted);
+}
+
+.lesson-button.done > svg {
+  color: #55a17f;
+}
+
+.curriculum .module-title {
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  margin-top: 7px;
+}
+
+/* Quiz & Questions */
+.quiz-question {
+  margin: 22px 0;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.quiz-question legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 13px;
+}
+
+.quiz-question fieldset,
+fieldset.quiz-question {
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.choice-option {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.choice-option:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--lavender);
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+/* Results & Feedback */
+.result-card {
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.result-card > svg {
+  color: var(--primary);
+  margin-bottom: 15px;
+}
+
+.result-card h2 {
+  font-size: 21px;
+  margin-bottom: 10px;
+}
+
+.result-card p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.result-score {
+  font-size: 42px;
+  font-weight: 650;
+  letter-spacing: -2px;
+  margin: 15px 0;
+}
+
+.feedback {
+  white-space: pre-wrap;
+  font-size: 12px;
+  background: var(--surface2);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 18px 0;
+}

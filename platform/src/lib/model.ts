@@ -10,15 +10,26 @@ export const courseSchema = z.object({
   retryPolicy: z.enum(["free", "review", "admin"]), version: z.number().int().positive(),
 });
 export const articleSchema = z.object({ id: z.string(), title: z.string().min(3), product: z.string(), category: z.string(), content: z.string(), status: z.enum(["draft", "published"]), revision: z.number().int().positive(), updatedAt: z.string(), author: z.string() });
-export const personSchema = z.object({ id: z.string(), name: z.string().min(2), email: z.string().email(), department: z.string(), managerId: z.string(), role: z.enum(["student", "manager", "admin"]), status: z.enum(["active", "pending", "inactive"]), xp: z.number().nonnegative(), progress: z.number().min(0).max(100) });
-export const attemptSchema = z.object({ id: z.string(), courseId: z.string(), courseTitle: z.string(), courseVersion: z.number(), questions: z.array(questionSchema), answers: z.record(z.string(), z.string()), status: z.enum(["pending", "approved", "retry"]), feedback: z.string(), score: z.number().nullable(), passingScore: z.number(), xp: z.number(), submittedAt: z.string(), retryPolicy: z.enum(["free", "review", "admin"]).default("free"), retryAllowed: z.boolean().default(false) });
+export const personSchema = z.object({ id: z.string(), name: z.string().min(2), email: z.union([z.string().email(), z.literal("")]), department: z.string(), managerId: z.string(), role: z.enum(["student", "manager", "admin"]), status: z.enum(["active", "pending", "inactive"]), xp: z.number().nonnegative(), progress: z.number().min(0).max(100) });
+export const notificationSchema = z.object({
+  id: z.string(),
+  userId: z.string().default(""),
+  title: z.string(),
+  message: z.string(),
+  link: z.string().default(""),
+  read: z.boolean().default(false),
+  createdAt: z.string().default(() => new Date().toISOString()),
+});
+export const attemptSchema = z.object({ id: z.string(), userId: z.string().optional(), courseId: z.string(), courseTitle: z.string(), courseVersion: z.number(), questions: z.array(questionSchema), answers: z.record(z.string(), z.string()), status: z.enum(["pending", "approved", "retry"]), feedback: z.string(), score: z.number().nullable(), passingScore: z.number(), xp: z.number(), submittedAt: z.string(), retryPolicy: z.enum(["free", "review", "admin"]).default("free"), retryAllowed: z.boolean().default(false) });
 export const stateSchema = z.object({
   schema: z.literal(1), courses: z.array(courseSchema), articles: z.array(articleSchema), people: z.array(personSchema),
   courseDrafts: z.array(courseSchema).default([]), articleDrafts: z.array(articleSchema).default([]),
   departments: z.array(z.string()), products: z.array(z.string()), completed: z.record(z.string(), z.array(z.string())),
   bookmarks: z.array(z.string()), attempts: z.array(attemptSchema), xpEvents: z.array(z.object({ id: z.string(), amount: z.number(), season: z.string(), label: z.string() })),
   readNotices: z.array(z.string()),
+  notifications: z.array(notificationSchema).default([]),
 });
+export type Notification = z.infer<typeof notificationSchema>;
 export type Course = z.infer<typeof courseSchema>;
 export type Lesson = z.infer<typeof lessonSchema>;
 export type Article = z.infer<typeof articleSchema>;
@@ -61,5 +72,17 @@ export function publishReview(state: AcademyState, id: string, score: number, fe
     attempts: state.attempts.map(item => item.id === id ? { ...item, status: approved ? "approved" : "retry", score, feedback } : item),
     completed: !approved && attempt.retryPolicy === "review" ? { ...state.completed, [attempt.courseId]: [] } : state.completed,
     xpEvents: reward ? [...state.xpEvents, { id: rewardId, amount: attempt.xp, season: attempt.submittedAt.slice(0, 4), label: attempt.courseTitle }] : state.xpEvents,
+    notifications: [
+      {
+        id: `rev-${id}-${Date.now()}`,
+        userId: attempt.userId || "daniel",
+        title: approved ? `Parabéns! Avaliação aprovada: ${attempt.courseTitle}` : `Avaliação corrigida: ${attempt.courseTitle}`,
+        message: `Sua avaliação foi revisada com nota ${score}%. Clique para conferir o feedback.`,
+        link: `/aprender/${attempt.courseId}/aula`,
+        read: false,
+        createdAt: new Date().toISOString(),
+      },
+      ...(state.notifications || []),
+    ],
   };
 }

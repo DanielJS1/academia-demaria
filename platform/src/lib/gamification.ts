@@ -1,5 +1,5 @@
 import type { AcademyState } from "./model";
-export const DEMO_SEASON = "2026";
+export const DEMO_SEASON = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric" });
 export const tiers = [{ name: "Bronze", xp: 0 }, { name: "Prata", xp: 800 }, { name: "Ouro", xp: 2000 }, { name: "Platina", xp: 3500 }, { name: "Diamante", xp: 5000 }];
 export function experience(state: AcademyState, season = DEMO_SEASON) {
   const total = state.xpEvents.reduce((sum, event) => sum + event.amount, 0);

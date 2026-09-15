@@ -1,37 +1,61 @@
 "use client";
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
-import { stateSchema, type AcademyState } from "@/lib/model";
-import { initialState } from "@/lib/seed";
-const key = "doc-academy.demo.v1";
-type Context = { state: AcademyState; update: (change: (current: AcademyState) => AcademyState) => void; ready: boolean; notify: (message: string) => void; theme: string; toggleTheme: () => void; storageError: boolean };
-const AcademyContext = createContext<Context | null>(null);
-export function AcademyProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AcademyState>(initialState);
-  const [ready, setReady] = useState(false);
-  const [theme, setTheme] = useState("light");
-  const [toast, setToast] = useState("");
-  const [storageError, setStorageError] = useState(false);
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        const result = stateSchema.safeParse(JSON.parse(saved));
-        if (result.success) setState(result.data);
-        else { setStorageError(true); setToast("Dados locais incompatíveis. Exibindo exemplos sem sobrescrever seu armazenamento."); }
-      }
-      const preference = localStorage.getItem("doc-academy.theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      setTheme(preference === "dark" ? "dark" : "light");
-    } catch { setStorageError(true); }
-    setReady(true);
-  }, []);
-  useEffect(() => {
-    if (!ready || storageError) return;
-    try { localStorage.setItem(key, JSON.stringify(state)); } catch { setStorageError(true); }
-  }, [state, ready, storageError]);
-  useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
-  useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(""), 5000); return () => clearTimeout(timer); }, [toast]);
-  const update = useCallback((change: (current: AcademyState) => AcademyState) => setState(current => change(current)), []);
-  const toggleTheme = () => setTheme(current => { const next = current === "light" ? "dark" : "light"; try { localStorage.setItem("doc-academy.theme", next); } catch {} return next; });
-  return <AcademyContext.Provider value={{ state, update, ready, notify: setToast, theme, toggleTheme, storageError }}>{children}{toast && <div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { browserAuth } from "@/lib/supabase-browser";
+import { stateCommand, type Command } from "@/lib/pilot-contract";
+import type { AcademyState } from "@/lib/model";
+import { AccessScreen } from "./access-screen";
+type Me={id:string;name:string;email:string;role:"admin"|"manager"|"student"};
+type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void};
+const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[]};
+const AcademyContext=createContext<Context|null>(null);
+export function AcademyProvider({children}:{children:ReactNode}){
+ const path=usePathname();const [state,setState]=useState(empty);const current=useRef(state);
+ const [me,setMe]=useState<Me|null>(null);const [authenticated,setAuthenticated]=useState(false);const [ready,setReady]=useState(false);const [sessionChecked,setSessionChecked]=useState(false);
+ const [error,setError]=useState("");const [busy,setBusy]=useState(false);const busyRef=useRef(false);const [toast,setToast]=useState("");const [theme,setTheme]=useState("light");const identity=useRef("");
+ const auth=browserAuth();
+ const request=useCallback(async(command?:Command)=>{
+  const client=browserAuth();const session=await client?.auth.getSession();const token=session?.data.session?.access_token;
+  if(!token)throw new Error("Entre na sua conta para continuar.");
+  const response=await fetch("/api/academy",{method:command?"POST":"GET",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},...(command?{body:JSON.stringify(command)}:{}),cache:"no-store"});
+  const data=await response.json();if(!response.ok){if(response.status===401||response.status===403){setReady(false);setMe(null);current.current=empty;setState(empty);}throw new Error(data.error||"Não foi possível salvar.");}
+  if(data.progress){
+   if(identity.current!==data.userId)return;
+   const next={...current.current,completed:{...current.current.completed,[data.progress.courseId]:data.progress.completed}};
+   current.current=next;setState(next);return;
+  }
+  if(identity.current!==data.me.id)return;
+  current.current=data.state;setState(data.state);setMe(data.me);setReady(true);setError("");
+ },[]);
+ const refresh=useCallback(async()=>{try{await request();}catch(err){setError(err instanceof Error?err.message:"Não foi possível carregar seus dados.");}},[request]);
+ useEffect(()=>{
+  try{const saved=localStorage.getItem("doc-academy.theme");setTheme(saved|| (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"));}catch{}
+  if(!auth){setSessionChecked(true);return;}
+  const {data}=auth.auth.onAuthStateChange((_event,session)=>{
+   const id=session?.user.id??"";
+   if(identity.current!==id){identity.current=id;setMe(null);setReady(false);current.current=empty;setState(empty);setError("");}
+   setAuthenticated(!!session);setSessionChecked(true);
+   if(session)window.setTimeout(()=>void refresh(),0);
+  });
+  return()=>data.subscription.unsubscribe();
+ },[auth,refresh]);
+ useEffect(()=>{if(authenticated&&!busyRef.current)void refresh();},[path,authenticated,refresh]);
+ useEffect(()=>{const onFocus=()=>{if(authenticated&&!busyRef.current)void refresh();};window.addEventListener("focus",onFocus);return()=>window.removeEventListener("focus",onFocus);},[authenticated,refresh]);
+ useEffect(()=>{document.documentElement.dataset.theme=theme;},[theme]);
+ useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(""),6000);return()=>clearTimeout(timer);},[toast]);
+ const mutate=useCallback(async(command:Command)=>{
+  if(busyRef.current){setToast("Aguarde a gravação em andamento.");return false;}
+  busyRef.current=true;setBusy(true);
+  try{await request(command);return true;}catch(err){setToast(err instanceof Error?err.message:"Não foi possível salvar. Tente novamente.");return false;}finally{busyRef.current=false;setBusy(false);}
+ },[request]);
+ const update=useCallback(async(change:(current:AcademyState)=>AcademyState)=>{try{const command=stateCommand(current.current,change(current.current));return command?await mutate(command):true;}catch(err){setToast(err instanceof Error?err.message:"Ação inválida.");return false;}},[mutate]);
+ const signOut=()=>{identity.current="";current.current=empty;setState(empty);setMe(null);setReady(false);setAuthenticated(false);void auth?.auth.signOut();};
+ const toggleTheme=()=>setTheme(value=>{const next=value==="light"?"dark":"light";try{localStorage.setItem("doc-academy.theme",next);}catch{}return next;});
+ if(!sessionChecked)return <div className="access-page"><p>Preparando seu acesso…</p></div>;
+ if(!auth||!authenticated||path==="/acesso")return <AccessScreen configured={!!auth} signedIn={authenticated}/>;
+ if(error&&!ready)return <div className="access-page"><section className="panel access-card"><h1>Vamos conferir seu acesso</h1><p role="alert">{error}</p><button className="button button-primary" onClick={()=>void refresh()}>Tentar novamente</button><button className="button button-secondary" onClick={signOut}>Sair da conta</button></section></div>;
+ if(!ready||!me)return <div className="access-page"><p>Carregando sua jornada…</p></div>;
+ const denied=(path.startsWith("/admin")&&me.role!=="admin")||(path.startsWith("/equipe")&&me.role==="student");
+ return <AcademyContext.Provider value={{state,me,update,mutate,refresh,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut}}>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
 }
-export function useAcademy() { const context = useContext(AcademyContext); if (!context) throw new Error("AcademyProvider ausente"); return context; }
+export function useAcademy(){const context=useContext(AcademyContext);if(!context)throw new Error("AcademyProvider ausente");return context;}

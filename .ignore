@@ -1,0 +1,15 @@
+# Ignore for ripgrep / fd used by AI tools
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+*.log
+.next/
+node_modules/
+out/
+coverage/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico

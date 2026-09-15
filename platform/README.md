@@ -1,31 +1,30 @@
-# DOC-Academy — primeira entrega
+# DOC-Academy — piloto interno
 
-Frontend navegável em Next.js, React, TypeScript e Tailwind. Interface em português, modos claro/escuro e layout responsivo. Esta entrega é uma demonstração local com dados fictícios, persistidos apenas neste navegador.
+Aplicação Next.js, React e TypeScript com Supabase Auth e PostgreSQL. O exemplar antigo permanece em ../.legacy.
 
-## Iniciar no Windows
+## Ativação
 
-Execute `INICIAR-ACADEMY.cmd` na raiz e abra http://127.0.0.1:4174. Mantenha o terminal aberto. O iniciador requer Node.js e pnpm; neste computador também reconhece o runtime do Codex. A primeira execução precisa de internet para instalar dependências.
+Siga [ATIVAR-PILOTO.md](ATIVAR-PILOTO.md) para configurar a Vercel, aplicar a migração e criar o primeiro administrador. O banco começa vazio. O aplicativo não usa os dados locais da demonstração.
 
-O código permanece na pasta compartilhada. Dependências e execução ficam em `%LOCALAPPDATA%\DeMaria\DOC-Academy\preview-verified`, evitando problemas de links simbólicos na rede. O iniciador copia alterações ao abrir; reinicie para refletir mudanças feitas no compartilhamento. O exemplar anterior permanece disponível em `INICIAR.cmd`, porta 4173.
+## Desenvolvimento
 
-## Funcional nesta demonstração
+Instale as dependências com pnpm install. Configure .env.local usando .env.example, sem versionar chaves, e execute pnpm dev. Acesse http://127.0.0.1:4174. Em compartilhamentos Windows, execute uma cópia local do projeto para evitar problemas com os links de dependências.
 
-- Dashboard, catálogo pesquisável, favoritos, aulas sequenciais e links Vimeo.
-- Avaliações com respostas objetivas e abertas, correção manual, feedback e regras de nova tentativa por curso.
-- XP de aprovação sem duplicidade; experiência histórica e classificação anual demonstrativa.
-- Administração de cursos, pessoas, setores, produtos e artigos; rascunhos separados da publicação.
-- Prévia de cursos sem conceder XP, relatório filtrado da equipe e exportação CSV.
-- Busca textual na base de conhecimento; consulta com IA identificada como futura.
+## Verificação
 
-## Limites e próxima fase
+pnpm test executa testes de regras, isolamento de respostas e comandos PostgreSQL via PGlite. pnpm typecheck verifica TypeScript; pnpm build gera a aplicação. A homologação com contas e vídeos reais exige a configuração do projeto Supabase.
 
-Não há autenticação, banco compartilhado, autorização no servidor, envio de e-mail, upload de arquivos, RAG ou certificados válidos. Os perfis e filtros locais demonstram os fluxos, não constituem controle de acesso. Não inserir informações confidenciais. Vídeos reais devem ser cadastrados pelo administrador; os exemplos não contêm manuais oficiais de produtos.
+## Arquitetura
 
-Para uso interno real, implementar autenticação, banco com permissões por organização e gestor, auditoria, backups, convites, armazenamento e testes de acesso. Depois integrar a IA com fontes versionadas e avaliar a qualidade das respostas. Clientes ficam para fase posterior. Regras e metas numéricas de temporadas ainda dependem de homologação.
+- src/components/academy-provider.tsx: sessão e comandos de atualização, sem persistência de cursos em localStorage.
+- src/lib/pilot-contract.ts: comandos validados; a API não aceita sobrescrever o estado inteiro.
+- src/app/api/academy/route.ts: autenticação obrigatória e respostas sem cache.
+- src/lib/pilot-server.ts: autorização, ocultação de gabaritos, relatórios por gestor e acesso ao Supabase.
+- supabase/migrations: tabelas com RLS e sem acesso direto de anon/authenticated; comandos transacionais disponíveis somente ao servidor.
+- src/components/vimeo-lesson.tsx: acompanhamento dos trechos reproduzidos pelo Vimeo.
 
-## Organização e verificação
+O servidor verifica a identidade via Supabase Auth em cada requisição e consulta o perfil ativo no banco. As notas, snapshots de questões e XP são registrados em transações. Tokens de sessão são gerenciados pelo SDK no navegador; senhas de usuários são gerenciadas pelo Supabase Auth. A chave service_role/secret fica exclusivamente no servidor.
 
-`src/app`: rotas. `src/components`: telas. `src/lib/model.ts`: validação e regras. `seed.ts`: exemplos. `academy-provider.tsx`: persistência local. Documentação de produto e arquitetura em `../docs/planejamento-2026-09-14`.
+## Ainda fora do piloto
 
-Na pasta local de execução: `pnpm test`, `pnpm typecheck` e `pnpm build`. O build não publica o site. Alterações locais de estudo podem ser apagadas ao limpar os dados do navegador; não são backup nem registros oficiais.
-
+IA/RAG, certificados oficiais, upload de arquivos, fechamento de temporadas e ambiente de clientes. Estabelecer rotina operacional de backups, restauração e monitoramento antes da ampliação.
