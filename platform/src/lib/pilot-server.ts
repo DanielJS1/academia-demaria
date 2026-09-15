@@ -12,9 +12,21 @@ export async function authenticate(request:Request){
  const token=request.headers.get("authorization")?.match(/^Bearer (.+)$/)?.[1];
  if(!token)throw new ApiError("Entre na sua conta para continuar.",401);
  const db=database();const {data,error}=await db.auth.getUser(token);
- if(error||!data.user||!data.user.email_confirmed_at)throw new ApiError("Sua sessão expirou ou o e-mail não foi confirmado.",401);
- const profile=await db.from("academy_profiles").select("*").eq("id",data.user.id).single();
- if(profile.error||!profile.data||profile.data.status!=="active")throw new ApiError("Seu acesso precisa ser ativado pelo administrador.",403);
+ if(error||!data.user)throw new ApiError("Sua sessão expirou. Entre novamente.",401);
+ let profile=await db.from("academy_profiles").select("*").eq("id",data.user.id).maybeSingle();
+ if(!profile.data){
+  const isDaniel=data.user.email?.toLowerCase()==="daniel@sacdemaria.com.br";
+  const name=(data.user.user_metadata?.name as string)||data.user.email?.split("@")[0]||"Colaborador";
+  const dept=(data.user.user_metadata?.department as string)||"Geral";
+  const {data:created}=await db.from("academy_profiles").insert({
+   id:data.user.id,name,email:data.user.email!,department:dept,
+   role:isDaniel?"admin":"student",status:isDaniel?"active":"pending"
+  }).select().single();
+  profile={data:created,error:null};
+ }
+ if(profile.error||!profile.data||profile.data.status!=="active"){
+  throw new ApiError("Seu cadastro foi realizado com sucesso e está aguardando liberação do administrador. Fale com Daniel para ativar seu acesso.",403);
+ }
  return {db,me:profile.data as Profile};
 }
 function ensure(result:{error:unknown}){if(result.error)throw new ApiError("Não foi possível consultar o banco. Confira a configuração ou tente novamente.",503);}

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { initials, normalize } from "@/lib/utils";
 
 export function AdminPeople({ search }: { search: string }) {
-  const { state } = useAcademy();
+  const { state, update, notify, busy } = useAcademy();
   const filtered = state.people.filter(person => normalize(person.name).includes(normalize(search)));
 
   return (
@@ -46,20 +46,40 @@ export function AdminPeople({ search }: { search: string }) {
                     : "Colaborador"}
                 </td>
                 <td>
-                  <span className={`pill ${person.status === "active" ? "green" : "amber"}`}>
+                  <span className={`pill ${person.status === "active" ? "green" : person.status === "pending" ? "amber" : ""}`}>
                     {person.status === "active"
-                      ? "Exemplo ativo"
+                      ? "Ativo"
                       : person.status === "pending"
-                      ? "Convite não enviado"
+                      ? "Aguardando aprovação"
                       : "Inativo"}
                   </span>
                 </td>
                 <td>
-                  <Button asChild variant="ghost" size="icon">
-                    <Link href={`/admin/pessoas/${person.id}`} aria-label={`Editar ${person.name}`}>
-                      <Pencil size={16} />
-                    </Link>
-                  </Button>
+                  <div className="table-actions">
+                    {person.status === "pending" && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={busy}
+                        onClick={async () => {
+                          const success = await update(current => ({
+                            ...current,
+                            people: current.people.map(p =>
+                              p.id === person.id ? { ...p, status: "active" } : p
+                            ),
+                          }));
+                          if (success) notify(`Acesso de ${person.name} aprovado com sucesso!`);
+                        }}
+                      >
+                        <Check size={13} /> Aprovar
+                      </Button>
+                    )}
+                    <Button asChild variant="ghost" size="icon">
+                      <Link href={`/admin/pessoas/${person.id}`} aria-label={`Editar ${person.name}`}>
+                        <Pencil size={16} />
+                      </Link>
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -67,7 +87,7 @@ export function AdminPeople({ search }: { search: string }) {
         </table>
       </div>
       <div className="info-note">
-        Os cadastros são locais. Esta versão não cria acessos reais nem envia convites por e-mail.
+        Novos colaboradores cadastrados na tela inicial aparecem como &ldquo;Aguardando aprovação&rdquo;. Clique em &ldquo;Aprovar&rdquo; para liberar o acesso ao catálogo.
       </div>
     </>
   );
