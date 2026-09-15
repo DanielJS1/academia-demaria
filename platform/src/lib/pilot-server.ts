@@ -93,6 +93,9 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  if(command.type==="profile"){
   const existing=await db.from("academy_profiles").select("email").eq("id",command.data.id).single();
   if(existing.error||existing.data.email!==command.data.email)throw new ApiError("A alteração de e-mail exige um fluxo de confirmação e não está disponível neste editor.");
+  if(command.data.status==="active"){
+   try{await db.auth.admin.updateUserById(command.data.id,{email_confirm:true});}catch{}
+  }
  }
  if(command.type==="settings"){
   const settings=await db.from("academy_settings").select(command.kind).single();ensure(settings);

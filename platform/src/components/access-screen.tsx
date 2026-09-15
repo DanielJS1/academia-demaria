@@ -36,15 +36,18 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
         if (password !== confirmation) throw new Error("As senhas digitadas não coincidem.");
         if (password.length < 12) throw new Error("A senha deve ter pelo menos 12 caracteres.");
 
-        const result = await auth.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            data: { name: name.trim() },
-          },
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim(),
+            password,
+          }),
         });
 
-        if (result.error) throw result.error;
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Não foi possível realizar o cadastro.");
 
         setMessage({
           type: "success",
