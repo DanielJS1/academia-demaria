@@ -4,7 +4,6 @@ import { ArrowLeft, Award, BookOpen, CheckCircle2, Clock3, FileText, PlayCircle,
 import { useAcademy } from "./academy-provider";
 import { CourseArt, EmptyState, StudyButton, CheckLabel } from "./shared";
 import { minutes } from "@/lib/model";
-
 export function CourseDetail({ id }: { id: string }) {
   const { state, ready } = useAcademy(); const course = state.courses.find(item => item.id === id && item.status === "published");
   if (!ready) return <div className="empty-state">Preparando sua jornada…</div>;

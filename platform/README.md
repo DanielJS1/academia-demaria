@@ -21,8 +21,11 @@ O código permanece na pasta compartilhada. Dependências e execução ficam em 
 
 Não há autenticação, banco compartilhado, autorização no servidor, envio de e-mail, upload de arquivos, RAG ou certificados válidos. Os perfis e filtros locais demonstram os fluxos, não constituem controle de acesso. Não inserir informações confidenciais. Vídeos reais devem ser cadastrados pelo administrador; os exemplos não contêm manuais oficiais de produtos.
 
+Para uso interno real, implementar autenticação, banco com permissões por organização e gestor, auditoria, backups, convites, armazenamento e testes de acesso. Depois integrar a IA com fontes versionadas e avaliar a qualidade das respostas. Clientes ficam para fase posterior. Regras e metas numéricas de temporadas ainda dependem de homologação.
+
 ## Organização e verificação
 
 `src/app`: rotas. `src/components`: telas. `src/lib/model.ts`: validação e regras. `seed.ts`: exemplos. `academy-provider.tsx`: persistência local. Documentação de produto e arquitetura em `../docs/planejamento-2026-09-14`.
 
 Na pasta local de execução: `pnpm test`, `pnpm typecheck` e `pnpm build`. O build não publica o site. Alterações locais de estudo podem ser apagadas ao limpar os dados do navegador; não são backup nem registros oficiais.
+

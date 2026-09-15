@@ -5,7 +5,6 @@ import { useAcademy } from "./academy-provider";
 import { CourseCard, EmptyState, PageHeading } from "./shared";
 import { Button } from "./ui/button";
 import { normalize } from "@/lib/utils";
-
 export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   const { state } = useAcademy(); const [search, setSearch] = useState(initialSearch); const [product, setProduct] = useState("Todos"); const [tab, setTab] = useState("Todos os cursos"); const [level, setLevel] = useState("Todos");
   const published = state.courses.filter(course => course.status === "published");

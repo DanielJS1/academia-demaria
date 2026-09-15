@@ -6,7 +6,6 @@ import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, Progress } from "./shared";
 import { completeActivity, courseProgress, vimeoEmbed, type Attempt } from "@/lib/model";
-
 export function Classroom({ id, initialLesson, preview = false }: { id: string; initialLesson?: string; preview?: boolean }) {
   const { state, ready, update, notify } = useAcademy();
   const course = (preview ? state.courseDrafts.find(item => item.id === id) : undefined) || state.courses.find(item => item.id === id && (item.status === "published" || preview));

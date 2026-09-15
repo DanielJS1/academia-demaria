@@ -5,7 +5,7 @@ import { initialState } from "@/lib/seed";
 const key = "doc-academy.demo.v1";
 type Context = { state: AcademyState; update: (change: (current: AcademyState) => AcademyState) => void; ready: boolean; notify: (message: string) => void; theme: string; toggleTheme: () => void; storageError: boolean };
 const AcademyContext = createContext<Context | null>(null);
-export function AcademyProvider({ children }: { children: React.ReactNode }) {
+export function AcademyProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AcademyState>(initialState);
   const [ready, setReady] = useState(false);
   const [theme, setTheme] = useState("light");

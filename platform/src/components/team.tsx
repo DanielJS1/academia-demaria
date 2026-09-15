@@ -5,7 +5,6 @@ import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { PageHeading, Progress, EmptyState } from "./shared";
 import { csvCell, initials, normalize } from "@/lib/utils";
-
 export function Team() {
   const { state, notify } = useAcademy(); const [search, setSearch] = useState("");
   const people = state.people.filter(person => person.managerId === "daniel" && person.id !== "daniel" && person.status !== "inactive");

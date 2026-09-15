@@ -1,12 +1,11 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, Award, Gem, Medal, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, Award, Gem, Medal, Shield, Sparkles, Trophy } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, PageHeading, Progress, SectionHeading } from "./shared";
 import { experience, tiers } from "@/lib/gamification";
 import { initials, number } from "@/lib/utils";
-
 export function Evolution() {
   const { state } = useAcademy(); const xp = experience(state);
   const people = state.people.filter(person => person.status === "active").map(person => person.id === "daniel" ? { ...person, xp: xp.annual } : person).sort((a, b) => b.xp - a.xp);

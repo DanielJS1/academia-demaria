@@ -5,7 +5,6 @@ import { ArrowRight, Bookmark, BookOpen, Check, Clock3, FileStack, Headphones, L
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { courseProgress, minutes, type Course } from "@/lib/model";
-
 export function PageHeading({ eyebrow, title, description, children }: { eyebrow?: string; title: string; description: string; children?: ReactNode }) { return <div className="page-heading"><div>{eyebrow && <div className="eyebrow">{eyebrow}</div>}<h1>{title}</h1><p>{description}</p></div>{children && <div className="heading-actions">{children}</div>}</div>; }
 export function SectionHeading({ title, description, href, link = "Ver todos" }: { title: string; description?: string; href?: string; link?: string }) { return <div className="section-heading"><div><h2>{title}</h2>{description && <p>{description}</p>}</div>{href && <Link className="text-link" href={href}>{link}<ArrowRight size={16}/></Link>}</div>; }
 export function Progress({ value, label }: { value: number; label?: string }) { return <div className="progress-track" role="progressbar" aria-label={label || "Progresso"} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}><span style={{ width: `${value}%` }}/></div>; }
@@ -19,4 +18,4 @@ export function CourseCard({ course }: { course: Course }) {
 }
 export function EmptyState({ icon = <BookOpen size={28}/>, title, description, children }: { icon?: ReactNode; title: string; description: string; children?: ReactNode }) { return <div className="empty-state"><span className="empty-icon">{icon}</span><h2>{title}</h2><p>{description}</p>{children}</div>; }
 export function CheckLabel({ children }: { children: ReactNode }) { return <span className="check-label"><Check size={15}/>{children}</span>; }
-export function StudyButton({ course, children }: { course: Course; children?: ReactNode }) { const { state } = useAcademy(); const lesson = course.lessons.find(item => !(state.completed[course.id] || []).includes(item.id)); return <Button asChild><Link href={`/aprender/${course.id}/aula${lesson ? `?aula=${lesson.id}` : ""}`}><Play size={16} fill="currentColor"/>{children || "Continuar aprendiendo"}</Link></Button>; }
+export function StudyButton({ course, children }: { course: Course; children?: ReactNode }) { const { state } = useAcademy(); const lesson = course.lessons.find(item => !(state.completed[course.id] || []).includes(item.id)); return <Button asChild><Link href={`/aprender/${course.id}/aula${lesson ? `?aula=${lesson.id}` : ""}`}><Play size={16} fill="currentColor"/>{children || "Continuar aprendendo"}</Link></Button>; }

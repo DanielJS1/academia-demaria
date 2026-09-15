@@ -12,7 +12,6 @@ describe("regras da demonstração", () => {
     expect(completeActivity(state, course.id, "inexistente")).toBe(state);
     expect(courseProgress(course, ["inexistente"])).toBe(0);
   });
-
   it("preserva a nota mínima da tentativa e concede XP uma única vez", () => {
     const course = initialState.courses[0];
     const attempt: Attempt = { id: "test", courseId: course.id, courseTitle: course.title, courseVersion: 1, questions: [], answers: {}, status: "pending", feedback: "", score: null, passingScore: 70, xp: 200, submittedAt: "2026-09-15", retryPolicy: "review", retryAllowed: false };
@@ -26,19 +25,16 @@ describe("regras da demonstração", () => {
     expect(repeat.xpEvents).toEqual(approved.xpEvents);
     expect(publishReview(state, "test", 60, "Revisar").completed[course.id]).toEqual([]);
   });
-
   it("separa experiência histórica da temporada", () => {
     const state = { ...initialState, xpEvents: [{ id: "old", amount: 5000, season: "2025", label: "Histórico" }] };
     expect(experience(state).total).toBe(5000);
     expect(experience(state).tier.name).toBe("Bronze");
   });
-
   it("valida dados persistidos e aceita versões sem rascunhos", () => {
     expect(stateSchema.safeParse(initialState).success).toBe(true);
     expect(stateSchema.parse({ ...initialState, courseDrafts: undefined }).courseDrafts).toEqual([]);
     expect(stateSchema.safeParse({ schema: 1 }).success).toBe(false);
   });
-
   it("aceita somente vídeos Vimeo HTTPS e preserva hash privado", () => {
     expect(vimeoEmbed("https://vimeo.com/123456/abc123")).toBe("https://player.vimeo.com/video/123456?h=abc123");
     expect(vimeoEmbed("https://vimeo.com.evil.example/123")).toBeNull();
