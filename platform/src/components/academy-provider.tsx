@@ -21,10 +21,15 @@ export function AcademyProvider({children}:{children:ReactNode}){
   const data=await response.json();if(!response.ok){if(response.status===401||response.status===403){setReady(false);setMe(null);current.current=empty;setState(empty);}throw new Error(data.error||"Não foi possível salvar.");}
   if(data.progress){
    if(identity.current!==data.userId)return;
-   const next={...current.current,completed:{...current.current.completed,[data.progress.courseId]:data.progress.completed}};
+   const xpEvents:AcademyState["xpEvents"]=data.xpEvents??current.current.xpEvents;
+   const earned=xpEvents.filter(event=>!current.current.xpEvents.some(old=>old.id===event.id)).reduce((sum,event)=>sum+event.amount,0);
+   if(earned>0)setToast(`+${earned} XP! Seu aprendizado está rendendo.`);
+   const season=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric"});
+   const next={...current.current,xpEvents,people:current.current.people.map(person=>person.id===data.userId?{...person,xp:xpEvents.filter(e=>e.season===season).reduce((sum,e)=>sum+e.amount,0)}:person),completed:{...current.current.completed,[data.progress.courseId]:data.progress.completed}};
    current.current=next;setState(next);return;
   }
   if(identity.current!==data.me.id)return;
+  if(command){const earned=(data.state.xpEvents as AcademyState["xpEvents"]).filter(event=>!current.current.xpEvents.some(old=>old.id===event.id)).reduce((sum,event)=>sum+event.amount,0);if(earned>0)setToast(`+${earned} XP! Seu aprendizado está rendendo.`);}
   current.current=data.state;setState(data.state);setMe(data.me);setReady(true);setError("");
  },[]);
  const refresh=useCallback(async()=>{try{await request();}catch(err){setError(err instanceof Error?err.message:"Não foi possível carregar seus dados.");}},[request]);

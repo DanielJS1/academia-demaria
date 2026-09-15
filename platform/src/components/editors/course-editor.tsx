@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { courseXp } from "@/lib/rewards";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, Eye, Plus, Save, Trash2 } from "lucide-react";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
@@ -12,7 +13,7 @@ import { courseSchema, safeImage, vimeoEmbed, type Course } from "@/lib/model";
 const uuid = () => crypto.randomUUID();
 
 export function CourseEditor({ id }: { id: string }) {
-  const { state, update, notify } = useAcademy();
+  const { state, me, update, notify, busy } = useAcademy();
   const router = useRouter();
   const existing = state.courseDrafts.find(course => course.id === id) || state.courses.find(course => course.id === id);
   const [course, setCourse] = useState<Course>(() =>
@@ -40,6 +41,26 @@ export function CourseEditor({ id }: { id: string }) {
   );
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const recoveryKey = `doc-academy.course-draft.${me.id}.${id}`;
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(recoveryKey);
+      if (raw) {
+        const recovered = JSON.parse(raw);
+        // An unfinished title is valid in a local recovery copy.
+        if (courseSchema.safeParse({ ...recovered, title: "Rascunho", product: "Produto",
+          lessons: recovered.lessons?.map((lesson: Course["lessons"][number]) => ({...lesson,title:"Aula"})),
+          questions: recovered.questions?.map((question: Course["questions"][number]) => ({...question,prompt:"Pergunta"})),
+        }).success) setCourse(recovered);
+      }
+    } catch {}
+    setRestored(true);
+  }, [recoveryKey]);
+  useEffect(() => {
+    if (!restored || saved) return;
+    try { sessionStorage.setItem(recoveryKey, JSON.stringify(course)); } catch {}
+  }, [course, recoveryKey, restored, saved]);
 
   if (id !== "novo" && !existing) {
     return <EmptyState title="Curso não encontrado" description="Abra um curso pelo painel administrativo." />;
@@ -50,7 +71,7 @@ export function CourseEditor({ id }: { id: string }) {
     setSaved(false);
   };
 
-  const save = (publish: boolean) => {
+  const save = async (publish: boolean) => {
     const parsed = courseSchema.safeParse(course);
     if (!parsed.success) {
       setError("Preencha título, produto e valores válidos para atividades, nota e XP.");
@@ -83,7 +104,7 @@ export function CourseEditor({ id }: { id: string }) {
       return;
     }
 
-    update(current => {
+    const success = await update(current => {
       if (!publish) {
         return {
           ...current,
@@ -104,9 +125,14 @@ export function CourseEditor({ id }: { id: string }) {
       };
     });
 
+    if (!success) {
+      setError("Não foi possível salvar. Seus dados continuam no editor; confira a mensagem e tente novamente.");
+      return;
+    }
+    try { sessionStorage.removeItem(recoveryKey); } catch {}
     setError("");
     setSaved(true);
-    notify(publish ? "Curso publicado no catálogo desta demonstração." : "Rascunho salvo. A versão publicada foi preservada.");
+    notify(publish ? "Curso publicado no catálogo." : "Rascunho salvo no servidor.");
     if (publish) router.push("/admin");
     else if (id === "novo") router.replace(`/admin/cursos/${course.id}`);
   };
@@ -367,7 +393,7 @@ export function CourseEditor({ id }: { id: string }) {
 
           <section className="panel form-panel">
             <div className="section-title">
-              <h2>Avaliação</h2>
+              <h2>Avaliação opcional</h2>
               <Button
                 variant="secondary"
                 size="sm"
@@ -398,7 +424,12 @@ export function CourseEditor({ id }: { id: string }) {
                 <Plus size={14} /> Adicionar pergunta
               </Button>
             </div>
-            <p>As questões abaixo pertencem à avaliação do curso.</p>
+            <p>{course.questions.length ? "As questões abaixo pertencem à avaliação do curso." : "Este curso pode ser publicado sem avaliação. O aluno conclui ao finalizar as aulas."}</p>
+            {(course.questions.length > 0 || course.lessons.some(lesson => lesson.type === "quiz")) && <Button variant="secondary" onClick={() => {
+              if (!window.confirm("Remover a avaliação e suas perguntas deste rascunho? As aulas serão mantidas.")) return;
+              setCourse(current => ({...current,questions:[],lessons:current.lessons.filter(lesson=>lesson.type!=="quiz")}));
+              setSaved(false);
+            }}>Publicar sem avaliação · remover perguntas</Button>}
             {course.questions.map((question, index) => (
               <div className="editor-lesson" key={question.id}>
                 <div className="editor-lesson-head">
@@ -496,14 +527,8 @@ export function CourseEditor({ id }: { id: string }) {
           <section className="panel form-panel" style={{ marginTop: 18 }}>
             <h2>Regras e publicação</h2>
             <label className="field">
-              <span>XP por aprovação</span>
-              <input
-                type="number"
-                min={0}
-                max={10000}
-                value={course.xp}
-                onChange={event => field("xp", Number(event.target.value))}
-              />
+              <span>XP automático · até {courseXp(course)} XP</span>
+              <small>Aulas: 15 XP até 5 min; +5 XP por faixa de 5 min. Conclusão: +30 XP. Avaliação opcional: 5 XP por objetiva correta, 8 XP por dissertativa correta; aprovação +30 XP ou +10 XP após reprovação.</small>
             </label>
             <label className="field">
               <span>Nota mínima (%)</span>
@@ -534,7 +559,7 @@ export function CourseEditor({ id }: { id: string }) {
               />
               Destacar como essencial
             </label>
-            <Button variant="secondary" onClick={() => save(false)}>
+            <Button disabled={busy} variant="secondary" onClick={() => save(false)}>
               <Save size={15} /> Salvar rascunho
             </Button>
             {id !== "novo" && (
@@ -544,12 +569,12 @@ export function CourseEditor({ id }: { id: string }) {
                 </Link>
               </Button>
             )}
-            <Button onClick={() => save(true)}>
+            <Button disabled={busy} onClick={() => save(true)}>
               <Check size={16} /> Publicar curso
             </Button>
             <div className="info-note">
               Todos os colaboradores veem o conteúdo publicado. Salve o rascunho antes de abrir a prévia. As alterações
-              ficam neste navegador.
+              são enviadas ao servidor; uma cópia temporária protege o preenchimento nesta aba.
             </div>
           </section>
         </aside>

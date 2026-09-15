@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, LockKeyhole, ShieldAlert, UserPlus } from "lucide-react";
 import { browserAuth } from "@/lib/supabase-browser";
+import { DEPARTMENTS } from "@/lib/departments";
 
 export function AccessScreen({ configured, signedIn }: { configured: boolean; signedIn: boolean }) {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [name, setName] = useState("");
+  const [department, setDepartment] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -41,6 +43,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: name.trim(),
+            department,
             email: email.trim(),
             password,
           }),
@@ -163,6 +166,14 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
               </label>
             )}
 
+            {!signedIn && mode === "signup" && (
+              <label className="field"><span>Seu setor</span>
+                <select required value={department} onChange={e => setDepartment(e.target.value)}>
+                  <option value="">Selecione seu setor</option>
+                  {DEPARTMENTS.map(item => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </label>
+            )}
             {!signedIn && (
               <label className="field">
                 <span>E-mail de trabalho</span>
@@ -173,7 +184,6 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
                   onChange={e => setEmail(e.target.value)}
                   required
                   placeholder="voce@sacdemaria.com.br"
-                  pattern="[^@\\s]+@(demaria\\.com\\.br|sacdemaria\\.com\\.br)"
                   title="Use um e-mail @demaria.com.br ou @sacdemaria.com.br"
                 />
               </label>

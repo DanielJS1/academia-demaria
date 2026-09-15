@@ -6,7 +6,9 @@ export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("complete"), courseId:id, version:z.number().int().positive(), lessonId:id }),
  z.object({ type:z.literal("video"), courseId:id, version:z.number().int().positive(), lessonId:id, duration:z.number().positive().max(86400), ranges:z.array(z.tuple([z.number().nonnegative(),z.number().nonnegative()])).max(2000) }),
  z.object({ type:z.literal("submit"), courseId:id, version:z.number().int().positive(), answers:z.record(id,z.string().max(5000)) }),
- z.object({ type:z.literal("review"), id:z.string().uuid(), score:z.number().min(0).max(100), feedback:z.string().trim().min(1).max(10000) }),
+ z.object({ type:z.literal("review"), id:z.string().uuid(), score:z.number().min(0).max(100), feedback:z.string().trim().min(1).max(10000), correctTextIds:z.array(id).default([]) }),
+ z.object({ type:z.literal("delete-user"), id:z.string().uuid() }),
+ z.object({ type:z.literal("reject-user"), id:z.string().uuid() }),
  z.object({ type:z.literal("unlock"), id:z.string().uuid() }),
  z.object({ type:z.literal("profile"), data:personSchema }),
  z.object({ type:z.literal("invite"), temporaryPassword:z.string().min(12).max(128).optional(), name:z.string().trim().min(2).max(120), email:z.string().email(), department:z.string().max(80), managerId:z.string(), role:z.enum(["student","manager","admin"]) }),
@@ -43,7 +45,7 @@ export function stateCommand(before:AcademyState,after:AcademyState):Command|nul
  const person=after.people.find(item=>changed(item,before.people.find(old=>old.id===item.id)));
  if(person) return before.people.some(item=>item.id===person.id)?{type:"profile",data:person}:{type:"invite",name:person.name,email:person.email,department:person.department,managerId:person.managerId,role:person.role};
  const attempt=after.attempts.find(item=>changed(item,before.attempts.find(old=>old.id===item.id)));
- if(attempt){const old=before.attempts.find(item=>item.id===attempt.id);if(!old)return {type:"submit",courseId:attempt.courseId,version:attempt.courseVersion,answers:attempt.answers};if(old.retryAllowed!==attempt.retryAllowed)return {type:"unlock",id:attempt.id};return {type:"review",id:attempt.id,score:attempt.score??-1,feedback:attempt.feedback};}
+ if(attempt){const old=before.attempts.find(item=>item.id===attempt.id);if(!old)return {type:"submit",courseId:attempt.courseId,version:attempt.courseVersion,answers:attempt.answers};if(old.retryAllowed!==attempt.retryAllowed)return {type:"unlock",id:attempt.id};return {type:"review",id:attempt.id,score:attempt.score??-1,feedback:attempt.feedback,correctTextIds:[]};}
  for(const [courseId,lessons] of Object.entries(after.completed)){const lessonId=lessons.find(id=>!before.completed[courseId]?.includes(id)); if(lessonId)return {type:"complete",courseId,lessonId,version:before.courses.find(course=>course.id===courseId)!.version};}
  if(changed(before.bookmarks,after.bookmarks)||changed(before.readNotices,after.readNotices))return {type:"preferences",bookmarks:after.bookmarks,readNotices:after.readNotices};
  return null;

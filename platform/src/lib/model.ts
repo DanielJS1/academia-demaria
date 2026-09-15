@@ -20,7 +20,7 @@ export const notificationSchema = z.object({
   read: z.boolean().default(false),
   createdAt: z.string().default(() => new Date().toISOString()),
 });
-export const attemptSchema = z.object({ id: z.string(), userId: z.string().optional(), courseId: z.string(), courseTitle: z.string(), courseVersion: z.number(), questions: z.array(questionSchema), answers: z.record(z.string(), z.string()), status: z.enum(["pending", "approved", "retry"]), feedback: z.string(), score: z.number().nullable(), passingScore: z.number(), xp: z.number(), submittedAt: z.string(), retryPolicy: z.enum(["free", "review", "admin"]).default("free"), retryAllowed: z.boolean().default(false) });
+export const attemptSchema = z.object({ id: z.string(), userId: z.string().optional(), courseId: z.string(), courseTitle: z.string(), courseVersion: z.number(), questions: z.array(questionSchema), answers: z.record(z.string(), z.string()), status: z.enum(["pending", "approved", "retry"]), feedback: z.string(), score: z.number().nullable(), passingScore: z.number(), xp: z.number(), submittedAt: z.string(), retryPolicy: z.enum(["free", "review", "admin"]).default("free"), retryAllowed: z.boolean().default(false), correctTextIds: z.array(z.string()).optional() });
 export const stateSchema = z.object({
   schema: z.literal(1), courses: z.array(courseSchema), articles: z.array(articleSchema), people: z.array(personSchema),
   courseDrafts: z.array(courseSchema).default([]), articleDrafts: z.array(articleSchema).default([]),

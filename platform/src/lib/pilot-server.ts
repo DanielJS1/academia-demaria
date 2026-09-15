@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./registration-security";
+import { DEPARTMENTS } from "./departments";
+import { courseXp } from "./rewards";
 import { commandSchema, mergeWatched } from "./pilot-contract";
 import { courseSchema, articleSchema, vimeoEmbed, safeImage, type AcademyState, type Course, type Article } from "./model";
 export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
@@ -23,6 +25,7 @@ export async function authenticate(request:Request){
   currentProfile=(created as Profile)??null;
  }
  if(!currentProfile||currentProfile.status!=="active"){
+  if(currentProfile?.status==="inactive")throw new ApiError("Seu acesso está inativo ou o cadastro foi reprovado. Entre em contato com o administrador.",403);
   throw new ApiError("Seu cadastro foi realizado com sucesso e está aguardando liberação do administrador. Fale com Daniel para ativar seu acesso.",403);
  }
  return {db,me:currentProfile};
@@ -43,7 +46,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  ]);
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,xp,preferences]=results;
- const courses:Course[]=(resources.data??[]).filter(r=>r.kind==="course"&&r.published).map(r=>r.published);
+ const courses:Course[]=(resources.data??[]).filter(r=>r.kind==="course"&&r.published).map(r=>({...r.published,xp:courseXp(r.published)}));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""}))});
  const completion:Record<string,string[]>={};
  for(const row of progress.data??[])if(row.user_id===me.id&&row.done&&courses.some(c=>c.id===row.course_id&&c.version===row.version))(completion[row.course_id]??=[]).push(row.lesson_id);
@@ -55,13 +58,27 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter(x=>x.user_id===p.id&&x.season===season).reduce((n,x)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0};
  });
  const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="course"&&r.draft).map(r=>r.draft):[],articles:(resources.data??[]).filter(r=>r.kind==="article"&&r.published).map(r=>r.published as Article),articleDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="article"&&r.draft).map(r=>r.draft):[],people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
-  attempts:(attempts.data??[]).sort((a,b)=>a.submitted_at.localeCompare(b.submitted_at)).map(a=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed})),
+  attempts:(attempts.data??[]).sort((a,b)=>a.submitted_at.localeCompare(b.submitted_at)).map(a=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[]})),
   xpEvents:(xp.data??[]).filter(x=>x.user_id===me.id).map(x=>({id:x.id,amount:x.amount,season:x.season,label:x.label}))};
  return {state,me:{id:me.id,name:me.name,email:me.email,role:me.role}};
 }
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");
  const command=parsed.data;
+ if(command.type==="delete-user"||command.type==="reject-user"){
+  if(me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
+  if(command.id===me.id)throw new ApiError("Você não pode excluir ou reprovar sua própria conta.");
+  if(command.type==="reject-user"){
+   const {error}=await db.rpc("academy_reject_user",{actor:me.id,target:command.id});
+   if(error)throw new ApiError(error.message);
+  }else{
+   const {error}=await db.auth.admin.deleteUser(command.id);
+   if(error)throw new ApiError("Não foi possível excluir a conta. Confira se a migração do banco foi aplicada.",503);
+   const audit=await db.from("academy_audit").insert({actor:me.id,action:"delete-user",resource:command.id});
+   if(audit.error)console.error("User deletion audit failed",audit.error.code);
+  }
+  return;
+ }
  if(["save-resource","review","unlock","profile","settings","invite"].includes(command.type)&&me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
  if(command.type==="save-resource"){
   const body=command.kind==="course"?courseSchema.parse(command.data):articleSchema.parse(command.data);
@@ -70,14 +87,16 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
    if(!safeImage(course.banner)||course.lessons.some(l=>l.videoUrl&&!vimeoEmbed(l.videoUrl)))throw new ApiError("Use banner HTTPS e vídeos válidos do Vimeo.");
    if(new Set(course.lessons.map(l=>l.id)).size!==course.lessons.length||new Set(course.questions.map(q=>q.id)).size!==course.questions.length)throw new ApiError("Atividades ou questões duplicadas.");
    if(command.publish){
-    if(!course.lessons.some(l=>l.type!=="quiz")||!course.lessons.some(l=>l.type==="quiz")||!course.questions.length)throw new ApiError("Adicione aulas e uma avaliação com perguntas antes de publicar.");
+    if(!course.lessons.some(l=>l.type!=="quiz"))throw new ApiError("Adicione ao menos uma aula antes de publicar.");
+    if(course.lessons.some(l=>l.type==="quiz")!==Boolean(course.questions.length))throw new ApiError("Para incluir avaliação, adicione a atividade de avaliação e suas perguntas; para publicar sem avaliação, remova ambas.");
     if(course.lessons.some(l=>!l.module.trim()||(l.type==="video"&&!vimeoEmbed(l.videoUrl))||(l.type==="reading"&&!l.content.trim())))throw new ApiError("Preencha os módulos, leituras e links Vimeo antes de publicar.");
     if(course.questions.some(q=>q.type==="choice"&&(q.options.length<2||new Set(q.options).size!==q.options.length||q.options.some(o=>!o.trim())||!q.options.includes(q.correct))))throw new ApiError("Confira alternativas e gabaritos.");
    }
   }else if(command.publish&&!(body as Article).content.trim())throw new ApiError("Escreva o conteúdo antes de publicar.");
-  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,data:body}});if(error)throw new ApiError(error.message);return;
+  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,data:command.kind==="course"?{...body,xp:courseXp(body as Course)}:body}});if(error)throw new ApiError(error.message);return;
  }
  if(command.type==="invite"){
+  if(!DEPARTMENTS.some(d=>d===command.department))throw new ApiError("Selecione um setor da DeMaria.");
   if(!isAllowedCompanyEmail(command.email))throw new ApiError("Use um e-mail @demaria.com.br ou @sacdemaria.com.br.");
   const normalizedEmail=normalizeEmail(command.email);
   const site=process.env.NEXT_PUBLIC_SITE_URL;
@@ -90,8 +109,9 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   await db.from("academy_audit").insert({actor:me.id,action:"invite",resource:data.user.id});return;
  }
  if(command.type==="profile"){
-  const existing=await db.from("academy_profiles").select("email").eq("id",command.data.id).single();
+  const existing=await db.from("academy_profiles").select("email,department").eq("id",command.data.id).single();
   if(existing.error||existing.data.email!==command.data.email)throw new ApiError("A alteração de e-mail exige um fluxo de confirmação e não está disponível neste editor.");
+  if(existing.data.department!==command.data.department&&!DEPARTMENTS.some(d=>d===command.data.department))throw new ApiError("Selecione um setor da DeMaria.");
   if(command.data.status==="active"){
    try{await db.auth.admin.updateUserById(command.data.id,{email_confirm:true});}catch{}
   }

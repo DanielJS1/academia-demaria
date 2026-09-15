@@ -13,7 +13,9 @@ export async function POST(request:Request){try{
  if(input.type==="video"){
   const progress=await db.from("academy_progress").select("lesson_id").eq("user_id",me.id).eq("course_id",input.courseId).eq("version",input.version).eq("done",true);
   if(progress.error)throw new ApiError("Avanço salvo. Atualize a página para consultar a conclusão.",503);
-  return Response.json({userId:me.id,progress:{courseId:input.courseId,completed:progress.data.map(row=>row.lesson_id)}},{headers});
+  const xp=await db.from("academy_xp").select("id,amount,season,label").eq("user_id",me.id);
+  if(xp.error)throw new ApiError("Avanço salvo. Atualize a página para consultar seu XP.",503);
+  return Response.json({userId:me.id,xpEvents:xp.data,progress:{courseId:input.courseId,completed:progress.data.map(row=>row.lesson_id)}},{headers});
  }
  return Response.json(await readAcademy(db,me),{headers});
  }catch(error){return failure(error);}}

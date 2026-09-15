@@ -9,6 +9,7 @@ import { Button } from "../ui/button";
 import { EmptyState, PageHeading } from "../shared";
 import { personSchema, type Person } from "@/lib/model";
 import { normalize } from "@/lib/utils";
+import { DEPARTMENTS } from "@/lib/departments";
 
 const uuid = () => crypto.randomUUID();
 
@@ -23,7 +24,7 @@ export function PersonEditor({ id }: { id: string }) {
           id: uuid(),
           name: "",
           email: "",
-          department: state.departments[0] || "",
+          department: "",
           managerId: me?.id || "daniel",
           role: "student",
           status: "pending",
@@ -114,7 +115,9 @@ export function PersonEditor({ id }: { id: string }) {
               value={person.department}
               onChange={event => setPerson({ ...person, department: event.target.value })}
             >
-              {state.departments.map(item => (
+              <option value="">Selecione o setor</option>
+              {person.department && !DEPARTMENTS.some(d => d === person.department) && <option value={person.department}>{person.department} (atualizar)</option>}
+              {DEPARTMENTS.map(item => (
                 <option key={item}>{item}</option>
               ))}
             </select>

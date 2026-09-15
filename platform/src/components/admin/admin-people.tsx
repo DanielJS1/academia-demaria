@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 import { initials, normalize } from "@/lib/utils";
 
 export function AdminPeople({ search }: { search: string }) {
-  const { state, update, notify, busy } = useAcademy();
+  const { state, me, update, mutate, notify, busy } = useAcademy();
   const filtered = state.people.filter(person => normalize(person.name).includes(normalize(search)));
 
   return (
@@ -51,11 +51,21 @@ export function AdminPeople({ search }: { search: string }) {
                       ? "Ativo"
                       : person.status === "pending"
                       ? "Aguardando aprovação"
-                      : "Inativo"}
+                      : "Inativo / reprovado"}
                   </span>
                 </td>
                 <td>
                   <div className="table-actions">
+                    {person.id !== me.id && <>
+                      {person.status === "pending" && <Button size="sm" variant="secondary" disabled={busy} onClick={async () => {
+                        if (!window.confirm(`Reprovar o cadastro de ${person.name}? O acesso ficará bloqueado.`)) return;
+                        if (await mutate({type:"reject-user",id:person.id})) notify("Cadastro reprovado; acesso bloqueado.");
+                      }}>Reprovar</Button>}
+                      <Button size="sm" variant="ghost" disabled={busy} onClick={async () => {
+                        if (!window.confirm(`Excluir definitivamente ${person.name} (${person.email}), incluindo progresso, avaliações e XP? Esta ação não pode ser desfeita.`)) return;
+                        if (await mutate({type:"delete-user",id:person.id})) notify("Usuário excluído.");
+                      }}>Excluir</Button>
+                    </>}
                     {person.status === "pending" && (
                       <Button
                         size="sm"

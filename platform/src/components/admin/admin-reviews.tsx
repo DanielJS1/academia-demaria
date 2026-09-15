@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle2, ClipboardCheck } from "lucide-react";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { EmptyState } from "../shared";
-import { publishReview, type Attempt } from "@/lib/model";
+import { type Attempt } from "@/lib/model";
 
 export function AdminReviews() {
   const { state } = useAcademy();
@@ -81,7 +81,8 @@ export function AdminReviews() {
 }
 
 function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void }) {
-  const { state, update, notify, busy } = useAcademy();
+  const { state, update, mutate, notify, busy } = useAcademy();
+  const [correctTextIds, setCorrectTextIds] = useState<string[]>(attempt.correctTextIds || []);
   const [score, setScore] = useState(attempt.score?.toString() || "");
   const [feedback, setFeedback] = useState(attempt.feedback);
   const pending = attempt.status === "pending";
@@ -103,13 +104,17 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
           </strong>
           <p style={{ margin: "9px 0" }}>Resposta: {attempt.answers[question.id]}</p>
           {question.type === "choice" && <small>Gabarito da versão enviada: {question.correct}</small>}
+          {question.type === "text" && <label className="checkbox-field">
+            <input type="checkbox" disabled={!pending} checked={correctTextIds.includes(question.id)} onChange={event => setCorrectTextIds(current => event.target.checked ? [...current, question.id] : current.filter(id => id !== question.id))}/>
+            Resposta correta · +8 XP (uma vez por pergunta)
+          </label>}
         </div>
       ))}
 
       <form
         onSubmit={async event => {
           event.preventDefault();
-          const success = await update(current => publishReview(current, attempt.id, Number(score), feedback.trim()));
+          const success = await mutate({type:"review",id:attempt.id,score:Number(score),feedback:feedback.trim(),correctTextIds});
           if (success) {
             notify("Resultado publicado.");
             close();
@@ -131,7 +136,7 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
             />
           </label>
           <div className="info-note" style={{ alignSelf: "start" }}>
-            Aprovação libera o XP uma única vez. A nota final é publicada pelo avaliador.
+            Acertos: objetiva +5 XP; dissertativa marcada como correta +8 XP. Aprovação: +30 XP na primeira tentativa ou +10 XP após reprovação. Acertos não geram XP repetido.
           </div>
         </div>
         <label className="field">

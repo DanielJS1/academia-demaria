@@ -5,8 +5,10 @@ import {
   pendingStudentProfile,
 } from "@/lib/registration-security";
 import { z } from "zod";
+import { DEPARTMENTS } from "@/lib/departments";
 
 const registerSchema = z.object({
+  department: z.enum(DEPARTMENTS, { error: "Selecione seu setor." }),
   name: z.string().trim().min(2, "Informe seu nome completo."),
   email: z
     .string()
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const { name, email, password } = result.data;
+    const { name, email, password, department } = result.data;
     const db = database();
     const normalizedEmail = normalizeEmail(email);
 
@@ -76,7 +78,7 @@ export async function POST(request: Request) {
       email: normalizedEmail,
       password,
       email_confirm: true,
-      user_metadata: { name },
+      user_metadata: { name, department },
     });
 
     if (authError || !authData.user) {
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
 
     const { error: profileError } = await db
       .from("academy_profiles")
-      .insert(pendingStudentProfile(authData.user.id, name, normalizedEmail));
+      .insert({ ...pendingStudentProfile(authData.user.id, name, normalizedEmail), department });
 
     if (profileError) {
       const cleanup = await db.auth.admin.deleteUser(authData.user.id);
