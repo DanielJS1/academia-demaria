@@ -1,17 +1,52 @@
 import { database } from "@/lib/pilot-server";
+import {
+  isAllowedCompanyEmail,
+  normalizeEmail,
+  pendingStudentProfile,
+} from "@/lib/registration-security";
 import { z } from "zod";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome completo."),
-  email: z.string().trim().email("Informe um e-mail válido."),
+  email: z
+    .string()
+    .trim()
+    .email("Informe um e-mail válido.")
+    .refine(isAllowedCompanyEmail, "Use um e-mail @demaria.com.br ou @sacdemaria.com.br."),
   password: z.string().min(12, "A senha deve ter pelo menos 12 caracteres."),
 });
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const registrationAttempts = new Map<string, number[]>();
+const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+const ATTEMPT_LIMIT = 5;
+
+function acceptsRegistrationAttempt(request: Request) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const client = forwarded || request.headers.get("x-real-ip") || "unknown";
+  const now = Date.now();
+  const recent = (registrationAttempts.get(client) || []).filter(
+    attempt => now - attempt < ATTEMPT_WINDOW_MS
+  );
+  if (recent.length >= ATTEMPT_LIMIT) return false;
+  registrationAttempts.set(client, [...recent, now]);
+  return true;
+}
+
 export async function POST(request: Request) {
   try {
+    const contentLength = Number(request.headers.get("content-length") || 0);
+    if (contentLength > 16_384) {
+      return Response.json({ error: "Solicitação inválida." }, { status: 413 });
+    }
+    if (!acceptsRegistrationAttempt(request)) {
+      return Response.json(
+        { error: "Muitas tentativas de cadastro. Aguarde alguns minutos." },
+        { status: 429 }
+      );
+    }
     const raw = await request.json();
     const result = registerSchema.safeParse(raw);
     if (!result.success) {
@@ -22,7 +57,7 @@ export async function POST(request: Request) {
     }
     const { name, email, password } = result.data;
     const db = database();
-    const normalizedEmail = email.toLowerCase();
+    const normalizedEmail = normalizeEmail(email);
 
     const existing = await db
       .from("academy_profiles")
@@ -31,13 +66,11 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (existing.data) {
-      return Response.json(
-        { error: "Este e-mail já está cadastrado na plataforma." },
-        { status: 400 }
-      );
+      return Response.json({
+        success: true,
+        message: "Se o endereço estiver disponível, o cadastro ficará aguardando liberação do administrador.",
+      });
     }
-
-    const isDaniel = normalizedEmail === "daniel@sacdemaria.com.br";
 
     const { data: authData, error: authError } = await db.auth.admin.createUser({
       email: normalizedEmail,
@@ -47,24 +80,22 @@ export async function POST(request: Request) {
     });
 
     if (authError || !authData.user) {
-      return Response.json(
-        { error: authError?.message || "Não foi possível criar o usuário no Supabase Auth." },
-        { status: 400 }
-      );
+      console.error("Public registration failed in Supabase Auth.", authError?.code);
+      return Response.json({
+        success: true,
+        message: "Se o endereço estiver disponível, o cadastro ficará aguardando liberação do administrador.",
+      });
     }
 
-    const { error: profileError } = await db.from("academy_profiles").insert({
-      id: authData.user.id,
-      name,
-      email: normalizedEmail,
-      department: "Geral",
-      role: isDaniel ? "admin" : "student",
-      status: isDaniel ? "active" : "pending",
-    });
+    const { error: profileError } = await db
+      .from("academy_profiles")
+      .insert(pendingStudentProfile(authData.user.id, name, normalizedEmail));
 
     if (profileError) {
+      const cleanup = await db.auth.admin.deleteUser(authData.user.id);
+      if (cleanup.error) console.error("Failed to roll back incomplete registration.", cleanup.error.code);
       return Response.json(
-        { error: "Conta criada, mas houve um erro ao registrar seu perfil. Fale com o administrador." },
+        { error: "Não foi possível concluir o cadastro. Tente novamente mais tarde." },
         { status: 500 }
       );
     }
@@ -73,9 +104,9 @@ export async function POST(request: Request) {
       success: true,
       message: "Cadastro realizado com sucesso! Sua conta está aguardando liberação do administrador.",
     });
-  } catch (err) {
+  } catch {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Erro ao processar cadastro." },
+      { error: "Não foi possível processar o cadastro." },
       { status: 500 }
     );
   }

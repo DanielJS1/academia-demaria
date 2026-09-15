@@ -173,6 +173,8 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
                   onChange={e => setEmail(e.target.value)}
                   required
                   placeholder="voce@sacdemaria.com.br"
+                  pattern="[^@\\s]+@(demaria\\.com\\.br|sacdemaria\\.com\\.br)"
+                  title="Use um e-mail @demaria.com.br ou @sacdemaria.com.br"
                 />
               </label>
             )}

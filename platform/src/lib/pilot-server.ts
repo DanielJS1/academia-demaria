@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./registration-security";
 import { commandSchema, mergeWatched } from "./pilot-contract";
 import { courseSchema, articleSchema, vimeoEmbed, safeImage, type AcademyState, type Course, type Article } from "./model";
 export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
@@ -13,16 +14,12 @@ export async function authenticate(request:Request){
  if(!token)throw new ApiError("Entre na sua conta para continuar.",401);
  const db=database();const {data,error}=await db.auth.getUser(token);
  if(error||!data.user)throw new ApiError("Sua sessão expirou. Entre novamente.",401);
+ if(!data.user.email||!isAllowedCompanyEmail(data.user.email))throw new ApiError("Este e-mail não pertence a um domínio autorizado.",403);
  let profile=await db.from("academy_profiles").select("*").eq("id",data.user.id).maybeSingle();
  let currentProfile: Profile | null = (profile.data as Profile) ?? null;
  if(!currentProfile){
-  const isDaniel=data.user.email?.toLowerCase()==="daniel@sacdemaria.com.br";
   const name=(data.user.user_metadata?.name as string)||data.user.email?.split("@")[0]||"Colaborador";
-  const dept=(data.user.user_metadata?.department as string)||"Geral";
-  const {data:created}=await db.from("academy_profiles").insert({
-   id:data.user.id,name,email:data.user.email!,department:dept,
-   role:isDaniel?"admin":"student",status:isDaniel?"active":"pending"
-  }).select().single();
+  const {data:created}=await db.from("academy_profiles").insert(pendingStudentProfile(data.user.id,name,data.user.email)).select().single();
   currentProfile=(created as Profile)??null;
  }
  if(!currentProfile||currentProfile.status!=="active"){
@@ -81,13 +78,15 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,data:body}});if(error)throw new ApiError(error.message);return;
  }
  if(command.type==="invite"){
+  if(!isAllowedCompanyEmail(command.email))throw new ApiError("Use um e-mail @demaria.com.br ou @sacdemaria.com.br.");
+  const normalizedEmail=normalizeEmail(command.email);
   const site=process.env.NEXT_PUBLIC_SITE_URL;
   if(!site && !command.temporaryPassword)throw new ApiError("Configure o endereço do site para enviar convites.",503);
   if(command.managerId){const manager=await db.from("academy_profiles").select("role,status").eq("id",command.managerId).single();if(manager.error||manager.data.status!=="active"||manager.data.role==="student")throw new ApiError("Selecione um gestor ativo.");}
-  const {data,error}=command.temporaryPassword ? await db.auth.admin.createUser({email:command.email,password:command.temporaryPassword,email_confirm:true,user_metadata:{name:command.name}}) : await db.auth.admin.inviteUserByEmail(command.email,{redirectTo:new URL("/acesso",site!).href,data:{name:command.name}});
+  const {data,error}=command.temporaryPassword ? await db.auth.admin.createUser({email:normalizedEmail,password:command.temporaryPassword,email_confirm:true,user_metadata:{name:command.name}}) : await db.auth.admin.inviteUserByEmail(normalizedEmail,{redirectTo:new URL("/acesso",site!).href,data:{name:command.name}});
   if(error||!data.user)throw new ApiError("Não foi possível criar o acesso. Confira se o e-mail já existe; para convites, confira também o SMTP no Supabase.");
-  const profile=await db.from("academy_profiles").insert({id:data.user.id,name:command.name,email:command.email.toLowerCase(),department:command.department,manager_id:command.managerId||null,role:command.role,status:"active"});
-  if(profile.error)throw new ApiError("O acesso foi criado, mas o perfil não foi salvo. Contate o responsável pelo banco para concluir o cadastro.",503);
+  const profile=await db.from("academy_profiles").insert({id:data.user.id,name:command.name,email:normalizedEmail,department:command.department,manager_id:command.managerId||null,role:command.role,status:"active"});
+  if(profile.error){await db.auth.admin.deleteUser(data.user.id);throw new ApiError("Não foi possível concluir a criação do acesso. Tente novamente.",503);}
   await db.from("academy_audit").insert({actor:me.id,action:"invite",resource:data.user.id});return;
  }
  if(command.type==="profile"){
