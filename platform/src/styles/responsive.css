@@ -103,12 +103,25 @@
   .global-search input { font-size: 10px; }
 }
 
+@media (min-width: 761px) {
+  .sidebar.is-collapsed {
+    width: 72px !important;
+    padding: 20px 8px !important;
+  }
+  .app-content.sidebar-collapsed {
+    margin-left: 72px !important;
+  }
+  .nav-scrim {
+    display: none !important;
+  }
+}
+
 @media (max-width: 760px) {
   .sidebar { visibility: hidden; transform: translateX(-100%); width: 242px; transition: transform 0.2s; }
   .sidebar.is-open { visibility: visible; transform: translateX(0); }
   .app-content { margin-left: 0; }
-  .nav-scrim { position: fixed; inset: 0; background: #17102466; border: 0; z-index: 39; }
-  .mobile-menu { display: inline-flex; }
+  .nav-scrim { display: block; position: fixed; inset: 0; background: #17102466; border: 0; z-index: 39; }
+  .mobile-menu, .sidebar-toggle-btn { display: inline-flex; }
   .brand strong { font-size: 20px; }
   .brand small { font-size: 6.5px; }
   .brand-official { width: 50px; height: 42px; }
