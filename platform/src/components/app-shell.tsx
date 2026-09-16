@@ -27,10 +27,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
   const [noticesOpen, setNoticesOpen] = useState(false);
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 760);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     try {
@@ -79,6 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const isDocked = !isMobile && collapsed;
   const active = (href: string) => href === "/" ? path === "/" : path.startsWith(href);
 
   const title = [
@@ -108,26 +117,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
       )}
       <aside
-        className={`sidebar ${mobileOpen ? "is-open" : ""} ${collapsed ? "is-collapsed" : ""}`}
+        className={`sidebar ${mobileOpen ? "is-open" : ""} ${isDocked ? "is-collapsed" : ""}`}
         aria-label="Navegação principal"
         onMouseLeave={() => setHoveredNavIndex(null)}
       >
         <div className="sidebar-header">
-          <Link href="/" className="brand" aria-label="DOC-Academy — início">
+          <Link href="/" className="brand" aria-label="DOC-Academy — início" onClick={() => setMobileOpen(false)}>
             <img className="brand-official" src="/doc-academy-logo-oficial.png" alt="DOC-Academy"/>
           </Link>
-          <button
-            type="button"
-            className="sidebar-collapse-mini-btn"
-            onClick={toggleCollapsed}
-            title={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
-            aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
-          >
-            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-          </button>
+          {isMobile ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="sidebar-close-btn"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Fechar menu"
+            >
+              <X size={20} />
+            </Button>
+          ) : (
+            <button
+              type="button"
+              className="sidebar-collapse-mini-btn"
+              onClick={toggleCollapsed}
+              title={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
+              aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
+            >
+              {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+          )}
         </div>
 
-        {collapsed ? (
+        {isDocked ? (
           <nav className="sidebar-dock-items" aria-label="Atalhos principais">
             {allNavItems.map((item, index) => {
               const isCurrent = active(item.href);
@@ -187,7 +208,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="nav-label">SEU ESPAÇO</span>
             <nav>
               {navigation.map(({ href, label, icon: Icon, badge }) => (
-                <Link className={`nav-item ${active(href) ? "active" : ""}`} href={href} key={href} aria-current={active(href) ? "page" : undefined}>
+                <Link
+                  className={`nav-item ${active(href) ? "active" : ""}`}
+                  href={href}
+                  key={href}
+                  aria-current={active(href) ? "page" : undefined}
+                  onClick={() => setMobileOpen(false)}
+                >
                   <Icon size={19}/>
                   <span>{label}</span>
                   {badge && <span className="nav-ai">{badge}</span>}
@@ -197,30 +224,53 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {me.role !== "student" && <span className="nav-label manage-label">GESTÃO</span>}
             <nav>
               {me.role !== "student" && (
-                <Link href="/equipe" className={`nav-item ${active("/equipe") ? "active" : ""}`} aria-current={active("/equipe") ? "page" : undefined}>
+                <Link
+                  href="/equipe"
+                  className={`nav-item ${active("/equipe") ? "active" : ""}`}
+                  aria-current={active("/equipe") ? "page" : undefined}
+                  onClick={() => setMobileOpen(false)}
+                >
                   <Users size={19}/> <span>Minha equipe</span>
                 </Link>
               )}
               {me.role === "admin" && (
-                <Link href="/admin" className={`nav-item ${active("/admin") ? "active" : ""}`} aria-current={active("/admin") ? "page" : undefined}>
+                <Link
+                  href="/admin"
+                  className={`nav-item ${active("/admin") ? "active" : ""}`}
+                  aria-current={active("/admin") ? "page" : undefined}
+                  onClick={() => setMobileOpen(false)}
+                >
                   <Settings2 size={19}/> <span>Administração</span>
                 </Link>
               )}
             </nav>
             <div className="sidebar-bottom">
-              <div className="sidebar-note">
-                <span className="little-star"><Sparkles size={17}/></span>
-                <strong>Conhecimento abre caminhos.</strong>
-                <p>Um novo aprendizado.<br/>Uma nova possibilidade.</p>
-                <Link href="/aprender">Explore os cursos <ArrowUpRight size={16}/></Link>
-              </div>
-              <Link className="help-link" href="/sobre"><CircleHelp size={17}/> <span>Sobre a plataforma</span></Link>
-              <div className="sidebar-footer"><Link href="/" className="brand"><strong>DOC-<span>Academy</span></strong></Link></div>
+              {!isMobile && (
+                <div className="sidebar-note">
+                  <span className="little-star"><Sparkles size={17}/></span>
+                  <strong>Conhecimento abre caminhos.</strong>
+                  <p>Um novo aprendizado.<br/>Uma nova possibilidade.</p>
+                  <Link href="/aprender">Explore os cursos <ArrowUpRight size={16}/></Link>
+                </div>
+              )}
+              <Link className="help-link" href="/sobre" onClick={() => setMobileOpen(false)}><CircleHelp size={17}/> <span>Sobre a plataforma</span></Link>
+              {isMobile ? (
+                <div className="mobile-drawer-account">
+                  <Link href="/acesso" className="nav-item" onClick={() => setMobileOpen(false)}>
+                    Minha senha
+                  </Link>
+                  <button type="button" className="mobile-signout-btn" onClick={signOut}>
+                    Sair da conta
+                  </button>
+                </div>
+              ) : (
+                <div className="sidebar-footer"><Link href="/" className="brand"><strong>DOC-<span>Academy</span></strong></Link></div>
+              )}
             </div>
           </>
         )}
       </aside>
-      <div className={`app-content ${collapsed ? "sidebar-collapsed" : ""}`}>
+      <div className={`app-content ${isDocked ? "sidebar-collapsed" : ""}`}>
         <header className="topbar">
           <div className="breadcrumb">
             <Button
@@ -228,9 +278,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               size="icon"
               className="sidebar-toggle-btn"
               onClick={handleMenuClick}
-              aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
-              title={collapsed ? "Expandir barra lateral" : "Recolher barra lateral (modo foco)"}
-              aria-expanded={!collapsed}
+              aria-label={isDocked ? "Expandir barra lateral" : "Recolher barra lateral"}
+              title={isDocked ? "Expandir barra lateral" : "Recolher barra lateral (modo foco)"}
+              aria-expanded={mobileOpen || !isDocked}
             >
               <Menu size={22}/>
             </Button>
@@ -283,10 +333,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="topbar-divider"/>
             <Link href="/conquistas" className="profile" aria-label={`Ver minha evolução — Nível ${exp.level}, ${exp.total} XP`}>
               <span className="avatar avatar-daniel">{me.name.slice(0,1)}</span>
-              <span><strong>{me.name.split(" ")[0]}</strong><span className="profile-level-badge"><Trophy size={10}/> Nível {exp.level} · {exp.total} XP</span></span>
+              <span className="profile-details desktop-only"><strong>{me.name.split(" ")[0]}</strong><span className="profile-level-badge"><Trophy size={10}/> Nível {exp.level} · {exp.total} XP</span></span>
             </Link>
-            <Link className="help-link" href="/acesso">Minha senha</Link>
-            <Button variant="ghost" onClick={signOut}>Sair</Button>
+            <Link className="help-link desktop-only" href="/acesso">Minha senha</Link>
+            <Button variant="ghost" className="desktop-only" onClick={signOut}>Sair</Button>
           </div>
         </header>
         {storageError && <div className="storage-warning" role="alert">Não foi possível atualizar os dados do servidor. Confira sua conexão e tente novamente.</div>}

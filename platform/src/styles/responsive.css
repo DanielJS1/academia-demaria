@@ -117,43 +117,72 @@
 }
 
 @media (max-width: 760px) {
-  .sidebar { visibility: hidden; transform: translateX(-100%); width: 242px; transition: transform 0.2s; }
-  .sidebar.is-open { visibility: visible; transform: translateX(0); }
+  html, body { overflow-x: hidden; max-width: 100vw; }
+  .desktop-only { display: none !important; }
+  .sidebar {
+    visibility: hidden;
+    transform: translateX(-100%);
+    width: min(290px, 86vw) !important;
+    padding: 24px 18px 18px !important;
+    align-items: stretch !important;
+    transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
+    z-index: 50;
+  }
+  .sidebar.is-open { visibility: visible !important; transform: translateX(0) !important; }
   .app-content { margin-left: 0; }
-  .nav-scrim { display: block; position: fixed; inset: 0; background: #17102466; border: 0; z-index: 39; }
+  .nav-scrim { display: block; position: fixed; inset: 0; background: #17102466; border: 0; z-index: 49; }
   .mobile-menu, .sidebar-toggle-btn { display: inline-flex; }
   .brand strong { font-size: 20px; }
   .brand small { font-size: 6.5px; }
-  .brand-official { width: 50px; height: 42px; }
+  .brand-official { width: 46px; height: 38px; }
   .nav-item { font-size: 13px; }
-  .topbar { height: 64px; padding: 0 16px; gap: 12px; }
-  .breadcrumb { gap: 7px; }
-  .breadcrumb strong { font-size: 10px; }
+  .topbar { height: 60px; padding: 0 14px; gap: 10px; }
+  .breadcrumb { gap: 6px; }
+  .breadcrumb strong { font-size: 11px; }
   .global-search { display: none; }
-  .topbar-actions { margin-left: auto; gap: 7px; }
-  .topbar-divider { margin: 0; }
-  .main-content { padding: 24px 18px; }
-  .page-heading { margin-bottom: 21px; align-items: flex-start; }
-  .page-heading h1 { font-size: 23px; letter-spacing: -0.7px; }
-  .page-heading p { font-size: 11px; max-width: 320px; }
+  .topbar-actions { margin-left: auto; gap: 6px; }
+  .topbar-divider { margin: 0 2px; }
+  .main-content { padding: 20px 16px; }
+  .page-heading { margin-bottom: 20px; align-items: flex-start; flex-direction: column; gap: 10px; }
+  .page-heading h1 { font-size: 24px; letter-spacing: -0.6px; }
+  .page-heading p { font-size: 11px; max-width: 100%; }
   .season-pill { font-size: 8px; padding: 6px 9px; white-space: nowrap; }
   .page-heading .season-pill svg { display: none; }
   .welcome-grid { grid-template-columns: 1fr; }
-  .hero { min-height: 300px; }
-  .hero-copy { padding: 28px; }
-  .hero-art { opacity: 0.9; width: 45%; }
-  .hero h2 { font-size: 34px; }
-  .hero p { max-width: 260px; }
-  .hero-foot { max-width: none; font-size: 7px; }
-  .hero-foot > span:last-child { max-width: 180px; }
+  .hero { min-height: auto; }
+  .hero-copy { padding: 24px 18px; }
+  .hero-art { opacity: 0.2; pointer-events: none; }
+  .hero h2 { font-size: 26px; line-height: 1.25; }
+  .hero p { max-width: 100%; font-size: 12px; margin-bottom: 16px; }
+  .hero-foot { max-width: none; font-size: 8px; }
+  .hero-foot > span:last-child { max-width: none; }
   .journey-card { display: none; }
-  .metric-strip { padding: 16px 9px; gap: 4px; margin-bottom: 28px; }
-  .metric-strip > div { flex-direction: column; align-items: flex-start; padding-left: 10px; gap: 9px; }
-  .metric-strip strong { font-size: 14px; }
-  .metric-strip strong em { display: block; font-size: 9px; margin-top: 3px; }
-  .metric-strip small { font-size: 8px; }
+  .metric-strip {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  .metric-strip > div {
+    flex-direction: row;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 12px 0;
+    gap: 12px;
+  }
+  .metric-strip > div:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+  .metric-strip strong { font-size: 15px; }
+  .metric-strip strong em { font-size: 10px; }
+  .metric-strip small { font-size: 9px; }
   .metric-strip a { display: none; }
-  .metric-icon { height: 20px; }
+  .metric-icon { height: 22px; width: 22px; }
+  .player-grid, .player-grid.focus-mode { grid-template-columns: 1fr !important; gap: 16px; }
+  .curriculum-dock { display: none !important; }
   .dashboard-bottom { grid-template-columns: 1fr; margin-top: 26px; }
   .knowledge-callout { padding: 25px; }
   .knowledge-callout h2 { font-size: 26px; }
@@ -224,24 +253,61 @@
   .prose { font-size: 12px; }
 }
 
+@media (max-width: 600px) {
+  .course-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+  .catalog-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .article-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .milestones {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .evolution-hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .evolution-xp {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .main-content {
+    padding: 16px 12px;
+  }
+  .page-heading h1 {
+    font-size: 22px;
+  }
+  .hero h2 {
+    font-size: 22px !important;
+  }
+}
+
 @media (max-width: 400px) {
-  .hero-art { opacity: 0.35; width: 49%; }
-  .hero-copy { padding: 25px; }
-  .hero h2 { font-size: 31px; }
-  .course-grid { gap: 10px; }
-  .course-card-body { padding: 12px; }
-  .course-card h3 { font-size: 11px; }
-  .course-duration { gap: 8px; font-size: 7px; }
-  .art-composition { transform: scale(0.78); }
+  .hero-art { opacity: 0.2; width: 49%; }
+  .hero-copy { padding: 18px 14px; }
+  .hero h2 { font-size: 20px !important; }
+  .course-grid { gap: 12px; }
+  .course-card-body { padding: 14px; }
+  .course-card h3 { font-size: 13px; }
+  .course-duration { gap: 8px; font-size: 8px; }
+  .art-composition { transform: scale(0.85); }
   .art-product { font-size: 9px; }
   .art-corner { display: none; }
-  .page-heading h1 { font-size: 21px; }
+  .page-heading h1 { font-size: 20px; }
   .season-pill { font-size: 7px; }
   .season-pill > span { display: none; }
   .section-heading { gap: 9px; }
-  .section-heading h2 { font-size: 14px; }
-  .hero-foot { font-size: 6px; }
-  .metric-strip small { font-size: 7px; }
+  .section-heading h2 { font-size: 15px; }
+  .hero-foot { font-size: 7px; }
+  .metric-strip small { font-size: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

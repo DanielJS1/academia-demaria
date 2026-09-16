@@ -9,11 +9,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/doc-academy-logo-oficial.png", type: "image/png", sizes: "192x192" }
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.svg", type: "image/svg+xml" }
     ],
-    apple: "/doc-academy-logo-oficial.png",
-    shortcut: "/favicon.svg"
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180" }
+    ],
+    shortcut: "/favicon.ico"
   }
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

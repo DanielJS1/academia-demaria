@@ -593,3 +593,44 @@
   color: var(--primary);
   background: var(--surface2);
 }
+
+.sidebar-close-btn {
+  color: var(--muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.sidebar-close-btn:hover {
+  color: var(--ink);
+  background: var(--surface2);
+}
+
+.mobile-drawer-account {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.mobile-signout-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 14px;
+  color: #ea5555;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.mobile-signout-btn:hover {
+  background: rgba(234, 85, 85, 0.1);
+  border-color: #ea5555;
+}
