@@ -48,11 +48,149 @@
 }
 
 .player-grid.focus-mode {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 56px;
+  gap: 16px;
 }
 
-.player-grid.focus-mode .curriculum {
-  display: none;
+.curriculum-dock {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  height: fit-content;
+  position: sticky;
+  top: 92px;
+  z-index: 25;
+}
+
+.dock-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  width: 100%;
+}
+
+.dock-expand-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dock-expand-btn:hover {
+  background: var(--lavender);
+  color: var(--ink);
+  border-color: var(--primary);
+}
+
+.dock-progress-pill {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.dock-items-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.dock-item-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: right center;
+}
+
+.dock-item-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.dock-item-btn:hover {
+  background: var(--lavender, rgba(128, 84, 217, 0.18));
+  color: var(--primary, #8054d9);
+  border-color: var(--primary, #8054d9);
+}
+
+.dock-item-btn.is-current {
+  border-color: var(--primary, #8054d9);
+  background: var(--lavender, rgba(128, 84, 217, 0.22));
+  color: var(--primary, #8054d9);
+  box-shadow: 0 0 0 2px var(--primary, #8054d9);
+}
+
+.dock-item-btn.is-done {
+  color: #5bcea9;
+}
+
+.dock-floating-tooltip {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--surface, #1d1828);
+  border: 1px solid var(--primary, #8054d9);
+  border-radius: 10px;
+  padding: 7px 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 60;
+  animation: dockTooltipIn 0.12s ease-out;
+}
+
+@keyframes dockTooltipIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.dock-tooltip-title {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.dock-tooltip-meta {
+  font-size: 9.5px;
+  color: var(--muted);
 }
 
 .video-frame {

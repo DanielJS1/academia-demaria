@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { normalize } from "@/lib/utils";
@@ -82,17 +82,36 @@ export function ConfigList({
       {state[kind].map(item => (
         <div className="config-item" key={item}>
           <span>{item}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Renomear ${item}`}
-            onClick={() => {
-              setEditing(item);
-              setValue(item);
-            }}
-          >
-            <Pencil size={14} />
-          </Button>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Renomear ${item}`}
+              onClick={() => {
+                setEditing(item);
+                setValue(item);
+              }}
+            >
+              <Pencil size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Excluir ${item}`}
+              title={`Excluir ${item}`}
+              onClick={async () => {
+                if (confirm(`Remover "${item}" definitivamente desta lista?`)) {
+                  const ok = await update(current => ({
+                    ...current,
+                    [kind]: current[kind].filter(i => i !== item),
+                  }));
+                  if (ok) notify(`"${item}" removido com sucesso.`);
+                }
+              }}
+            >
+              <X size={14} />
+            </Button>
+          </div>
         </div>
       ))}
       <form className="inline-form" onSubmit={save}>

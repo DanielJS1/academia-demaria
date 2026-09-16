@@ -81,7 +81,7 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   }
   return;
  }
- if(["save-resource","review","unlock","profile","settings","invite"].includes(command.type)&&me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
+ if(["save-resource","review","unlock","profile","settings","delete-setting","invite"].includes(command.type)&&me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
  if(command.type==="save-resource"){
   const body=command.kind==="course"?courseSchema.parse(command.data):articleSchema.parse(command.data);
   if(command.kind==="course"){
@@ -117,6 +117,13 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   const settings=await db.from("academy_settings").select(command.kind).single();ensure(settings);
   const values=(settings.data as unknown as Record<string,string[]>)[command.kind];
   if(values.some(v=>v.toLocaleLowerCase()===command.name.toLocaleLowerCase()&&v!==command.oldName))throw new ApiError("Já existe um cadastro com este nome.");
+ }
+ if(command.type==="delete-setting"){
+  const settings=await db.from("academy_settings").select(command.kind).single();ensure(settings);
+  const values=((settings.data as unknown as Record<string,string[]>)[command.kind]||[]).filter(v=>v!==command.name);
+  const {error}=await db.from("academy_settings").update({[command.kind]:values}).eq("id",true);
+  if(error)throw new ApiError("Não foi possível excluir o cadastro.");
+  return;
  }
  if(command.type==="video"){
   const previous=await db.from("academy_progress").select("ranges").eq("user_id",me.id).eq("course_id",command.courseId).eq("version",command.version).eq("lesson_id",command.lessonId).maybeSingle();ensure(previous);

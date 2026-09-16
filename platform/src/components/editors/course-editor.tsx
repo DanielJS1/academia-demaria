@@ -7,7 +7,7 @@ import { normalizeCourse, courseValidationError } from "@/lib/course-activities"
 import { ActivityQuestions } from "./activity-questions";
 import { PdfAttachmentEditor } from "./pdf-attachment-editor";
 import { courseXp } from "@/lib/rewards";
-import { ArrowDown, ArrowLeft, ArrowUp, Check, Eye, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Check, Eye, Plus, Save, Trash2, X } from "lucide-react";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { CourseArt, EmptyState, PageHeading } from "../shared";
@@ -161,14 +161,75 @@ export function CourseEditor({ id }: { id: string }) {
               />
             </label>
             <div className="form-grid">
-              <label className="field">
-                <span>Produto ou assunto</span>
-                <select value={course.product} onChange={event => field("product", event.target.value)}>
-                  {state.products.map(product => (
-                    <option key={product}>{product}</option>
+              <div className="field">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Produto ou assunto</span>
+                  {course.product.trim() && !state.products.includes(course.product.trim()) && (
+                    <button
+                      type="button"
+                      style={{ fontSize: 11, background: "none", border: "none", cursor: "pointer", color: "var(--primary)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}
+                      onClick={async () => {
+                        const name = course.product.trim();
+                        const ok = await update(current => ({
+                          ...current,
+                          products: [...current.products, name],
+                        }));
+                        if (ok) notify(`"${name}" adicionado à lista de produtos.`);
+                      }}
+                    >
+                      <Plus size={12} /> Salvar como nova opção
+                    </button>
+                  )}
+                </div>
+                <input
+                  value={course.product}
+                  placeholder="Selecione abaixo ou digite um novo assunto..."
+                  list="products-autocomplete"
+                  onChange={event => field("product", event.target.value)}
+                />
+                <datalist id="products-autocomplete">
+                  {state.products.map(p => (
+                    <option key={p} value={p} />
                   ))}
-                </select>
-              </label>
+                </datalist>
+                <div className="product-chips-wrap">
+                  {state.products.map(p => (
+                    <span key={p} className={`product-chip ${course.product === p ? "is-active" : ""}`}>
+                      <button
+                        type="button"
+                        className="product-chip-name"
+                        onClick={() => field("product", p)}
+                        title={`Selecionar ${p}`}
+                      >
+                        {p}
+                      </button>
+                      <button
+                        type="button"
+                        className="product-chip-remove"
+                        title={`Remover "${p}" da lista`}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm(`Remover "${p}" da lista de produtos e assuntos?`)) {
+                            const ok = await update(current => ({
+                              ...current,
+                              products: current.products.filter(item => item !== p),
+                            }));
+                            if (ok) {
+                              notify(`"${p}" removido da lista.`);
+                              if (course.product === p) {
+                                const remaining = state.products.filter(item => item !== p);
+                                field("product", remaining[0] || "");
+                              }
+                            }
+                          }
+                        }}
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
               <label className="field">
                 <span>Categoria</span>
                 <input value={course.category} onChange={event => field("category", event.target.value)} />

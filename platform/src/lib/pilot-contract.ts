@@ -14,6 +14,7 @@ export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("invite"), temporaryPassword:z.string().min(12).max(128).optional(), name:z.string().trim().min(2).max(120), email:z.string().email(), department:z.string().max(80), managerId:z.string(), role:z.enum(["student","manager","admin"]) }),
  z.object({ type:z.literal("preferences"), bookmarks:z.array(id).max(2000), readNotices:z.array(id).max(2000) }),
  z.object({ type:z.literal("settings"), kind:z.enum(["departments","products"]), oldName:z.string().optional(), name:z.string().trim().min(1).max(80) }),
+ z.object({ type:z.literal("delete-setting"), kind:z.enum(["departments","products"]), name:z.string().trim().min(1).max(80) }),
 ]);
 export type Command = z.infer<typeof commandSchema>;
 export function normalizeVimeoRanges(values:unknown[]):[number,number][]{
@@ -34,9 +35,10 @@ const changed = (a:unknown,b:unknown) => JSON.stringify(a)!==JSON.stringify(b);
 // completo para sobrescrever e valida novamente cada operação e permissão.
 export function stateCommand(before:AcademyState,after:AcademyState):Command|null {
  for(const kind of ["departments","products"] as const) if(changed(before[kind],after[kind])) {
-  const name=after[kind].find(item=>!before[kind].includes(item));
-  if(!name)throw new Error("Não é possível remover este cadastro por aqui.");
-  return {type:"settings",kind,name,oldName:before[kind].find(item=>!after[kind].includes(item))};
+  const added=after[kind].find(item=>!before[kind].includes(item));
+  if(added) return {type:"settings",kind,name:added,oldName:before[kind].find(item=>!after[kind].includes(item))};
+  const removed=before[kind].find(item=>!after[kind].includes(item));
+  if(removed) return {type:"delete-setting",kind,name:removed};
  }
  for(const [key,kind,publish] of [["courseDrafts","course",false],["courses","course",true],["articleDrafts","article",false],["articles","article",true]] as const){
   const item=after[key].find(item=>changed(item,before[key].find(old=>old.id===item.id)));
