@@ -25,6 +25,8 @@ O banco começa vazio: os dados fictícios da apresentação não serão importa
 
 Depois da migração inicial, execute também `supabase/migrations/202609160001_learning_rewards.sql`, uma vez, para ativar XP por aula, conclusão sem avaliação e gestão de cadastros. Em um banco já existente, siga [ATUALIZAR-APRENDIZADO.md](ATUALIZAR-APRENDIZADO.md).
 
+Em seguida, execute `supabase/migrations/202609170001_activity_assessments.sql` para avaliações dentro das atividades. Consulte [ATUALIZAR-ATIVIDADES.md](ATUALIZAR-ATIVIDADES.md) para os detalhes desta atualização.
+
 ## 3. Criar o primeiro administrador
 
 1. Supabase → **Authentication → Users → Add user → Create new user**.

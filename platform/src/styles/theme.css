@@ -15,15 +15,15 @@
 }
 
 [data-theme="dark"] {
-  --background: #121119;
-  --surface: #1b1925;
-  --surface2: #24212f;
-  --ink: #eeedf6;
-  --muted: #aba6bc;
-  --line: #312d40;
+  --background: #0b0c10;
+  --surface: #14161c;
+  --surface2: #1c1f27;
+  --ink: #eceef4;
+  --muted: #a6adbd;
+  --line: #2c303b;
   --primary: #a586f4;
   --primary-hover: #b79ff6;
-  --lavender: #312647;
+  --lavender: #242135;
   --mint: #95dfc9;
   --shadow: 0 8px 32px #00000013;
   color-scheme: dark;

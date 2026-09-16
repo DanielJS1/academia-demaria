@@ -1,3 +1,4 @@
+import { courseValidationError, normalizeCourse } from "./course-activities";
 import { createClient } from "@supabase/supabase-js";
 import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./registration-security";
 import { DEPARTMENTS } from "./departments";
@@ -48,7 +49,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,xp,preferences]=results;
  const courses:Course[]=(resources.data??[]).filter(r=>r.kind==="course"&&r.published).map(r=>({...r.published,xp:courseXp(r.published)}));
- const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""}))});
+ const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))}))});
  const completion:Record<string,string[]>={};
  for(const row of progress.data??[])if(row.user_id===me.id&&row.done&&courses.some(c=>c.id===row.course_id&&c.version===row.version))(completion[row.course_id]??=[]).push(row.lesson_id);
  const season=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric"});
@@ -59,7 +60,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter(x=>x.user_id===p.id&&x.season===season).reduce((n,x)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0};
  });
  const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="course"&&r.draft).map(r=>r.draft):[],articles:(resources.data??[]).filter(r=>r.kind==="article"&&r.published).map(r=>r.published as Article),articleDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="article"&&r.draft).map(r=>r.draft):[],people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
-  attempts:(attempts.data??[]).sort((a,b)=>a.submitted_at.localeCompare(b.submitted_at)).map(a=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[]})),
+  attempts:(attempts.data??[]).sort((a,b)=>a.submitted_at.localeCompare(b.submitted_at)).map(a=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[]})),
   xpEvents:(xp.data??[]).filter(x=>x.user_id===me.id).map(x=>({id:x.id,amount:x.amount,season:x.season,label:x.label}))};
  return {state,me:{id:me.id,name:me.name,email:me.email,role:me.role}};
 }
@@ -85,16 +86,11 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   const body=command.kind==="course"?courseSchema.parse(command.data):articleSchema.parse(command.data);
   if(command.kind==="course"){
    const course=body as Course;
-   if(!safeImage(course.banner)||course.lessons.some(l=>l.videoUrl&&!vimeoEmbed(l.videoUrl)))throw new ApiError("Use banner HTTPS e vídeos válidos do Vimeo.");
-   if(new Set(course.lessons.map(l=>l.id)).size!==course.lessons.length||new Set(course.questions.map(q=>q.id)).size!==course.questions.length)throw new ApiError("Atividades ou questões duplicadas.");
-   if(command.publish){
-    if(!course.lessons.some(l=>l.type!=="quiz"))throw new ApiError("Adicione ao menos uma aula antes de publicar.");
-    if(course.lessons.some(l=>l.type==="quiz")!==Boolean(course.questions.length))throw new ApiError("Para incluir avaliação, adicione a atividade de avaliação e suas perguntas; para publicar sem avaliação, remova ambas.");
-    if(course.lessons.some(l=>!l.module.trim()||(l.type==="video"&&!vimeoEmbed(l.videoUrl))||(l.type==="reading"&&!l.content.trim())))throw new ApiError("Preencha os módulos, leituras e links Vimeo antes de publicar.");
-    if(course.questions.some(q=>q.type==="choice"&&(q.options.length<2||new Set(q.options).size!==q.options.length||q.options.some(o=>!o.trim())||!q.options.includes(q.correct))))throw new ApiError("Confira alternativas e gabaritos.");
-   }
+   if(new Set(course.lessons.map(l=>l.id)).size!==course.lessons.length)throw new ApiError("Atividades duplicadas.");
+   const problem=courseValidationError(course,command.publish);if(problem)throw new ApiError(problem);
+
   }else if(command.publish&&!(body as Article).content.trim())throw new ApiError("Escreva o conteúdo antes de publicar.");
-  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,data:command.kind==="course"?{...body,xp:courseXp(body as Course)}:body}});if(error)throw new ApiError(error.message);return;
+  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,data:command.kind==="course"?{...normalizeCourse(body as Course),xp:courseXp(body as Course)}:body}});if(error)throw new ApiError(error.message);return;
  }
  if(command.type==="invite"){
   if(!DEPARTMENTS.some(d=>d===command.department))throw new ApiError("Selecione um setor da DeMaria.");

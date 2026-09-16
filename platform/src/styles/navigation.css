@@ -191,6 +191,9 @@
   height: auto;
   margin: 0 auto;
 }
+.sidebar > .brand { justify-content: center; padding-bottom: 18px; }
+.sidebar > .brand .brand-official { width: 136px; height: auto; }
+.sidebar-footer .brand { padding: 0; margin: 0 auto; }
 
 .brand-block {
   display: flex;

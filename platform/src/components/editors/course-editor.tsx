@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { normalizeCourse, courseValidationError } from "@/lib/course-activities";
+import { ActivityQuestions } from "./activity-questions";
+import { PdfAttachmentEditor } from "./pdf-attachment-editor";
 import { courseXp } from "@/lib/rewards";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, Eye, Plus, Save, Trash2 } from "lucide-react";
 import { useAcademy } from "../academy-provider";
@@ -18,7 +21,7 @@ export function CourseEditor({ id }: { id: string }) {
   const existing = state.courseDrafts.find(course => course.id === id) || state.courses.find(course => course.id === id);
   const [course, setCourse] = useState<Course>(() =>
     existing
-      ? structuredClone(existing)
+      ? normalizeCourse(structuredClone(existing))
       : {
           id: uuid(),
           title: "",
@@ -41,6 +44,7 @@ export function CourseEditor({ id }: { id: string }) {
   );
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [uploads, setUploads] = useState(0);
   const [restored, setRestored] = useState(false);
   const recoveryKey = `doc-academy.course-draft.${me.id}.${id}`;
   useEffect(() => {
@@ -52,7 +56,7 @@ export function CourseEditor({ id }: { id: string }) {
         if (courseSchema.safeParse({ ...recovered, title: "Rascunho", product: "Produto",
           lessons: recovered.lessons?.map((lesson: Course["lessons"][number]) => ({...lesson,title:"Aula"})),
           questions: recovered.questions?.map((question: Course["questions"][number]) => ({...question,prompt:"Pergunta"})),
-        }).success) setCourse(recovered);
+        }).success) setCourse(normalizeCourse(recovered));
       }
     } catch {}
     setRestored(true);
@@ -72,37 +76,9 @@ export function CourseEditor({ id }: { id: string }) {
   };
 
   const save = async (publish: boolean) => {
-    const parsed = courseSchema.safeParse(course);
-    if (!parsed.success) {
-      setError("Preencha título, produto e valores válidos para atividades, nota e XP.");
-      return;
-    }
-    if (!safeImage(course.banner)) {
-      setError("Use um endereço HTTPS válido para o banner.");
-      return;
-    }
-    if (course.lessons.some(lesson => lesson.videoUrl && !vimeoEmbed(lesson.videoUrl))) {
-      setError("Confira os links de vídeo: use endereços HTTPS do Vimeo.");
-      return;
-    }
-    if (publish && (!course.lessons.length || course.lessons.some(lesson => !lesson.title.trim() || !lesson.module.trim()))) {
-      setError("Adicione ao menos uma atividade com título e módulo antes de publicar.");
-      return;
-    }
-    if (
-      publish &&
-      course.lessons.some(lesson => lesson.type === "quiz") &&
-      (!course.questions.length ||
-        course.questions.some(
-          question =>
-            !question.prompt.trim() ||
-            (question.type === "choice" &&
-              (question.options.filter(option => option.trim()).length < 2 || !question.options.includes(question.correct)))
-        ))
-    ) {
-      setError("Complete as perguntas e selecione o gabarito das questões objetivas antes de publicar.");
-      return;
-    }
+    if(uploads){notify("Aguarde o envio dos PDFs antes de salvar.");return;}
+    const problem = courseValidationError(course, publish);
+    if(problem){ setError(problem); notify(problem); return; }
 
     const success = await update(current => {
       if (!publish) {
@@ -136,6 +112,8 @@ export function CourseEditor({ id }: { id: string }) {
     if (publish) router.push("/admin");
     else if (id === "novo") router.replace(`/admin/cursos/${course.id}`);
   };
+
+  const addActivity = () => field("lessons", [...course.lessons, {id:uuid(),title:"Nova atividade",module:"",minutes:5,type:"video",content:"",videoUrl:""}]);
 
   const reorder = (index: number, direction: number) => {
     const lessons = [...course.lessons];
@@ -240,20 +218,7 @@ export function CourseEditor({ id }: { id: string }) {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() =>
-                  field("lessons", [
-                    ...course.lessons,
-                    {
-                      id: uuid(),
-                      title: "Nova atividade",
-                      module: "01 · Comece por aqui",
-                      minutes: 5,
-                      type: "reading",
-                      content: "",
-                      videoUrl: "",
-                    },
-                  ])
-                }
+                onClick={addActivity}
               >
                 <Plus size={14} /> Adicionar atividade
               </Button>
@@ -307,7 +272,7 @@ export function CourseEditor({ id }: { id: string }) {
                     />
                   </label>
                   <label className="field">
-                    <span>Módulo</span>
+                    <span>Módulo (opcional)</span>
                     <input
                       value={lesson.module}
                       onChange={event =>
@@ -373,6 +338,8 @@ export function CourseEditor({ id }: { id: string }) {
                     />
                   </label>
                 )}
+                {lesson.type === "quiz" && <ActivityQuestions questions={lesson.questions || []} onChange={questions => field("lessons",course.lessons.map(item=>item.id===lesson.id?{...item,questions}:item))}/>}
+                {lesson.type === "reading" && <PdfAttachmentEditor lesson={lesson} onBusyChange={active=>setUploads(n=>Math.max(0,n+(active?1:-1)))} onChange={attachment=>{setCourse(current=>({...current,lessons:current.lessons.map(item=>item.id===lesson.id?{...item,...attachment}:item)}));setSaved(false);}}/>}
                 <label className="field">
                   <span>{lesson.type === "reading" ? "Conteúdo da leitura" : "Descrição da atividade"}</span>
                   <textarea
@@ -388,138 +355,11 @@ export function CourseEditor({ id }: { id: string }) {
                 </label>
               </div>
             ))}
+            {course.lessons.length >= 2 && <Button variant="secondary" onClick={addActivity}><Plus size={14}/> Adicionar atividade</Button>}
             {!course.lessons.length && <div className="info-note">Adicione a primeira atividade para montar seu curso.</div>}
           </section>
 
-          <section className="panel form-panel">
-            <div className="section-title">
-              <h2>Avaliação opcional</h2>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  field("questions", [
-                    ...course.questions,
-                    { id: uuid(), prompt: "", type: "choice", options: ["", ""], correct: "" },
-                  ]);
-                  if (!course.lessons.some(lesson => lesson.type === "quiz")) {
-                    setCourse(current => ({
-                      ...current,
-                      lessons: [
-                        ...current.lessons,
-                        {
-                          id: uuid(),
-                          title: "Avaliação do curso",
-                          module: "Avaliação",
-                          minutes: 5,
-                          type: "quiz",
-                          content: "Confira seu aprendizado e envie as respostas para correção.",
-                          videoUrl: "",
-                        },
-                      ],
-                    }));
-                  }
-                }}
-              >
-                <Plus size={14} /> Adicionar pergunta
-              </Button>
-            </div>
-            <p>{course.questions.length ? "As questões abaixo pertencem à avaliação do curso." : "Este curso pode ser publicado sem avaliação. O aluno conclui ao finalizar as aulas."}</p>
-            {(course.questions.length > 0 || course.lessons.some(lesson => lesson.type === "quiz")) && <Button variant="secondary" onClick={() => {
-              if (!window.confirm("Remover a avaliação e suas perguntas deste rascunho? As aulas serão mantidas.")) return;
-              setCourse(current => ({...current,questions:[],lessons:current.lessons.filter(lesson=>lesson.type!=="quiz")}));
-              setSaved(false);
-            }}>Publicar sem avaliação · remover perguntas</Button>}
-            {course.questions.map((question, index) => (
-              <div className="editor-lesson" key={question.id}>
-                <div className="editor-lesson-head">
-                  <strong>Pergunta {index + 1}</strong>
-                  <span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Remover pergunta ${index + 1}`}
-                      onClick={() => field("questions", course.questions.filter(item => item.id !== question.id))}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </span>
-                </div>
-                <label className="field">
-                  <span>Enunciado</span>
-                  <textarea
-                    value={question.prompt}
-                    rows={2}
-                    onChange={event =>
-                      field(
-                        "questions",
-                        course.questions.map(item => (item.id === question.id ? { ...item, prompt: event.target.value } : item))
-                      )
-                    }
-                  />
-                </label>
-                <label className="field">
-                  <span>Tipo de resposta</span>
-                  <select
-                    value={question.type}
-                    onChange={event =>
-                      field(
-                        "questions",
-                        course.questions.map(item =>
-                          item.id === question.id ? { ...item, type: event.target.value as "choice" | "text" } : item
-                        )
-                      )
-                    }
-                  >
-                    <option value="choice">Múltipla escolha</option>
-                    <option value="text">Discursiva</option>
-                  </select>
-                </label>
-                {question.type === "choice" && (
-                  <>
-                    <label className="field">
-                      <span>Alternativas (uma por linha)</span>
-                      <textarea
-                        rows={3}
-                        value={question.options.join("\n")}
-                        onChange={event =>
-                          field(
-                            "questions",
-                            course.questions.map(item =>
-                              item.id === question.id
-                                ? { ...item, options: event.target.value.split("\n"), correct: "" }
-                                : item
-                            )
-                          )
-                        }
-                      />
-                    </label>
-                    <label className="field">
-                      <span>Resposta correta</span>
-                      <select
-                        value={question.correct}
-                        onChange={event =>
-                          field(
-                            "questions",
-                            course.questions.map(item =>
-                              item.id === question.id ? { ...item, correct: event.target.value } : item
-                            )
-                          )
-                        }
-                      >
-                        <option value="">Selecione o gabarito</option>
-                        {question.options
-                          .filter(option => option.trim())
-                          .map((option, optionIndex) => (
-                            <option key={optionIndex}>{option}</option>
-                          ))}
-                      </select>
-                    </label>
-                  </>
-                )}
-              </div>
-            ))}
-          </section>
+
         </div>
 
         <aside className="editor-aside">
@@ -559,7 +399,7 @@ export function CourseEditor({ id }: { id: string }) {
               />
               Destacar como essencial
             </label>
-            <Button disabled={busy} variant="secondary" onClick={() => save(false)}>
+            <Button disabled={busy || uploads > 0} variant="secondary" onClick={() => save(false)}>
               <Save size={15} /> Salvar rascunho
             </Button>
             {id !== "novo" && (
@@ -569,7 +409,8 @@ export function CourseEditor({ id }: { id: string }) {
                 </Link>
               </Button>
             )}
-            <Button disabled={busy} onClick={() => save(true)}>
+            {error && <div className="form-error" role="alert">{error}</div>}
+            <Button disabled={busy || uploads > 0} onClick={() => save(true)}>
               <Check size={16} /> Publicar curso
             </Button>
             <div className="info-note">

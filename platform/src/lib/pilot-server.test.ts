@@ -4,7 +4,7 @@ import { initialState } from "./seed";
 function fixture(){
  const me:Profile={id:"student",name:"Aluno",email:"a@example.test",department:"Comercial",manager_id:"manager",role:"student",status:"active"};
  const tables:Record<string,Record<string,any>[]>={
-  academy_resources:[{id:"course",kind:"course",revision:1,published:{...initialState.courses[0],id:"course"},draft:{...initialState.courses[0],title:"Rascunho privado"}}],
+  academy_resources:[{id:"course",kind:"course",revision:1,published:{...initialState.courses[0],id:"course",lessons:initialState.courses[0].lessons.map(l=>({...l,questions:l.type==="quiz"?initialState.courses[0].questions:undefined}))},draft:{...initialState.courses[0],title:"Rascunho privado"}}],
   academy_profiles:[me,{...me,id:"other",name:"Outra pessoa",email:"b@example.test",manager_id:"other-manager"},{...me,id:"manager",role:"manager",manager_id:null}],
   academy_settings:[{departments:["Comercial"],products:["DOC-Windows"]}],
   academy_progress:[{user_id:"other",course_id:"course",version:1,lesson_id:initialState.courses[0].lessons[0].id,done:true}],
@@ -18,6 +18,8 @@ describe("API: isolamento de dados",()=>{
  it("não entrega gabaritos, rascunhos ou avaliações de terceiros ao aluno",async()=>{
   const {db,me}=fixture();const {state}=await readAcademy(db,me);
   expect(state.courseDrafts).toHaveLength(0);expect(state.courses[0].questions.every(q=>q.correct==="")).toBe(true);
+  const questions=state.courses[0].lessons.flatMap(l=>l.questions??[]);
+  expect(questions.length).toBeGreaterThan(0);expect(questions.every(q=>q.correct==="")).toBe(true);
   expect(state.attempts).toHaveLength(0);expect(state.people.find(p=>p.id==="other")?.email).toBe("");
   expect(state.people.find(p=>p.id==="other")?.progress).toBe(0);
  });

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const lessonSchema = z.object({ id: z.string(), title: z.string().min(1), module: z.string(), minutes: z.number().nonnegative(), type: z.enum(["video", "reading", "quiz"]), content: z.string(), videoUrl: z.string() });
 export const questionSchema = z.object({ id: z.string(), prompt: z.string().min(1), type: z.enum(["choice", "text"]), options: z.array(z.string()), correct: z.string() });
+export const lessonSchema = z.object({ id: z.string(), title: z.string().min(1), module: z.string(), minutes: z.number().nonnegative(), type: z.enum(["video", "reading", "quiz"]), content: z.string(), videoUrl: z.string(), questions: z.array(questionSchema).optional(), attachmentPath: z.string().regex(/^pdf\/[a-f0-9-]+\.pdf$/).optional(), attachmentName: z.string().max(200).optional() });
 export const courseSchema = z.object({
   id: z.string(), title: z.string().min(3).max(120), description: z.string(), product: z.string().min(1), category: z.string(), level: z.string(),
   accent: z.enum(["violet", "mint", "peach", "blue", "pink", "slate"]), status: z.enum(["draft", "published"]),
@@ -20,7 +20,7 @@ export const notificationSchema = z.object({
   read: z.boolean().default(false),
   createdAt: z.string().default(() => new Date().toISOString()),
 });
-export const attemptSchema = z.object({ id: z.string(), userId: z.string().optional(), courseId: z.string(), courseTitle: z.string(), courseVersion: z.number(), questions: z.array(questionSchema), answers: z.record(z.string(), z.string()), status: z.enum(["pending", "approved", "retry"]), feedback: z.string(), score: z.number().nullable(), passingScore: z.number(), xp: z.number(), submittedAt: z.string(), retryPolicy: z.enum(["free", "review", "admin"]).default("free"), retryAllowed: z.boolean().default(false), correctTextIds: z.array(z.string()).optional() });
+export const attemptSchema = z.object({ id: z.string(), userId: z.string().optional(), courseId: z.string(), courseTitle: z.string(), courseVersion: z.number(), quizId: z.string().optional(), questions: z.array(questionSchema), answers: z.record(z.string(), z.string()), status: z.enum(["pending", "approved", "retry"]), feedback: z.string(), score: z.number().nullable(), passingScore: z.number(), xp: z.number(), submittedAt: z.string(), retryPolicy: z.enum(["free", "review", "admin"]).default("free"), retryAllowed: z.boolean().default(false), correctTextIds: z.array(z.string()).optional() });
 export const stateSchema = z.object({
   schema: z.literal(1), courses: z.array(courseSchema), articles: z.array(articleSchema), people: z.array(personSchema),
   courseDrafts: z.array(courseSchema).default([]), articleDrafts: z.array(articleSchema).default([]),

@@ -1,4 +1,6 @@
 /* Player & Classroom */
+.lesson-pdf { display: grid; gap: 12px; margin-top: 20px; }
+.lesson-pdf iframe { width: 100%; height: min(70vh, 800px); min-height: 320px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .video-next-action {
   display: flex;
   align-items: center;

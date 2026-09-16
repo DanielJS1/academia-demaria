@@ -1,4 +1,10 @@
 /* Welcome & Hero */
+[data-theme="dark"] .hero { background: #13131d; border: 1px solid var(--line); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .hero .hero-art { transform: translate(var(--hero-x, 0px), var(--hero-y, 0px)); transition: transform 180ms ease-out; }
+  .hero .hero-aura { transition: filter 500ms ease, opacity 500ms ease; }
+  .hero:hover .hero-aura { filter: hue-rotate(18deg); opacity: .8; }
+}
 .welcome-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 276px;
