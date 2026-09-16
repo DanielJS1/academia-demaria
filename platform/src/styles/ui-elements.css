@@ -576,6 +576,8 @@ textarea.input {
   max-width: 430px;
   width: 100%;
   box-shadow: var(--shadow);
+  border-radius: 18px;
+  box-sizing: border-box;
 }
 .access-logo {
   display: block;
@@ -585,10 +587,24 @@ textarea.input {
   margin: 0 auto 20px;
   object-fit: contain;
 }
+.access-card h1,
 .access-card h2 { font-size: 26px; margin: 12px 0; }
 .access-card p { color: var(--muted); margin: 15px 0 24px; font-size: 13px; }
 .access-card .button { width: 100%; margin-bottom: 10px; }
 .access-card .info-note { margin-top: 20px; }
+.access-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.access-actions .button {
+  width: auto;
+  margin-bottom: 0;
+  font-size: 11px;
+  padding: 6px 8px;
+}
 .save-indicator {
   position: fixed;
   bottom: 20px;

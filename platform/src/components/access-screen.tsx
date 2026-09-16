@@ -139,14 +139,18 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
             style={{
               marginBottom: "16px",
               display: "flex",
-              alignItems: "center",
+              alignItems: "flex-start",
               gap: "8px",
               background: message.type === "success" ? "#eefaf6" : undefined,
               borderColor: message.type === "success" ? "#bcebdc" : undefined,
               color: message.type === "success" ? "#236d55" : undefined,
             }}
           >
-            {message.type === "error" ? <ShieldAlert size={16} /> : <CheckCircle2 size={16} />}
+            {message.type === "error" ? (
+              <ShieldAlert size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            ) : (
+              <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            )}
             <span>{message.text}</span>
           </div>
         )}
@@ -234,13 +238,12 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
             </button>
 
             {!signedIn && (
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginTop: "14px" }}>
+              <div className="access-actions">
                 {mode === "login" ? (
                   <>
                     <button
                       type="button"
                       className="button button-ghost"
-                      style={{ fontSize: "11px", padding: "6px 8px" }}
                       onClick={() => {
                         setMode("signup");
                         setMessage(null);
@@ -252,7 +255,6 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
                     <button
                       type="button"
                       className="button button-ghost"
-                      style={{ fontSize: "11px", padding: "6px 8px" }}
                       onClick={() => {
                         setMode("forgot");
                         setMessage(null);
@@ -265,7 +267,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
                   <button
                     type="button"
                     className="button button-ghost"
-                    style={{ fontSize: "11px", padding: "6px 8px", width: "100%" }}
+                    style={{ width: "100%" }}
                     onClick={() => {
                       setMode("login");
                       setMessage(null);
