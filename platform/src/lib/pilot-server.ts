@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./registration-security";
 import { DEPARTMENTS } from "./departments";
 import { courseXp } from "./rewards";
+import { videoIsComplete } from "./video-completion";
 import { commandSchema, mergeWatched } from "./pilot-contract";
 import { courseSchema, articleSchema, vimeoEmbed, safeImage, type AcademyState, type Course, type Article } from "./model";
 export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
@@ -124,7 +125,7 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  if(command.type==="video"){
   const previous=await db.from("academy_progress").select("ranges").eq("user_id",me.id).eq("course_id",command.courseId).eq("version",command.version).eq("lesson_id",command.lessonId).maybeSingle();ensure(previous);
   const watched=mergeWatched([...(previous.data?.ranges??[]),...command.ranges],command.duration);
-  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,ranges:watched.ranges,done:watched.seconds/command.duration>=0.9}});if(error)throw new ApiError(error.message);return;
+  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,ranges:watched.ranges,done:videoIsComplete(watched.seconds,command.duration,command.position)}});if(error)throw new ApiError(error.message);return;
  }
  const {error}=await db.rpc("academy_mutate",{actor:me.id,command});if(error)throw new ApiError(error.message);
 }

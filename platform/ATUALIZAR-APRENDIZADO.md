@@ -11,6 +11,10 @@ O SQL preserva usuários, cursos, avaliações e XP existentes. Ajusta as refer�
 
 ## Regras
 
+### Exceção temporária para testar vídeos
+
+No piloto, avançar para os últimos 20 segundos também conclui a aula e concede o XP normal. Para vídeos de até 20 segundos, exige alcançar 90% da duração. O botão destacado abaixo do player avança após o servidor confirmar o salvamento. A prévia continua sem registrar progresso. A regra original de 90% assistido permanece como alternativa. Para remover a exceção, altere `ALLOW_END_SEEK_COMPLETION` para `false` em `src/lib/video-completion.ts` e ajuste os avisos na sala de aula. Não requer migração SQL.
+
 - Cursos sem avaliação concluem quando todas as aulas forem concluídas. Com avaliação, exigem também aprovação.
 - Aula não avaliativa: `10 + 5 × máximo(1, teto(minutos / 5))` XP. Exemplos: até 5 min = 15; até 10 = 20; até 15 = 25. Usa os minutos cadastrados pelo administrador. Vídeos continuam exigindo 90% assistido.
 - Curso concluído: 30 XP.

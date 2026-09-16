@@ -4,7 +4,7 @@ const id = z.string().min(1).max(100);
 export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("save-resource"), kind:z.enum(["course","article"]), data:z.union([courseSchema,articleSchema]), publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
  z.object({ type:z.literal("complete"), courseId:id, version:z.number().int().positive(), lessonId:id }),
- z.object({ type:z.literal("video"), courseId:id, version:z.number().int().positive(), lessonId:id, duration:z.number().positive().max(86400), ranges:z.array(z.tuple([z.number().nonnegative(),z.number().nonnegative()])).max(2000) }),
+ z.object({ type:z.literal("video"), courseId:id, version:z.number().int().positive(), lessonId:id, duration:z.number().positive().max(86400), position:z.number().nonnegative().max(86400).optional(), ranges:z.array(z.tuple([z.number().nonnegative(),z.number().nonnegative()])).max(2000) }),
  z.object({ type:z.literal("submit"), courseId:id, version:z.number().int().positive(), answers:z.record(id,z.string().max(5000)) }),
  z.object({ type:z.literal("review"), id:z.string().uuid(), score:z.number().min(0).max(100), feedback:z.string().trim().min(1).max(10000), correctTextIds:z.array(id).default([]) }),
  z.object({ type:z.literal("delete-user"), id:z.string().uuid() }),

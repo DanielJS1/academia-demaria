@@ -1,4 +1,19 @@
 /* Player & Classroom */
+.video-next-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px;
+  margin-top: 12px;
+  border: 2px solid var(--primary, #8054d9);
+  border-radius: 14px;
+  background: var(--lavender);
+}
+.video-next-action p { margin: 6px 0 0; }
+.video-next-action .button { min-height: 48px; }
+
 .player-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 285px;
