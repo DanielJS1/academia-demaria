@@ -186,6 +186,12 @@
   justify-content: space-between;
 }
 
+.sidebar-footer .brand-official {
+  width: 110px;
+  height: auto;
+  margin: 0 auto;
+}
+
 .brand-block {
   display: flex;
   flex-direction: column;

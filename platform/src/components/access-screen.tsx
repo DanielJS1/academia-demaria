@@ -108,6 +108,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
       </section>
 
       <section className="panel access-card">
+        <img className="access-logo" src="/doc-academy-logo-oficial.png" alt="DOC-Academy" width={180} height={120} />
         <span className="eyebrow">SUA JORNADA NA DOC-ACADEMY</span>
         <h2>
           {!configured

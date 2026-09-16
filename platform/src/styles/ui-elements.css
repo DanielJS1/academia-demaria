@@ -577,6 +577,14 @@ textarea.input {
   width: 100%;
   box-shadow: var(--shadow);
 }
+.access-logo {
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 20px;
+  object-fit: contain;
+}
 .access-card h2 { font-size: 26px; margin: 12px 0; }
 .access-card p { color: var(--muted); margin: 15px 0 24px; font-size: 13px; }
 .access-card .button { width: 100%; margin-bottom: 10px; }
