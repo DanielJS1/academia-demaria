@@ -34,6 +34,7 @@ export function CourseEditor({ id }: { id: string }) {
           xp: 200,
           required: false,
           banner: "",
+          logoUrl: "",
           author: "Equipe DOC-Academy",
           passingScore: 70,
           retryPolicy: "free",
@@ -194,6 +195,16 @@ export function CourseEditor({ id }: { id: string }) {
                 onChange={event => field("banner", event.target.value)}
               />
               <small>Deixe vazio para usar a capa visual da DOC-Academy.</small>
+            </label>
+            <label className="field">
+              <span>Logo central do produto (PNG recomendado)</span>
+              <input
+                type="url"
+                value={course.logoUrl || ""}
+                placeholder="https://.../logo.png"
+                onChange={event => field("logoUrl", event.target.value)}
+              />
+              <small>Substitui as folhas geométricas no centro do card pelo logotipo oficial do produto.</small>
             </label>
             <div className="field">
               <span>Cor da capa</span>

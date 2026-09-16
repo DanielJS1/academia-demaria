@@ -331,6 +331,16 @@
   display: block;
 }
 
+.profile-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: -0.2px;
+}
+
 .avatar {
   width: 33px;
   height: 33px;

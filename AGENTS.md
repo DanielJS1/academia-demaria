@@ -22,7 +22,15 @@ O app principal reside dentro da pasta `platform/`:
 - **Conquistas / Evolução:** `platform/src/components/evolution.tsx` (rota `/conquistas`)
 - **Equipe:** `platform/src/components/team.tsx` (rota `/equipe`)
 - **Painel de Administração:** `platform/src/components/admin/` (rota `/admin`)
+  - Cursos: `src/components/admin/admin-courses.tsx`
+  - Artigos: `src/components/admin/admin-articles.tsx`
+  - Pessoas (Aprovação/Reprovação/Exclusão): `src/components/admin/admin-people.tsx`
+  - Correções de Provas: `src/components/admin/admin-reviews.tsx`
+  - Configurações: `src/components/admin/admin-config.tsx`
 - **Editores de Recursos:** `platform/src/components/editors/` (rota `/admin/[kind]/[id]`)
+  - Curso & Banners/Logos: `src/components/editors/course-editor.tsx`
+  - Avaliação por Atividade: `src/components/editors/activity-questions.tsx`
+  - Anexos PDF de Aula: `src/components/editors/pdf-attachment-editor.tsx`
 - **Acesso / Login:** `platform/src/app/acesso/page.tsx` (rota `/acesso`)
 
 ---
@@ -30,5 +38,6 @@ O app principal reside dentro da pasta `platform/`:
 ## 3. Regras de Ouro para Economizar Tokens
 1. **Edição Cirúrgica:** Nunca reescreva um arquivo inteiro quando for alterar apenas uma função ou elemento JSX. Utilize diffs mínimos.
 2. **Componentes Modulares:** Edite os submódulos específicos em `src/components/editors/` ou `src/components/admin/` em vez de carregar arquivos orquestradores completos.
-3. **Estilos Específicos:** Ao mexer em estilos, edite apenas a folha correspondente em `platform/src/styles/` (ex: `sidebar.css`, `cards.css`, `forms.css`), nunca altere tudo de uma vez.
+3. **Estilos Específicos:** Ao mexer em estilos, edite apenas a folha correspondente em `platform/src/styles/` (ex: `classroom.css`, `cards.css`, `navigation.css`), nunca altere tudo de uma vez.
 4. **Respostas Concisas:** Responda direto ao ponto com o código alterado. Evite explicações redundantes sobre o que o código faz.
+5. **Consulte ARCHITECTURE.md:** Para entender o fluxo completo de dados e regras de negócio antes de propor refatorações.

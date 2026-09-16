@@ -534,6 +534,26 @@
   align-items: center;
 }
 
+.art-custom-logo {
+  max-width: 92px;
+  max-height: 76px;
+  object-fit: contain;
+  z-index: 2;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.2));
+  transform: translateY(2px);
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.course-card:hover .art-custom-logo {
+  transform: translateY(-1px) scale(1.04);
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.28));
+}
+
+.art-large .art-custom-logo {
+  max-width: 140px;
+  max-height: 110px;
+}
+
 .art-orbit {
   position: absolute;
   width: 134px;

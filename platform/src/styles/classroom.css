@@ -16,10 +16,43 @@
 .video-next-action p { margin: 6px 0 0; }
 .video-next-action .button { min-height: 48px; }
 
+.classroom-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.classroom-top-actions .back-link {
+  margin-bottom: 0;
+}
+
+.focus-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.focus-toggle-btn:hover {
+  color: var(--ink);
+}
+
 .player-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 285px;
   gap: 23px;
+}
+
+.player-grid.focus-mode {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.player-grid.focus-mode .curriculum {
+  display: none;
 }
 
 .video-frame {

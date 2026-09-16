@@ -5,7 +5,7 @@ export const lessonSchema = z.object({ id: z.string(), title: z.string().min(1),
 export const courseSchema = z.object({
   id: z.string(), title: z.string().min(3).max(120), description: z.string(), product: z.string().min(1), category: z.string(), level: z.string(),
   accent: z.enum(["violet", "mint", "peach", "blue", "pink", "slate"]), status: z.enum(["draft", "published"]),
-  xp: z.number().int().min(0).max(10000), required: z.boolean(), banner: z.string(), author: z.string(),
+  xp: z.number().int().min(0).max(10000), required: z.boolean(), banner: z.string(), logoUrl: z.string().optional(), author: z.string(),
   lessons: z.array(lessonSchema), questions: z.array(questionSchema), passingScore: z.number().int().min(0).max(100),
   retryPolicy: z.enum(["free", "review", "admin"]), version: z.number().int().positive(),
 });
