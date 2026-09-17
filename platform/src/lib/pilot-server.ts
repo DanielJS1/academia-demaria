@@ -171,6 +171,30 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   await db.from("academy_audit").insert({actor:me.id,action:"delete-setting",resource:command.name});
   return;
  }
+ if(command.type==="save-cartorio"){
+  if(me.role!=="admin")throw new ApiError("Somente administradores podem gerenciar cartórios.",403);
+  const {error}=await db.from("academy_cartorios").upsert({
+   id:command.data.id,
+   name:command.data.name,
+   city:command.data.city,
+   uf:command.data.uf,
+   cns:command.data.cns,
+   modules:command.data.modules,
+   key_user_id:command.data.keyUserId,
+   key_user_name:command.data.keyUserName,
+   key_user_email:command.data.keyUserEmail,
+   status:command.data.status,
+   updated_at:new Date().toISOString(),
+  });
+  if(error)throw new ApiError(error.message);
+  return;
+ }
+ if(command.type==="delete-cartorio"){
+  if(me.role!=="admin")throw new ApiError("Somente administradores podem gerenciar cartórios.",403);
+  const {error}=await db.from("academy_cartorios").delete().eq("id",command.id);
+  if(error)throw new ApiError(error.message);
+  return;
+ }
  if(command.type==="video"){
   const previous=await db.from("academy_progress").select("ranges").eq("user_id",me.id).eq("course_id",command.courseId).eq("version",command.version).eq("lesson_id",command.lessonId).maybeSingle();ensure(previous);
   const watched=mergeWatched([...(previous.data?.ranges??[]),...command.ranges],command.duration);
