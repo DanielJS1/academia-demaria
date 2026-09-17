@@ -54,6 +54,8 @@ export function vimeoEmbed(url: string): string | null {
 }
 export function safeImage(url: string) {
   if (!url) return true;
+  if (url.startsWith("/") && !url.startsWith("//")) return true;
+  if (url.startsWith("data:image/")) return url.length <= 64 * 1024;
   try { return new URL(url).protocol === "https:"; } catch { return false; }
 }
 export function completeActivity(state: AcademyState, courseId: string, lessonId: string): AcademyState {

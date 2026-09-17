@@ -10,8 +10,8 @@ export function normalizeCourse(course: Course): Course {
 export function courseValidationError(course: Course, publish: boolean): string | null {
   const parsed=courseSchema.safeParse(course);
   if(!parsed.success){const issue=parsed.error.issues[0];const index=issue.path[0]==="lessons"?Number(issue.path[1])+1:null;return `${index?`Atividade ${index}: `:"Curso: "}${issue.message} (${issue.path.join(" → ")}).`;}
-  if(!safeImage(course.banner))return "Banner: use um endereço HTTPS válido.";
-  if(course.logoUrl && !safeImage(course.logoUrl))return "Logo: use um endereço HTTPS válido.";
+  if(!safeImage(course.banner))return "Banner: use um link HTTPS, caminho local (/...) ou Base64 de até 64 KB.";
+  if(course.logoUrl && !safeImage(course.logoUrl))return "Logo: use um link HTTPS, caminho local (/logos/...) ou Base64 leve (até 64 KB).";
   if(publish&&!course.lessons.some(l=>l.type!=="quiz"))return "Adicione ao menos uma aula de vídeo ou leitura.";
   const questionIds=new Set<string>();
   for(const [index,lesson] of course.lessons.entries()){

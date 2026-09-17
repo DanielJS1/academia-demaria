@@ -248,11 +248,11 @@ export function CourseEditor({ id }: { id: string }) {
               </label>
             </div>
             <label className="field">
-              <span>Link do banner (HTTPS)</span>
+              <span>Link do banner (opcional)</span>
               <input
-                type="url"
+                type="text"
                 value={course.banner}
-                placeholder="https://..."
+                placeholder="https://... ou /banners/..."
                 onChange={event => field("banner", event.target.value)}
               />
               <small>Deixe vazio para usar a capa visual da DOC-Academy.</small>
@@ -260,12 +260,16 @@ export function CourseEditor({ id }: { id: string }) {
             <label className="field">
               <span>Logo central do produto (PNG recomendado)</span>
               <input
-                type="url"
+                type="text"
+                list="preset-logos"
                 value={course.logoUrl || ""}
-                placeholder="https://.../logo.png"
+                placeholder="Ex: /logos/doc-mobile.png ou https://..."
                 onChange={event => field("logoUrl", event.target.value)}
               />
-              <small>Substitui as folhas geométricas no centro do card pelo logotipo oficial do produto.</small>
+              <datalist id="preset-logos">
+                <option value="/logos/doc-mobile.png">DOC Mobile</option>
+              </datalist>
+              <small>Substitui as folhas no centro do card. Aceita caminho local (/logos/...), link HTTPS ou Base64 (até 64 KB).</small>
             </label>
             <div className="field">
               <span>Cor da capa</span>
