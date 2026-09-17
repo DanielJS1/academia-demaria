@@ -10,6 +10,7 @@ const lessons = (prefix: string): Lesson[] => [
 const base: Omit<Course, "id" | "title" | "description" | "product" | "accent" | "lessons"> = {
   category: "Produtos", level: "Essencial", status: "published", xp: 420, required: false, banner: "", author: "Equipe DOC-Academy", passingScore: 70, retryPolicy: "free", version: 1,
   audience: "internal", requiredModules: [], isSelagem: false,
+  hasProficiencyTest: false, proficiencyScore: 85, proficiencyQuestions: [],
   questions: [
     { id: "q1", prompt: "Onde você encontra a sequência de aulas nesta demonstração?", type: "choice", options: ["No programa do curso, ao lado da atividade", "Somente no painel administrativo", "A sequência não está disponível"], correct: "No programa do curso, ao lado da atividade" },
     { id: "q2", prompt: "O que tornaria esta experiência de aprendizado mais útil no seu dia a dia?", type: "text", options: [], correct: "" },

@@ -188,7 +188,7 @@ export function QuizRunner({
         </p>
         <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
           {onCancel && (
-            <Button variant={submittedResult.passed ? "primary" : "secondary"} onClick={onCancel}>
+            <Button variant={submittedResult.passed ? "default" : "secondary"} onClick={onCancel}>
               {submittedResult.passed ? "Continuar jornada" : "Voltar e assistir aulas"}
             </Button>
           )}
@@ -222,7 +222,7 @@ export function QuizRunner({
           <div className="quiz-options-area">
             {currentQ.type === "choice" ? (
               <div className="quiz-choices-grid">
-                {currentQ.options.map(option => {
+                {currentQ.options.map((option: string) => {
                   const isSelected = currentAnswer === option;
                   return (
                     <label
@@ -297,7 +297,7 @@ export function QuizRunner({
             {currentIndex < questions.length - 1 ? (
               <Button
                 type="button"
-                variant="primary"
+                variant="default"
                 disabled={!isCurrentAnswered}
                 onClick={nextQuestion}
                 title={!isCurrentAnswered ? "Selecione ou escreva uma resposta para avançar" : "Avançar"}
@@ -307,7 +307,7 @@ export function QuizRunner({
             ) : (
               <Button
                 type="submit"
-                variant="primary"
+                variant="default"
                 disabled={busy || !allAnswered}
                 title={!allAnswered ? "Responda todas as perguntas para concluir" : "Concluir"}
               >

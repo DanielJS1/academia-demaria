@@ -78,6 +78,7 @@ export const stateSchema = z.object({
 export type Notification = z.infer<typeof notificationSchema>;
 export type Course = z.infer<typeof courseSchema>;
 export type Lesson = z.infer<typeof lessonSchema>;
+export type Question = z.infer<typeof questionSchema>;
 export type Article = z.infer<typeof articleSchema>;
 export type Person = z.infer<typeof personSchema>;
 export type Cartorio = z.infer<typeof cartorioSchema>;
