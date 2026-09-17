@@ -505,6 +505,15 @@
   padding: 7px;
 }
 
+.sales-brand {
+  background: linear-gradient(135deg, rgba(116, 75, 238, 0.12), rgba(116, 75, 238, 0.05));
+  color: var(--primary);
+}
+
+.sales-brand svg {
+  color: var(--primary);
+}
+
 .assistant-copy {
   min-width: 0;
 }
