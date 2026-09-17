@@ -115,14 +115,41 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  }
  if(command.type==="settings"){
   const settings=await db.from("academy_settings").select(command.kind).single();ensure(settings);
-  const values=(settings.data as unknown as Record<string,string[]>)[command.kind];
-  if(values.some(v=>v.toLocaleLowerCase()===command.name.toLocaleLowerCase()&&v!==command.oldName))throw new ApiError("Já existe um cadastro com este nome.");
+  const currentValues=((settings.data as unknown as Record<string,string[]>)[command.kind]||[]);
+  if(currentValues.some(v=>v.toLocaleLowerCase()===command.name.toLocaleLowerCase()&&v!==command.oldName))throw new ApiError("Já existe um cadastro com este nome.");
+  const newValues=command.oldName
+    ? currentValues.map(v=>v===command.oldName ? command.name : v)
+    : [...currentValues, command.name];
+  const {error}=await db.from("academy_settings").update({[command.kind]:newValues}).eq("id",true);
+  if(error)throw new ApiError("Não foi possível salvar a alteração.");
+  if(command.oldName){
+   if(command.kind==="departments"){
+    await db.from("academy_profiles").update({department:command.name}).eq("department",command.oldName);
+   }else{
+    const res=await db.from("academy_resources").select("id,published,draft").eq("kind","course");
+    if(res.data){
+     for(const row of res.data){
+      const p=row.published as Course|null;
+      const d=row.draft as Course|null;
+      if(p?.product===command.oldName || d?.product===command.oldName){
+       await db.from("academy_resources").update({
+        published:p?.product===command.oldName?{...p,product:command.name}:p,
+        draft:d?.product===command.oldName?{...d,product:command.name}:d
+       }).eq("id",row.id);
+      }
+     }
+    }
+   }
+  }
+  await db.from("academy_audit").insert({actor:me.id,action:"settings",resource:command.name});
+  return;
  }
  if(command.type==="delete-setting"){
   const settings=await db.from("academy_settings").select(command.kind).single();ensure(settings);
   const values=((settings.data as unknown as Record<string,string[]>)[command.kind]||[]).filter(v=>v!==command.name);
   const {error}=await db.from("academy_settings").update({[command.kind]:values}).eq("id",true);
   if(error)throw new ApiError("Não foi possível excluir o cadastro.");
+  await db.from("academy_audit").insert({actor:me.id,action:"delete-setting",resource:command.name});
   return;
  }
  if(command.type==="video"){

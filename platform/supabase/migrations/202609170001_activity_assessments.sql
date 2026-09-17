@@ -128,10 +128,10 @@ begin
  elsif op='settings' then
   old_name:=command->>'oldName'; new_name:=command->>'name';
   if command->>'kind'='departments' then
-   update public.academy_settings set departments=case when old_name is null then departments || jsonb_build_array(new_name) else (select jsonb_agg(case when value=old_name then new_name else value end) from jsonb_array_elements_text(departments)) end;
+   update public.academy_settings set departments=case when old_name is null then departments || jsonb_build_array(new_name) else (select jsonb_agg(case when value=old_name then new_name else value end) from jsonb_array_elements_text(departments)) end where id=true;
    if old_name is not null then update public.academy_profiles set department=new_name where department=old_name; end if;
   else
-   update public.academy_settings set products=case when old_name is null then products || jsonb_build_array(new_name) else (select jsonb_agg(case when value=old_name then new_name else value end) from jsonb_array_elements_text(products)) end;
+   update public.academy_settings set products=case when old_name is null then products || jsonb_build_array(new_name) else (select jsonb_agg(case when value=old_name then new_name else value end) from jsonb_array_elements_text(products)) end where id=true;
    if old_name is not null then update public.academy_resources set published=case when published->>'product'=old_name then jsonb_set(published,'{product}',to_jsonb(new_name)) else published end,draft=case when draft->>'product'=old_name then jsonb_set(draft,'{product}',to_jsonb(new_name)) else draft end; end if;
   end if;
  else raise exception 'Comando desconhecido';
