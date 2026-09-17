@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { articleSchema, courseSchema, personSchema, type AcademyState } from "./model";
+import { articleSchema, courseSchema, personSchema, cartorioSchema, type AcademyState } from "./model";
 const id = z.string().min(1).max(100);
 export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("save-resource"), kind:z.enum(["course","article"]), data:z.union([courseSchema,articleSchema]), publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
@@ -15,6 +15,8 @@ export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("preferences"), bookmarks:z.array(id).max(2000), readNotices:z.array(id).max(2000) }),
  z.object({ type:z.literal("settings"), kind:z.enum(["departments","products"]), oldName:z.string().optional(), name:z.string().trim().min(1).max(80) }),
  z.object({ type:z.literal("delete-setting"), kind:z.enum(["departments","products"]), name:z.string().trim().min(1).max(80) }),
+ z.object({ type:z.literal("save-cartorio"), data:cartorioSchema, initialPassword:z.string().min(6).max(128).optional() }),
+ z.object({ type:z.literal("delete-cartorio"), id:id }),
 ]);
 export type Command = z.infer<typeof commandSchema>;
 export function normalizeVimeoRanges(values:unknown[]):[number,number][]{
@@ -50,5 +52,11 @@ export function stateCommand(before:AcademyState,after:AcademyState):Command|nul
  if(attempt){const old=before.attempts.find(item=>item.id===attempt.id);if(!old)return {type:"submit",quizId:attempt.quizId,courseId:attempt.courseId,version:attempt.courseVersion,answers:attempt.answers};if(old.retryAllowed!==attempt.retryAllowed)return {type:"unlock",id:attempt.id};return {type:"review",id:attempt.id,score:attempt.score??-1,feedback:attempt.feedback,correctTextIds:[]};}
  for(const [courseId,lessons] of Object.entries(after.completed)){const lessonId=lessons.find(id=>!before.completed[courseId]?.includes(id)); if(lessonId)return {type:"complete",courseId,lessonId,version:before.courses.find(course=>course.id===courseId)!.version};}
  if(changed(before.bookmarks,after.bookmarks)||changed(before.readNotices,after.readNotices))return {type:"preferences",bookmarks:after.bookmarks,readNotices:after.readNotices};
+ if(changed(before.cartorios,after.cartorios)){
+  const item=after.cartorios.find(item=>changed(item,before.cartorios.find(old=>old.id===item.id)));
+  if(item)return {type:"save-cartorio",data:item};
+  const removed=before.cartorios.find(item=>!after.cartorios.some(next=>next.id===item.id));
+  if(removed)return {type:"delete-cartorio",id:removed.id};
+ }
  return null;
 }

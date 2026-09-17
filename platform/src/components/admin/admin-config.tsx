@@ -81,7 +81,23 @@ export function ConfigList({
       <p>{description}</p>
       {state[kind].map(item => (
         <div className="config-item" key={item}>
-          <span>{item}</span>
+          <div>
+            <span style={{ fontWeight: 600 }}>{item}</span>
+            {kind === "departments" && (
+              <small style={{ display: "block", color: "var(--muted)", fontSize: 10, marginTop: 2 }}>
+                {(() => {
+                  const managers = state.people.filter(
+                    p => p.department === item && p.role === "manager" && p.status === "active"
+                  );
+                  const totalInDept = state.people.filter(p => p.department === item && p.status === "active").length;
+                  if (managers.length > 0) {
+                    return `Gestor(a): ${managers.map(m => m.name).join(", ")} · ${totalInDept} colaborador(es)`;
+                  }
+                  return `Sem gestor específico atribuído · ${totalInDept} colaborador(es)`;
+                })()}
+              </small>
+            )}
+          </div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
             <Button
               variant="ghost"

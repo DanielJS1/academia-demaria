@@ -113,7 +113,17 @@ export function PersonEditor({ id }: { id: string }) {
             <span>Departamento</span>
             <select
               value={person.department}
-              onChange={event => setPerson({ ...person, department: event.target.value })}
+              onChange={event => {
+                const newDept = event.target.value;
+                const deptManager = state.people.find(
+                  p => p.department === newDept && p.role === "manager" && p.status === "active" && p.id !== person.id
+                );
+                setPerson(current => ({
+                  ...current,
+                  department: newDept,
+                  managerId: current.role === "student" && deptManager ? deptManager.id : current.managerId,
+                }));
+              }}
             >
               <option value="">Selecione o setor</option>
               {person.department && !DEPARTMENTS.some(d => d === person.department) && <option value={person.department}>{person.department} (atualizar)</option>}
@@ -123,19 +133,21 @@ export function PersonEditor({ id }: { id: string }) {
             </select>
           </label>
           <label className="field">
-            <span>Gestor responsável</span>
+            <span>Gestor responsável direto</span>
             <select
               value={person.managerId}
               onChange={event => setPerson({ ...person, managerId: event.target.value })}
             >
+              <option value="">Nenhum (Gestão automática por setor)</option>
               {state.people
                 .filter(item => item.role !== "student")
                 .map(item => (
                   <option value={item.id} key={item.id}>
-                    {item.name}
+                    {item.name} ({item.department})
                   </option>
                 ))}
             </select>
+            <small>Gestores do mesmo setor do colaborador também o visualizam automaticamente na tela Minha equipe.</small>
           </label>
           <label className="field">
             <span>Perfil</span>
@@ -144,9 +156,14 @@ export function PersonEditor({ id }: { id: string }) {
               onChange={event => setPerson({ ...person, role: event.target.value as Person["role"] })}
             >
               <option value="student">Colaborador</option>
-              <option value="manager">Gestor</option>
-              <option value="admin">Administrador</option>
+              <option value="manager">Gestor de Setor / Equipe</option>
+              <option value="admin">Administrador Geral</option>
             </select>
+            {person.role === "manager" && (
+              <small style={{ color: "var(--primary)", fontWeight: 600, marginTop: 4 }}>
+                ✓ Como Gestor(a), terá acesso à tela &ldquo;Minha equipe&rdquo; e acompanhará os colaboradores do setor {person.department ? `"${person.department}"` : "(selecione o departamento)"}.
+              </small>
+            )}
           </label>
           <label className="field">
             <span>Situação do acesso</span>

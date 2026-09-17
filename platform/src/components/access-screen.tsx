@@ -8,6 +8,7 @@ import { DEPARTMENTS } from "@/lib/departments";
 
 export function AccessScreen({ configured, signedIn }: { configured: boolean; signedIn: boolean }) {
   const router = useRouter();
+  const [portal, setPortal] = useState<"colaborador" | "cartorio">("colaborador");
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
@@ -155,6 +156,32 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
           </div>
         )}
 
+        {!signedIn && (
+          <div className="portal-toggle-tabs">
+            <button
+              type="button"
+              className={`portal-tab-btn ${portal === "colaborador" ? "active" : ""}`}
+              onClick={() => {
+                setPortal("colaborador");
+                setMessage(null);
+              }}
+            >
+              Colaborador DeMaria
+            </button>
+            <button
+              type="button"
+              className={`portal-tab-btn ${portal === "cartorio" ? "active" : ""}`}
+              onClick={() => {
+                setPortal("cartorio");
+                setMode("login");
+                setMessage(null);
+              }}
+            >
+              Cliente Cartório · Certificação
+            </button>
+          </div>
+        )}
+
         {configured && (
           <form onSubmit={submit}>
             {!signedIn && mode === "signup" && (
@@ -181,15 +208,15 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
             )}
             {!signedIn && (
               <label className="field">
-                <span>E-mail de trabalho</span>
+                <span>{portal === "cartorio" ? "E-mail credenciado da serventia" : "E-mail corporativo"}</span>
                 <input
                   type="email"
                   autoComplete="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
-                  placeholder="voce@sacdemaria.com.br"
-                  title="Use um e-mail @demaria.com.br ou @sacdemaria.com.br"
+                  placeholder={portal === "cartorio" ? "ex: titular@cartoriosp.com.br" : "voce@sacdemaria.com.br"}
+                  title={portal === "cartorio" ? "E-mail cadastrado pela DeMaria para o cartório" : "Use um e-mail @demaria.com.br ou @sacdemaria.com.br"}
                 />
               </label>
             )}
@@ -241,17 +268,19 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
               <div className="access-actions">
                 {mode === "login" ? (
                   <>
-                    <button
-                      type="button"
-                      className="button button-ghost"
-                      onClick={() => {
-                        setMode("signup");
-                        setMessage(null);
-                      }}
-                    >
-                      <UserPlus size={14} style={{ marginRight: 5 }} />
-                      Primeiro acesso? Crie sua conta
-                    </button>
+                    {portal === "colaborador" && (
+                      <button
+                        type="button"
+                        className="button button-ghost"
+                        onClick={() => {
+                          setMode("signup");
+                          setMessage(null);
+                        }}
+                      >
+                        <UserPlus size={14} style={{ marginRight: 5 }} />
+                        Primeiro acesso? Crie sua conta
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="button button-ghost"
@@ -282,7 +311,9 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
         )}
 
         <div className="info-note" style={{ marginTop: "20px" }}>
-          Novos cadastros passam por aprovação de um administrador antes da liberação do catálogo.
+          {portal === "cartorio"
+            ? "O cadastro do cartório e credenciamento do usuário-chave são realizados pela equipe administrativa da DeMaria. A certificação oficial é emitida nesta plataforma após a conclusão da trilha."
+            : "Novos cadastros de colaboradores passam por aprovação de um administrador antes da liberação do catálogo."}
         </div>
       </section>
     </main>

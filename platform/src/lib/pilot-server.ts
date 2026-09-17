@@ -5,23 +5,23 @@ import { DEPARTMENTS } from "./departments";
 import { courseXp } from "./rewards";
 import { videoIsComplete } from "./video-completion";
 import { commandSchema, mergeWatched } from "./pilot-contract";
-import { courseSchema, articleSchema, vimeoEmbed, safeImage, type AcademyState, type Course, type Article } from "./model";
+import { courseSchema, articleSchema, vimeoEmbed, safeImage, type AcademyState, type Course, type Article, type Cartorio } from "./model";
 export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
 export function database(){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)throw new ApiError("O Supabase ainda não foi configurado no servidor.",503);
  return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 }
-export type Profile={id:string;name:string;email:string;department:string;manager_id:string|null;role:"admin"|"manager"|"student";status:"active"|"pending"|"inactive"};
+export type Profile={id:string;name:string;email:string;department:string;manager_id:string|null;role:"admin"|"manager"|"student";status:"active"|"pending"|"inactive";audience?:"client"|"internal";cartorio_id?:string|null};
 export async function authenticate(request:Request){
  const token=request.headers.get("authorization")?.match(/^Bearer (.+)$/)?.[1];
  if(!token)throw new ApiError("Entre na sua conta para continuar.",401);
  const db=database();const {data,error}=await db.auth.getUser(token);
  if(error||!data.user)throw new ApiError("Sua sessão expirou. Entre novamente.",401);
- if(!data.user.email||!isAllowedCompanyEmail(data.user.email))throw new ApiError("Este e-mail não pertence a um domínio autorizado.",403);
  let profile=await db.from("academy_profiles").select("*").eq("id",data.user.id).maybeSingle();
  let currentProfile: Profile | null = (profile.data as Profile) ?? null;
  if(!currentProfile){
+  if(!data.user.email||!isAllowedCompanyEmail(data.user.email))throw new ApiError("Este e-mail não pertence a um domínio autorizado.",403);
   const name=(data.user.user_metadata?.name as string)||data.user.email?.split("@")[0]||"Colaborador";
   const {data:created}=await db.from("academy_profiles").insert(pendingStudentProfile(data.user.id,name,data.user.email)).select().single();
   currentProfile=(created as Profile)??null;
@@ -43,26 +43,45 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   all("academy_resources"),all("academy_profiles"),
   db.from("academy_settings").select("*").single(),
   all("academy_progress","user_id,course_id,version,lesson_id,done"),
-  all("academy_attempts","*",me.role==="admin"?undefined:"user_id",me.id),
+  all("academy_attempts","*",me.role==="student"?"user_id":undefined,me.role==="student"?me.id:undefined),
   all("academy_xp"),db.from("academy_preferences").select("*").eq("user_id",me.id).maybeSingle(),
+  all("academy_cartorios"),
  ]);
  results.forEach(ensure);
- const [resources,profiles,settings,progress,attempts,xp,preferences]=results;
+ const [resources,profiles,settings,progress,attempts,xp,preferences,cartoriosResult]=results;
  const courses:Course[]=(resources.data??[]).filter(r=>r.kind==="course"&&r.published).map(r=>({...r.published,xp:courseXp(r.published)}));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))}))});
  const completion:Record<string,string[]>={};
  for(const row of progress.data??[])if(row.user_id===me.id&&row.done&&courses.some(c=>c.id===row.course_id&&c.version===row.version))(completion[row.course_id]??=[]).push(row.lesson_id);
  const season=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric"});
+ const norm = (s?: string) => (s || "").trim().toLowerCase();
+ const managedIds=new Set((profiles.data??[]).filter(p=>me.role==="admin"||p.manager_id===me.id||(me.role==="manager"&&me.department&&p.department&&norm(p.department)===norm(me.department))||p.id===me.id).map(p=>p.id));
+ const teamProgress:Record<string,Record<string,string[]>>={};
+ if(me.role==="admin"||me.role==="manager"){
+  for(const row of progress.data??[]){
+   if(row.done&&managedIds.has(row.user_id)&&courses.some(c=>c.id===row.course_id&&c.version===row.version)){
+    (teamProgress[row.user_id]??={})[row.course_id]??=[];
+    teamProgress[row.user_id][row.course_id].push(row.lesson_id);
+   }
+  }
+ }
  const people=(profiles.data??[]).filter(p=>p.status!=="inactive"||me.role==="admin"||p.id===me.id).map(p=>{
-  const report=me.role==="admin"||p.id===me.id||(me.role==="manager"&&p.manager_id===me.id);
+  const report=me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(p.department&&p.department&&norm(p.department)===norm(me.department))));
   const total=courses.reduce((n,c)=>n+c.lessons.filter(l=>l.type!=="quiz").length,0);
   const done=(progress.data??[]).filter(r=>r.user_id===p.id&&r.done&&courses.some(c=>c.id===r.course_id&&c.version===r.version&&c.lessons.some(l=>l.id===r.lesson_id&&l.type!=="quiz"))).length;
-  return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter(x=>x.user_id===p.id&&x.season===season).reduce((n,x)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0};
+  return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter((x: any)=>x.user_id===p.id&&x.season===season).reduce((n: number,x: any)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0,audience:(p.audience??"internal") as "internal"|"client",cartorioId:p.cartorio_id??undefined};
  });
- const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="course"&&r.draft).map(r=>r.draft):[],articles:(resources.data??[]).filter(r=>r.kind==="article"&&r.published).map(r=>r.published as Article),articleDrafts:me.role==="admin"?(resources.data??[]).filter(r=>r.kind==="article"&&r.draft).map(r=>r.draft):[],people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
-  attempts:(attempts.data??[]).sort((a,b)=>a.submitted_at.localeCompare(b.submitted_at)).map(a=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[]})),
-  xpEvents:(xp.data??[]).filter(x=>x.user_id===me.id).map(x=>({id:x.id,amount:x.amount,season:x.season,label:x.label}))};
- return {state,me:{id:me.id,name:me.name,email:me.email,role:me.role}};
+ const cartorios:Cartorio[]=(cartoriosResult.data??[]).map((c: any)=>({
+  id:c.id,name:c.name,city:c.city??"",uf:c.uf??"",cns:c.cns??undefined,modules:c.modules??[],
+  keyUserId:c.key_user_id??undefined,keyUserName:c.key_user_name??undefined,keyUserEmail:c.key_user_email??undefined,
+  status:c.status??"active",createdAt:c.created_at??new Date().toISOString()
+ }));
+ const visibleAttempts=(attempts.data??[]).filter(a=>me.role==="admin"||managedIds.has(a.user_id));
+ const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:(resources.data??[]).filter((r: any)=>r.kind==="article"&&r.published).map((r: any)=>r.published as Article),articleDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="article"&&r.draft).map((r: any)=>r.draft):[],people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
+  attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[]})),
+  xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
+  teamProgress,cartorios};
+ return {state,me:{id:me.id,name:me.name,email:me.email,department:me.department,role:me.role}};
 }
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");

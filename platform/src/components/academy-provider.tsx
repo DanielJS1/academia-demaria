@@ -3,11 +3,11 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef, ty
 import { usePathname } from "next/navigation";
 import { browserAuth } from "@/lib/supabase-browser";
 import { stateCommand, type Command } from "@/lib/pilot-contract";
-import type { AcademyState } from "@/lib/model";
+import type { AcademyState, Cartorio } from "@/lib/model";
 import { AccessScreen } from "./access-screen";
-type Me={id:string;name:string;email:string;role:"admin"|"manager"|"student"};
-type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void};
-const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[]};
+type Me={id:string;name:string;email:string;department?:string;role:"admin"|"manager"|"student";audience?:"internal"|"client";cartorioId?:string|null};
+type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean};
+const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[],teamProgress:{},cartorios:[]};
 const AcademyContext=createContext<Context|null>(null);
 export function AcademyProvider({children}:{children:ReactNode}){
  const path=usePathname();const [state,setState]=useState(empty);const current=useRef(state);
@@ -60,7 +60,18 @@ export function AcademyProvider({children}:{children:ReactNode}){
  if(!auth||!authenticated||path==="/acesso")return <AccessScreen configured={!!auth} signedIn={authenticated}/>;
  if(error&&!ready)return <div className="access-page"><section className="panel access-card"><h1>Vamos conferir seu acesso</h1><p role="alert">{error}</p><button className="button button-primary" onClick={()=>void refresh()}>Tentar novamente</button><button className="button button-secondary" onClick={signOut}>Sair da conta</button></section></div>;
  if(!ready||!me)return <div className="access-page"><p>Carregando sua jornada…</p></div>;
- const denied=(path.startsWith("/admin")&&me.role!=="admin")||(path.startsWith("/equipe")&&me.role==="student");
- return <AcademyContext.Provider value={{state,me,update,mutate,refresh,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut}}>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
+ const [simulatedCartorioId, setSimulatedCartorioId] = useState<string | null>(null);
+
+ const activeCartorio = (me?.cartorioId ? state.cartorios.find(c => c.id === me.cartorioId) : null)
+  || (simulatedCartorioId ? state.cartorios.find(c => c.id === simulatedCartorioId) : null)
+  || null;
+
+ const isClientEnvironment = (me?.audience === "client") || !!simulatedCartorioId;
+
+ const denied = (!simulatedCartorioId && path.startsWith("/admin") && me.role !== "admin")
+  || (!simulatedCartorioId && path.startsWith("/equipe") && me.role === "student")
+  || (me.audience === "client" && !simulatedCartorioId && (path.startsWith("/admin") || path.startsWith("/equipe") || path.startsWith("/conhecimento") || path.startsWith("/conquistas")));
+
+ return <AcademyContext.Provider value={{state,me,update,mutate,refresh,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut,activeCartorio,simulatedCartorioId,setSimulatedCartorioId,isClientEnvironment}}>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
 }
 export function useAcademy(){const context=useContext(AcademyContext);if(!context)throw new Error("AcademyProvider ausente");return context;}

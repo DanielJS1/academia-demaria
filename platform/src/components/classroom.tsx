@@ -11,13 +11,18 @@ import { Button } from "./ui/button";
 import { EmptyState, Progress } from "./shared";
 import { completeActivity, courseProgress, vimeoEmbed, type Attempt } from "@/lib/model";
 export function Classroom({ id, initialLesson, preview = false }: { id: string; initialLesson?: string; preview?: boolean }) {
-  const { state, me, ready, update, mutate, notify, busy } = useAcademy();
-  const course = (preview ? state.courseDrafts.find(item => item.id === id) : undefined) || state.courses.find(item => item.id === id && (item.status === "published" || preview));
+  const { state, me, ready, update, mutate, notify, busy, activeCartorio } = useAcademy();
+  const rawCourse = (preview ? state.courseDrafts.find(item => item.id === id) : undefined) || state.courses.find(item => item.id === id && (item.status === "published" || preview));
+  const cartorioUf = activeCartorio?.uf;
+  const course = rawCourse ? {
+    ...rawCourse,
+    lessons: rawCourse.lessons.filter(l => !l.ufFilter || l.ufFilter.length === 0 || !cartorioUf || l.ufFilter.includes(cartorioUf))
+  } : undefined;
   const [selected, setSelected] = useState(initialLesson || ""); const [answers, setAnswers] = useState<Record<string, string>>({}); const [retrying, setRetrying] = useState(false); const [focusMode, setFocusMode] = useState(false); const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   if (!ready) return <div className="empty-state">Abrindo sua sala de aula…</div>;
-  if (!course || !course.lessons.length) return <EmptyState title="Uma jornada em preparação" description="Este curso ainda não possui atividades publicadas."><Button asChild variant="secondary"><Link href="/aprender">Voltar ao catálogo</Link></Button></EmptyState>;
+  if (!course || !course.lessons.length) return <EmptyState title="Uma jornada em preparação" description="Este curso ainda não possui atividades publicadas para sua região ou módulos."><Button asChild variant="secondary"><Link href="/aprender">Voltar ao catálogo</Link></Button></EmptyState>;
   const lesson = course.lessons.find(item => item.id === selected) || course.lessons[0]; const index = course.lessons.findIndex(item => item.id === lesson.id);
-  const done = state.completed[id] || []; const progress = courseProgress(course, done);
+  const done = state.completed[id] || []; const progress = courseProgress(course, done, cartorioUf);
   const questions = activityQuestions(course,lesson);
   const matchesQuiz = (attempt: Attempt) => attempt.quizId===lesson.id || (!attempt.quizId && course.lessons.find(l=>l.type==="quiz")?.id===lesson.id);
   const prerequisitesDone = course.lessons.slice(0,index).every(l=>l.type!=="quiz" ? done.includes(l.id) : state.attempts.some(a=>a.courseId===id&&a.courseVersion===course.version&&a.userId===me.id&&a.status==="approved"&&(a.quizId===l.id||(!a.quizId&&course.lessons.find(x=>x.type==="quiz")?.id===l.id))));

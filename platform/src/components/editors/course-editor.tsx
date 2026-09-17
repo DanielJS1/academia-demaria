@@ -12,6 +12,7 @@ import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { CourseArt, EmptyState, PageHeading } from "../shared";
 import { courseSchema, safeImage, vimeoEmbed, type Course } from "@/lib/model";
+import { BRAZILIAN_UFS, ALL_MODULES_MAP } from "@/lib/cartorio-modules";
 
 const uuid = () => crypto.randomUUID();
 
@@ -36,6 +37,7 @@ export function CourseEditor({ id }: { id: string }) {
           banner: "",
           logoUrl: "",
           author: "Equipe DOC-Academy",
+          department: "",
           passingScore: 70,
           retryPolicy: "free",
           version: 1,
@@ -246,6 +248,45 @@ export function CourseEditor({ id }: { id: string }) {
                 <span>Responsável pelo conteúdo</span>
                 <input value={course.author} onChange={event => field("author", event.target.value)} />
               </label>
+              <label className="field">
+                <span>Setor específico (opcional)</span>
+                <select value={course.department || ""} onChange={event => field("department", event.target.value || undefined)}>
+                  <option value="">Todos os setores (Geral)</option>
+                  {state.departments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Público-alvo do curso</span>
+                <select
+                  value={course.audience || "internal"}
+                  onChange={event => field("audience", event.target.value as "internal" | "client" | "both")}
+                >
+                  <option value="internal">Colaboradores DeMaria (Interno)</option>
+                  <option value="client">Clientes Cartórios (Certificação)</option>
+                  <option value="both">Ambos os Públicos (Interno e Clientes)</option>
+                </select>
+                <small>Define se o curso aparecerá para colaboradores internos ou cartórios parceiros.</small>
+              </label>
+
+              {(course.audience === "client" || course.audience === "both") && (
+                <label className="field">
+                  <span>Módulo Vinculado (Opcional)</span>
+                  <select
+                    value={course.requiredModules?.[0] || ""}
+                    onChange={event => field("requiredModules", event.target.value ? [event.target.value] : [])}
+                  >
+                    <option value="">Geral para todos os clientes</option>
+                    {Object.values(ALL_MODULES_MAP).map(mod => (
+                      <option key={mod.key} value={mod.key}>
+                        [{mod.family}] {mod.code} — {mod.name}
+                      </option>
+                    ))}
+                  </select>
+                  <small>Apenas cartórios que contrataram este módulo terão acesso ao curso.</small>
+                </label>
+              )}
             </div>
             <label className="field">
               <span>Link do banner (opcional)</span>
@@ -395,6 +436,31 @@ export function CourseEditor({ id }: { id: string }) {
                       }
                     />
                   </label>
+                  {(course.audience === "client" || course.audience === "both") && (
+                    <label className="field">
+                      <span>Variação por UF (Selagem / Estadual)</span>
+                      <select
+                        value={lesson.ufFilter?.[0] || ""}
+                        onChange={event =>
+                          field(
+                            "lessons",
+                            course.lessons.map(item =>
+                              item.id === lesson.id
+                                ? { ...item, ufFilter: event.target.value ? [event.target.value] : undefined }
+                                : item
+                            )
+                          )
+                        }
+                      >
+                        <option value="">Todas as UFs (Padrão)</option>
+                        {BRAZILIAN_UFS.map(uf => (
+                          <option key={uf.uf} value={uf.uf}>
+                            {uf.uf} — {uf.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                 </div>
                 {lesson.type === "video" && (
                   <label className="field">

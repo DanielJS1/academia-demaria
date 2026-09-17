@@ -1,16 +1,57 @@
 import { z } from "zod";
 
 export const questionSchema = z.object({ id: z.string(), prompt: z.string().min(1), type: z.enum(["choice", "text"]), options: z.array(z.string()), correct: z.string() });
-export const lessonSchema = z.object({ id: z.string(), title: z.string().min(1), module: z.string(), minutes: z.number().nonnegative(), type: z.enum(["video", "reading", "quiz"]), content: z.string(), videoUrl: z.string(), questions: z.array(questionSchema).optional(), attachmentPath: z.string().regex(/^pdf\/[a-f0-9-]+\.pdf$/).optional(), attachmentName: z.string().max(200).optional() });
+export const lessonSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1),
+  module: z.string(),
+  minutes: z.number().nonnegative(),
+  type: z.enum(["video", "reading", "quiz"]),
+  content: z.string(),
+  videoUrl: z.string(),
+  questions: z.array(questionSchema).optional(),
+  attachmentPath: z.string().regex(/^pdf\/[a-f0-9-]+\.pdf$/).optional(),
+  attachmentName: z.string().max(200).optional(),
+  ufFilter: z.array(z.string()).optional(),
+});
 export const courseSchema = z.object({
   id: z.string(), title: z.string().min(3).max(120), description: z.string(), product: z.string().min(1), category: z.string(), level: z.string(),
   accent: z.enum(["violet", "mint", "peach", "blue", "pink", "slate"]), status: z.enum(["draft", "published"]),
   xp: z.number().int().min(0).max(10000), required: z.boolean(), banner: z.string(), logoUrl: z.string().optional(), author: z.string(),
+  department: z.string().optional(),
+  audience: z.enum(["internal", "client", "both"]).optional().default("internal"),
+  requiredModules: z.array(z.string()).optional().default([]),
+  isSelagem: z.boolean().optional().default(false),
   lessons: z.array(lessonSchema), questions: z.array(questionSchema), passingScore: z.number().int().min(0).max(100),
   retryPolicy: z.enum(["free", "review", "admin"]), version: z.number().int().positive(),
 });
 export const articleSchema = z.object({ id: z.string(), title: z.string().min(3), product: z.string(), category: z.string(), content: z.string(), status: z.enum(["draft", "published"]), revision: z.number().int().positive(), updatedAt: z.string(), author: z.string() });
-export const personSchema = z.object({ id: z.string(), name: z.string().min(2), email: z.union([z.string().email(), z.literal("")]), department: z.string(), managerId: z.string(), role: z.enum(["student", "manager", "admin"]), status: z.enum(["active", "pending", "inactive"]), xp: z.number().nonnegative(), progress: z.number().min(0).max(100) });
+export const personSchema = z.object({
+  id: z.string(),
+  name: z.string().min(2),
+  email: z.union([z.string().email(), z.literal("")]),
+  department: z.string(),
+  managerId: z.string(),
+  role: z.enum(["student", "manager", "admin"]),
+  status: z.enum(["active", "pending", "inactive"]),
+  xp: z.number().nonnegative(),
+  progress: z.number().min(0).max(100),
+  audience: z.enum(["internal", "client"]).optional().default("internal"),
+  cartorioId: z.string().nullable().optional(),
+});
+export const cartorioSchema = z.object({
+  id: z.string(),
+  name: z.string().min(2),
+  city: z.string().default(""),
+  uf: z.string().length(2),
+  cns: z.string().optional(),
+  modules: z.array(z.string()).default([]),
+  keyUserId: z.string().optional(),
+  keyUserName: z.string().optional(),
+  keyUserEmail: z.string().optional(),
+  status: z.enum(["active", "inactive"]).default("active"),
+  createdAt: z.string().default(() => new Date().toISOString()),
+});
 export const notificationSchema = z.object({
   id: z.string(),
   userId: z.string().default(""),
@@ -28,18 +69,31 @@ export const stateSchema = z.object({
   bookmarks: z.array(z.string()), attempts: z.array(attemptSchema), xpEvents: z.array(z.object({ id: z.string(), amount: z.number(), season: z.string(), label: z.string() })),
   readNotices: z.array(z.string()),
   notifications: z.array(notificationSchema).default([]),
+  teamProgress: z.record(z.string(), z.record(z.string(), z.array(z.string()))).default({}),
+  cartorios: z.array(cartorioSchema).default([]),
 });
 export type Notification = z.infer<typeof notificationSchema>;
 export type Course = z.infer<typeof courseSchema>;
 export type Lesson = z.infer<typeof lessonSchema>;
 export type Article = z.infer<typeof articleSchema>;
 export type Person = z.infer<typeof personSchema>;
+export type Cartorio = z.infer<typeof cartorioSchema>;
 export type Attempt = z.infer<typeof attemptSchema>;
 export type AcademyState = z.infer<typeof stateSchema>;
 
-export function courseProgress(course: Course, completed: string[]) {
-  const activities = course.lessons.filter(lesson => lesson.type !== "quiz");
+export function courseProgress(course: Course, completed: string[], cartorioUf?: string) {
+  const visibleLessons = cartorioUf ? course.lessons.filter(l => !l.ufFilter || l.ufFilter.length === 0 || l.ufFilter.includes(cartorioUf)) : course.lessons;
+  const activities = visibleLessons.filter(lesson => lesson.type !== "quiz");
   return activities.length ? Math.round(activities.filter(lesson => completed.includes(lesson.id)).length / activities.length * 100) : 0;
+}
+export function isCourseAvailableForCartorio(course: Course, cartorio: Cartorio): boolean {
+  if (course.audience === "internal") return false;
+  if (!course.requiredModules || course.requiredModules.length === 0) return true;
+  return course.requiredModules.some(mod => cartorio.modules.includes(mod));
+}
+export function getCartorioLessons(course: Course, cartorioUf?: string): Lesson[] {
+  if (!cartorioUf) return course.lessons;
+  return course.lessons.filter(lesson => !lesson.ufFilter || lesson.ufFilter.length === 0 || lesson.ufFilter.includes(cartorioUf));
 }
 export const minutes = (course: Course) => course.lessons.reduce((sum, lesson) => sum + lesson.minutes, 0);
 export function vimeoEmbed(url: string): string | null {

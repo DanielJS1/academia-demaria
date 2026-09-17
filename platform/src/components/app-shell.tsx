@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Search, Settings2, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
+import { ArrowUpRight, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Search, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { experience } from "@/lib/gamification";
@@ -22,7 +22,7 @@ const notices = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
-  const { state, me, update, theme, toggleTheme, storageError, signOut } = useAcademy();
+  const { state, me, update, theme, toggleTheme, storageError, signOut, activeCartorio, simulatedCartorioId, setSimulatedCartorioId, isClientEnvironment } = useAcademy();
   const exp = experience(state);
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -90,8 +90,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isDocked = !isMobile && collapsed;
   const active = (href: string) => href === "/" ? path === "/" : path.startsWith(href);
 
+  const currentNav = isClientEnvironment
+    ? [
+        { href: "/", label: "Visão geral", icon: Home },
+        { href: "/aprender", label: "Aprender", icon: BookOpen },
+      ]
+    : navigation;
+
   const title = [
-    ...navigation,
+    ...currentNav,
     { href: "/equipe", label: "Minha equipe" },
     { href: "/admin", label: "Administração" },
     { href: "/sobre", label: "Sobre esta versão" },
@@ -99,12 +106,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const unread = notices.filter(item => !state.readNotices.includes(item.id)).length;
 
-  const allNavItems = [
-    ...navigation,
-    ...(me.role !== "student" ? [{ href: "/equipe", label: "Minha equipe", icon: Users }] : []),
-    ...(me.role === "admin" ? [{ href: "/admin", label: "Administração", icon: Settings2 }] : []),
-    { href: "/sobre", label: "Sobre a plataforma", icon: CircleHelp },
-  ];
+  const allNavItems = isClientEnvironment
+    ? currentNav
+    : [
+        ...navigation,
+        ...(me.role !== "student" ? [{ href: "/equipe", label: "Minha equipe", icon: Users }] : []),
+        ...(me.role === "admin" ? [{ href: "/admin", label: "Administração", icon: Settings2 }] : []),
+        { href: "/sobre", label: "Sobre a plataforma", icon: CircleHelp },
+      ];
 
   return (
     <div className="app">
@@ -204,10 +213,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         ) : (
           <>
-            <div className="workspace-label"><span className="workspace-dot"/> DeMaria <span className="workspace-tag">INTERNO</span></div>
-            <span className="nav-label">SEU ESPAÇO</span>
+            {isClientEnvironment ? (
+              <div className="workspace-label">
+                <span className="workspace-dot" style={{ background: "var(--mint-9)" }}/>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {activeCartorio ? activeCartorio.name : "Cartório Parceiro"}
+                </span>
+                <span className="workspace-tag" style={{ background: "var(--mint-4)", color: "var(--mint-11)" }}>
+                  {activeCartorio?.uf || "CLIENTE"}
+                </span>
+              </div>
+            ) : (
+              <div className="workspace-label"><span className="workspace-dot"/> DeMaria <span className="workspace-tag">INTERNO</span></div>
+            )}
+            <span className="nav-label">{isClientEnvironment ? "CAPACITAÇÃO" : "SEU ESPAÇO"}</span>
             <nav>
-              {navigation.map(({ href, label, icon: Icon, badge }) => (
+              {currentNav.map(({ href, label, icon: Icon, badge }: any) => (
                 <Link
                   className={`nav-item ${active(href) ? "active" : ""}`}
                   href={href}
@@ -221,37 +242,50 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Link>
               ))}
             </nav>
-            {me.role !== "student" && <span className="nav-label manage-label">GESTÃO</span>}
-            <nav>
-              {me.role !== "student" && (
-                <Link
-                  href="/equipe"
-                  className={`nav-item ${active("/equipe") ? "active" : ""}`}
-                  aria-current={active("/equipe") ? "page" : undefined}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <Users size={19}/> <span>Minha equipe</span>
-                </Link>
-              )}
-              {me.role === "admin" && (
-                <Link
-                  href="/admin"
-                  className={`nav-item ${active("/admin") ? "active" : ""}`}
-                  aria-current={active("/admin") ? "page" : undefined}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <Settings2 size={19}/> <span>Administração</span>
-                </Link>
-              )}
-            </nav>
+            {!isClientEnvironment && me.role !== "student" && <span className="nav-label manage-label">GESTÃO</span>}
+            {!isClientEnvironment && (
+              <nav>
+                {me.role !== "student" && (
+                  <Link
+                    href="/equipe"
+                    className={`nav-item ${active("/equipe") ? "active" : ""}`}
+                    aria-current={active("/equipe") ? "page" : undefined}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Users size={19}/> <span>Minha equipe</span>
+                  </Link>
+                )}
+                {me.role === "admin" && (
+                  <Link
+                    href="/admin"
+                    className={`nav-item ${active("/admin") ? "active" : ""}`}
+                    aria-current={active("/admin") ? "page" : undefined}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Settings2 size={19}/> <span>Administração</span>
+                  </Link>
+                )}
+              </nav>
+            )}
             <div className="sidebar-bottom">
               {!isMobile && (
-                <div className="sidebar-note">
-                  <span className="little-star"><Sparkles size={17}/></span>
-                  <strong>Conhecimento abre caminhos.</strong>
-                  <p>Um novo aprendizado.<br/>Uma nova possibilidade.</p>
-                  <Link href="/aprender">Explore os cursos <ArrowUpRight size={16}/></Link>
-                </div>
+                isClientEnvironment ? (
+                  activeCartorio && (
+                    <div className="sidebar-note">
+                      <span className="little-star"><ShieldCheck size={17}/></span>
+                      <strong>{activeCartorio.modules.length} módulos ativos</strong>
+                      <p>Trilha personalizada para as rotinas do seu cartório.</p>
+                      <Link href="/aprender">Ver meus cursos <ArrowUpRight size={16}/></Link>
+                    </div>
+                  )
+                ) : (
+                  <div className="sidebar-note">
+                    <span className="little-star"><Sparkles size={17}/></span>
+                    <strong>Conhecimento abre caminhos.</strong>
+                    <p>Um novo aprendizado.<br/>Uma nova possibilidade.</p>
+                    <Link href="/aprender">Explore os cursos <ArrowUpRight size={16}/></Link>
+                  </div>
+                )
               )}
               <Link className="help-link" href="/sobre" onClick={() => setMobileOpen(false)}><CircleHelp size={17}/> <span>Sobre a plataforma</span></Link>
               {isMobile ? (
@@ -293,7 +327,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <input ref={searchRef} aria-label="Buscar cursos" placeholder="O que você quer aprender?" value={search} onChange={event => setSearch(event.target.value)}/>
           </form>
           <div className="topbar-actions">
-            <Link href="/sobre" className="demo-tag"><span/> Piloto interno</Link>
+            {me.role === "admin" && (
+              <div className="sim-switcher-wrap desktop-only">
+                <select
+                  aria-label="Simular ambiente de cartório"
+                  className="sim-select"
+                  value={simulatedCartorioId || ""}
+                  onChange={e => setSimulatedCartorioId(e.target.value || null)}
+                >
+                  <option value="">Ambiente: Interno (DeMaria)</option>
+                  <optgroup label="Simular como Cartório Cliente">
+                    {(state.cartorios || []).map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.uf})
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+            )}
+            <Link href="/sobre" className="demo-tag"><span/> {isClientEnvironment ? "Área do Cliente" : "Piloto interno"}</Link>
             <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === "light" ? "Ativar tema escuro" : "Ativar tema claro"}>
               {theme === "light" ? <Moon size={19}/> : <Sun size={19}/>}
             </Button>
@@ -331,14 +384,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <span className="topbar-divider"/>
-            <Link href="/conquistas" className="profile" aria-label={`Ver minha evolução — Nível ${exp.level}, ${exp.total} XP`}>
-              <span className="avatar avatar-daniel">{me.name.slice(0,1)}</span>
-              <span className="profile-details desktop-only"><strong>{me.name.split(" ")[0]}</strong><span className="profile-level-badge"><Trophy size={10}/> Nível {exp.level} · {exp.total} XP</span></span>
-            </Link>
+            {isClientEnvironment ? (
+              <div className="profile" style={{ cursor: "default" }}>
+                <span className="avatar avatar-daniel" style={{ background: "var(--mint-9)", color: "#fff" }}>
+                  {me.name.slice(0, 1)}
+                </span>
+                <span className="profile-details desktop-only">
+                  <strong>{me.name.split(" ")[0]}</strong>
+                  <span className="profile-level-badge" style={{ background: "var(--mint-3)", color: "var(--mint-11)" }}>
+                    <ShieldCheck size={10} /> {activeCartorio?.uf || "Cliente"}
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <Link href="/conquistas" className="profile" aria-label={`Ver minha evolução — Nível ${exp.level}, ${exp.total} XP`}>
+                <span className="avatar avatar-daniel">{me.name.slice(0, 1)}</span>
+                <span className="profile-details desktop-only">
+                  <strong>{me.name.split(" ")[0]}</strong>
+                  <span className="profile-level-badge">
+                    <Trophy size={10} /> Nível {exp.level} · {exp.total} XP
+                  </span>
+                </span>
+              </Link>
+            )}
             <Link className="help-link desktop-only" href="/acesso">Minha senha</Link>
             <Button variant="ghost" className="desktop-only" onClick={signOut}>Sair</Button>
           </div>
         </header>
+        {simulatedCartorioId && activeCartorio && (
+          <div className="sim-notice-banner">
+            <span>
+              <strong>Simulação de Ambiente Ativa:</strong> Você está visualizando como <strong>{activeCartorio.name} ({activeCartorio.uf})</strong> — {activeCartorio.modules.length} módulos contratados.
+            </span>
+            <Button size="sm" variant="secondary" onClick={() => setSimulatedCartorioId(null)}>
+              Encerrar simulação
+            </Button>
+          </div>
+        )}
         {storageError && <div className="storage-warning" role="alert">Não foi possível atualizar os dados do servidor. Confira sua conexão e tente novamente.</div>}
         <main id="conteudo" className="main-content">{children}</main>
         <footer className="main-footer">

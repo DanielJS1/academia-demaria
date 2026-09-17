@@ -7,9 +7,14 @@ import { Button } from "./ui/button";
 import { CourseCard, PageHeading, SectionHeading } from "./shared";
 import { experience, DEMO_SEASON } from "@/lib/gamification";
 import { courseProgress } from "@/lib/model";
+import { ClientDashboard } from "./client-dashboard";
 import { initials, number } from "@/lib/utils";
 export function Dashboard() {
-  const { state, me } = useAcademy(); const courses = state.courses.filter(course => course.status === "published");
+  const { state, me, isClientEnvironment, activeCartorio } = useAcademy();
+  if (isClientEnvironment && activeCartorio) {
+    return <ClientDashboard cartorio={activeCartorio} />;
+  }
+  const courses = state.courses.filter(course => course.status === "published" && course.audience !== "client");
   const continuing = courses.filter(course => !isCourseComplete(course, state, me.id)).sort((a, b) => Number((state.completed[b.id] || []).length > 0) - Number((state.completed[a.id] || []).length > 0)).slice(0, 3);
   const active = courses.filter(course => (state.completed[course.id] || []).length > 0 && !isCourseComplete(course, state, me.id));
   const progress = active.length ? Math.round(active.reduce((sum, course) => sum + courseProgress(course, state.completed[course.id] || []), 0) / active.length) : 0;
