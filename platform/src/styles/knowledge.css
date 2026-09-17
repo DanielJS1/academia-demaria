@@ -427,6 +427,130 @@
   margin: 20px 0 12px;
 }
 
+.assistant-directory {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.assistant-intro {
+  padding: 28px;
+  margin-bottom: 30px;
+  background: linear-gradient(120deg, var(--lavender), var(--surface));
+}
+
+.assistant-intro h2 {
+  font-size: 21px;
+  margin: 18px 0 8px;
+}
+
+.assistant-intro p {
+  max-width: 650px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.assistant-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 34px;
+}
+
+.assistant-card {
+  min-width: 0;
+  padding: 17px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.assistant-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--line));
+  box-shadow: var(--shadow);
+}
+
+.assistant-card > svg {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.assistant-brand {
+  width: 58px;
+  height: 45px;
+  flex: 0 0 58px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+}
+
+.assistant-brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.state-flag img {
+  object-fit: contain;
+}
+
+.doc-windows-brand img {
+  object-fit: contain;
+  padding: 7px;
+}
+
+.assistant-copy {
+  min-width: 0;
+}
+
+.assistant-copy small,
+.assistant-copy strong,
+.assistant-copy > span {
+  display: block;
+}
+
+.assistant-copy small {
+  color: var(--primary);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.assistant-copy strong {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.assistant-copy > span {
+  color: var(--muted);
+  font-size: 9px;
+  margin-top: 5px;
+}
+
+.assistant-future-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.assistant-future-note svg {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+@media (max-width: 680px) {
+  .assistant-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .search-answer {
   background: var(--surface2);
   padding: 18px;
