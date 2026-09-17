@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, ExternalLink, FileText, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, SectionHeading } from "./shared";
 import { normalize } from "@/lib/utils";
+import { getAllUserNotes, exportCourseNotesTxt } from "./lesson-notepad";
 
 const salesAssistants = [
   {
@@ -32,9 +33,13 @@ const windowsAssistants = [
 ];
 
 export function Knowledge() {
-  const { state } = useAcademy();
+  const { state, me, notify } = useAcademy();
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca">("Consulta assistida");
+  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">("Consulta assistida");
+  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
+
+  const userNotes = getAllUserNotes(me.id);
+  const coursesWithNotes = state.courses.filter(c => userNotes[c.id] && Object.values(userNotes[c.id]).some(t => t && t.trim()));
 
   const q = normalize(search);
   const filteredSales = salesAssistants.filter(a => normalize(`${a.title} ${a.tag} ${a.description}`).includes(q));
@@ -84,6 +89,14 @@ export function Knowledge() {
         </button>
         <button
           type="button"
+          className={tab === "Anotações" ? "selected" : ""}
+          aria-pressed={tab === "Anotações"}
+          onClick={() => setTab("Anotações")}
+        >
+          <FileText size={16}/> Minhas Anotações ({coursesWithNotes.length})
+        </button>
+        <button
+          type="button"
           className="tab-disabled"
           disabled
           aria-disabled="true"
@@ -93,7 +106,91 @@ export function Knowledge() {
         </button>
       </div>
 
-      {tab === "Biblioteca" ? (
+      {tab === "Anotações" ? (
+        <section className="notes-directory">
+          <SectionHeading
+            title="Seu Caderno de Estudos"
+            description="Anotações feitas durante as aulas, organizadas por curso com opção de download em arquivo .txt"
+          />
+          {coursesWithNotes.length ? (
+            <div style={{ display: "grid", gap: 20 }}>
+              {coursesWithNotes.map(course => {
+                const notes = userNotes[course.id] || {};
+                const lessonsWithNotes = course.lessons.filter(l => notes[l.id] && notes[l.id].trim());
+                const isExpanded = expandedCourseId === course.id || coursesWithNotes.length === 1;
+
+                return (
+                  <div className="panel" key={course.id} style={{ padding: 24 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14 }}>
+                      <div>
+                        <span className="pill">{course.product}</span>
+                        <h3 style={{ fontSize: 19, margin: "8px 0 4px" }}>{course.title}</h3>
+                        <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+                          {lessonsWithNotes.length} {lessonsWithNotes.length === 1 ? "aula com anotação" : "aulas com anotações"} · {course.lessons.length} aulas no total
+                        </p>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            exportCourseNotesTxt(course.title, me.name || "Colaborador", course.lessons, notes);
+                            notify(`Arquivo .txt baixado com sucesso!`);
+                          }}
+                        >
+                          <Download size={14} /> Baixar Caderno (.txt)
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setExpandedCourseId(isExpanded ? null : course.id)}
+                        >
+                          {isExpanded ? "Ocultar anotações" : "Ver anotações"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--line)", display: "grid", gap: 14 }}>
+                        {lessonsWithNotes.map(l => (
+                          <div key={l.id} className="feedback" style={{ margin: 0 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
+                              <strong style={{ fontSize: 13, color: "var(--ink)" }}>
+                                Aula {course.lessons.findIndex(x => x.id === l.id) + 1}: {l.title}
+                              </strong>
+                              <Link
+                                href={`/aprender/${course.id}/aula?aula=${l.id}`}
+                                style={{ fontSize: 11, color: "var(--primary)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
+                              >
+                                Abrir aula no player <ArrowRight size={12} />
+                              </Link>
+                            </div>
+                            <p style={{ margin: 0, fontSize: 12, color: "var(--ink)", whiteSpace: "pre-wrap" }}>
+                              {notes[l.id]}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<FileText size={32} />}
+              title="Você ainda não fez anotações"
+              description="Ao assistir às aulas nos cursos, use o bloco de notas localizado logo abaixo do player para registrar suas considerações e dúvidas."
+            >
+              <Button asChild variant="secondary">
+                <Link href="/aprender">
+                  Explorar catálogo de cursos <ArrowRight size={15} />
+                </Link>
+              </Button>
+            </EmptyState>
+          )}
+        </section>
+      ) : tab === "Biblioteca" ? (
         <>
           <SectionHeading
             title={search ? `Resultados para “${search}”` : "Conhecimento para o seu dia a dia"}

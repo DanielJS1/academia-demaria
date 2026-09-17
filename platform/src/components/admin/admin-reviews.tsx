@@ -83,11 +83,42 @@ export function AdminReviews() {
 function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void }) {
   const { state, update, mutate, notify, busy } = useAcademy();
   const [correctTextIds, setCorrectTextIds] = useState<string[]>(attempt.correctTextIds || []);
+  const [partialTextIds, setPartialTextIds] = useState<string[]>(attempt.partialTextIds || []);
   const [score, setScore] = useState(attempt.score?.toString() || "");
   const [feedback, setFeedback] = useState(attempt.feedback);
   const pending = attempt.status === "pending";
 
   const studentName = state.people.find(person => person.id === attempt.userId)?.name || "Colaborador";
+
+  // Cálculo de pontuação sugerida
+  const calculateSuggestedScore = (nextCorrect: string[], nextPartial: string[]) => {
+    let earned = 0;
+    const total = attempt.questions.length;
+    if (total === 0) return 0;
+    for (const q of attempt.questions) {
+      if (q.type === "choice") {
+        if (attempt.answers[q.id] === q.correct) earned += 1;
+      } else {
+        if (nextCorrect.includes(q.id)) earned += 1;
+        else if (nextPartial.includes(q.id)) earned += 0.5;
+      }
+    }
+    return Math.round((earned / total) * 100);
+  };
+
+  const handleGradeChange = (questionId: string, grade: "correct" | "partial" | "wrong") => {
+    let nextCorrect = correctTextIds.filter(id => id !== questionId);
+    let nextPartial = partialTextIds.filter(id => id !== questionId);
+
+    if (grade === "correct") nextCorrect.push(questionId);
+    else if (grade === "partial") nextPartial.push(questionId);
+
+    setCorrectTextIds(nextCorrect);
+    setPartialTextIds(nextPartial);
+
+    const suggested = calculateSuggestedScore(nextCorrect, nextPartial);
+    setScore(String(suggested));
+  };
 
   return (
     <section className="panel form-panel">
@@ -95,26 +126,103 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
         ← Voltar às correções
       </Button>
       <h2 style={{ marginTop: 19 }}>{attempt.courseTitle}</h2>
-      <p>{studentName} · nota mínima {attempt.passingScore}%</p>
+      <p>{studentName} · nota mínima para aprovação: {attempt.passingScore}%</p>
 
-      {attempt.questions.map((question, index) => (
-        <div className="feedback" key={question.id}>
-          <strong>
-            {index + 1}. {question.prompt}
-          </strong>
-          <p style={{ margin: "9px 0" }}>Resposta: {attempt.answers[question.id]}</p>
-          {question.type === "choice" && <small>Gabarito da versão enviada: {question.correct}</small>}
-          {question.type === "text" && <label className="checkbox-field">
-            <input type="checkbox" disabled={!pending} checked={correctTextIds.includes(question.id)} onChange={event => setCorrectTextIds(current => event.target.checked ? [...current, question.id] : current.filter(id => id !== question.id))}/>
-            Resposta correta · +8 XP (uma vez por pergunta)
-          </label>}
-        </div>
-      ))}
+      {attempt.questions.map((question, index) => {
+        const studentAnswer = attempt.answers[question.id] || "—";
+        const studentComment = attempt.answers[`${question.id}__comment`];
+        const isChoice = question.type === "choice";
+        const isCorrectChoice = isChoice && studentAnswer === question.correct;
+        const currentGrade = correctTextIds.includes(question.id)
+          ? "correct"
+          : partialTextIds.includes(question.id)
+          ? "partial"
+          : "wrong";
+
+        return (
+          <div className="feedback" key={question.id} style={{ borderLeft: isChoice ? (isCorrectChoice ? "4px solid #48bb78" : "4px solid #e53e3e") : "4px solid var(--primary)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+              <strong>
+                {index + 1}. {question.prompt}
+              </strong>
+              {isChoice ? (
+                <span className={`pill ${isCorrectChoice ? "green" : ""}`}>
+                  {isCorrectChoice ? "Correta (+5 XP automático)" : "Incorreta (0 XP)"}
+                </span>
+              ) : (
+                <span className="pill">Dissertativa</span>
+              )}
+            </div>
+
+            <p style={{ margin: "8px 0", background: "var(--surface)", padding: 10, borderRadius: 6, border: "1px solid var(--line)" }}>
+              <strong style={{ color: "var(--muted)", fontSize: 11, display: "block" }}>Resposta do aluno:</strong>
+              {studentAnswer}
+            </p>
+
+            {studentComment && (
+              <div style={{ margin: "8px 0", padding: "8px 12px", background: "var(--lavender)", borderRadius: 6, fontSize: 11, color: "var(--ink)" }}>
+                <strong>Comentário / Justificativa do aluno:</strong> {studentComment}
+              </div>
+            )}
+
+            {isChoice && (
+              <small style={{ display: "block", color: "var(--muted)" }}>
+                Gabarito oficial: <strong>{question.correct}</strong>
+              </small>
+            )}
+
+            {!isChoice && pending && (
+              <div style={{ marginTop: 12, padding: "10px 12px", background: "var(--surface)", borderRadius: 6, border: "1px solid var(--line)" }}>
+                <span style={{ fontSize: 11, fontWeight: 600, display: "block", marginBottom: 8 }}>
+                  Avaliação da resposta dissertativa:
+                </span>
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                  <label className="choice-option" style={{ margin: 0, padding: "6px 12px", fontSize: 11, cursor: "pointer" }}>
+                    <input
+                      type="radio"
+                      name={`grade_${question.id}`}
+                      checked={currentGrade === "correct"}
+                      onChange={() => handleGradeChange(question.id, "correct")}
+                    />
+                    Correta (+8 XP)
+                  </label>
+                  <label className="choice-option" style={{ margin: 0, padding: "6px 12px", fontSize: 11, cursor: "pointer" }}>
+                    <input
+                      type="radio"
+                      name={`grade_${question.id}`}
+                      checked={currentGrade === "partial"}
+                      onChange={() => handleGradeChange(question.id, "partial")}
+                    />
+                    Parcialmente correta (+4 XP)
+                  </label>
+                  <label className="choice-option" style={{ margin: 0, padding: "6px 12px", fontSize: 11, cursor: "pointer" }}>
+                    <input
+                      type="radio"
+                      name={`grade_${question.id}`}
+                      checked={currentGrade === "wrong"}
+                      onChange={() => handleGradeChange(question.id, "wrong")}
+                    />
+                    Incorreta (0 XP)
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {!isChoice && !pending && (
+              <div style={{ marginTop: 8 }}>
+                <span className={`pill ${currentGrade === "correct" ? "green" : currentGrade === "partial" ? "amber" : ""}`}>
+                  {currentGrade === "correct" ? "Avaliada como Correta (+8 XP)" : currentGrade === "partial" ? "Avaliada como Parcialmente Correta (+4 XP)" : "Avaliada como Incorreta (0 XP)"}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       <form
         onSubmit={async event => {
           event.preventDefault();
-          const success = await mutate({type:"review",id:attempt.id,score:Number(score),feedback:feedback.trim(),correctTextIds});
+          const success = await mutate({type:"review",id:attempt.id,score:Number(score),feedback:feedback.trim(),correctTextIds,partialTextIds});
           if (success) {
             notify("Resultado publicado.");
             close();
@@ -123,7 +231,7 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
       >
         <div className="form-grid">
           <label className="field">
-            <span>Nota final (0 a 100)</span>
+            <span>Nota final calculada (0 a 100)</span>
             <input
               type="number"
               min={0}
@@ -136,7 +244,7 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
             />
           </label>
           <div className="info-note" style={{ alignSelf: "start" }}>
-            Acertos: objetiva +5 XP; dissertativa marcada como correta +8 XP. Aprovação: +30 XP na primeira tentativa ou +10 XP após reprovação. Acertos não geram XP repetido.
+            Critérios: Objetiva +5 XP; Dissertativa Correta +8 XP; Dissertativa Parcial +4 XP. Aprovação (+30 XP) exige nota &ge; {attempt.passingScore}%.
           </div>
         </div>
         <label className="field">

@@ -27,5 +27,12 @@ export function courseValidationError(course: Course, publish: boolean): string 
       if(publish&&(!q.prompt.trim()||(q.type==="choice"&&(q.options.length<2||new Set(q.options).size!==q.options.length||q.options.some(o=>!o.trim())||!q.options.includes(q.correct)))))return `${label}, pergunta ${qi+1}: confira enunciado, alternativas e gabarito.`;
     }
   }
+  if (publish && course.hasProficiencyTest && course.proficiencyQuestions && course.proficiencyQuestions.length > 0) {
+    for (const [qi, q] of course.proficiencyQuestions.entries()) {
+      if (!q.prompt.trim() || (q.type === "choice" && (q.options.length < 2 || new Set(q.options).size !== q.options.length || q.options.some(o => !o.trim()) || !q.options.includes(q.correct)))) {
+        return `Prova de Proficiência, pergunta ${qi + 1}: confira enunciado, alternativas e gabarito.`;
+      }
+    }
+  }
   return null;
 }

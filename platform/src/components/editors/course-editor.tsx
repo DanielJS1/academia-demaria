@@ -43,6 +43,9 @@ export function CourseEditor({ id }: { id: string }) {
           isSelagem: false,
           passingScore: 70,
           retryPolicy: "free",
+          hasProficiencyTest: false,
+          proficiencyScore: 85,
+          proficiencyQuestions: [],
           version: 1,
           lessons: [],
           questions: [],
@@ -504,7 +507,52 @@ export function CourseEditor({ id }: { id: string }) {
             {!course.lessons.length && <div className="info-note">Adicione a primeira atividade para montar seu curso.</div>}
           </section>
 
+          <section className="panel form-panel">
+            <div className="section-title">
+              <div>
+                <h2>Prova de Proficiência (Aceleração de Conteúdo)</h2>
+                <p style={{ margin: 0, fontSize: 11, color: "var(--muted)" }}>
+                  Permite que colaboradores antigos e experientes comprovem conhecimento prévio e liberem todo o XP do curso imediatamente.
+                </p>
+              </div>
+            </div>
 
+            <label className="checkbox-field" style={{ margin: "14px 0" }}>
+              <input
+                type="checkbox"
+                checked={!!course.hasProficiencyTest}
+                onChange={event => field("hasProficiencyTest", event.target.checked)}
+              />
+              <strong>Habilitar Prova de Proficiência neste curso</strong>
+            </label>
+
+            {course.hasProficiencyTest && (
+              <div style={{ marginTop: 16, display: "grid", gap: 16 }}>
+                <label className="field" style={{ maxWidth: 240 }}>
+                  <span>Nota mínima para dispensa (%)</span>
+                  <input
+                    type="number"
+                    min={50}
+                    max={100}
+                    value={course.proficiencyScore || 85}
+                    onChange={event => field("proficiencyScore", Number(event.target.value))}
+                  />
+                  <small>Padrão: 85%. Com essa pontuação o aluno conclui o curso de imediato.</small>
+                </label>
+
+                <div>
+                  <h3 style={{ fontSize: 13, marginBottom: 6 }}>Questões da Prova de Proficiência</h3>
+                  <p style={{ fontSize: 11, color: "var(--muted)", marginBottom: 12 }}>
+                    Cadastre as perguntas de validação. Caso nenhuma seja cadastrada aqui, o sistema utilizará as perguntas das avaliações do curso.
+                  </p>
+                  <ActivityQuestions
+                    questions={course.proficiencyQuestions || []}
+                    onChange={questions => field("proficiencyQuestions", questions)}
+                  />
+                </div>
+              </div>
+            )}
+          </section>
         </div>
 
         <aside className="editor-aside">
