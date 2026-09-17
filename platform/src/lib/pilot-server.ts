@@ -184,7 +184,6 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
    key_user_name:command.data.keyUserName,
    key_user_email:command.data.keyUserEmail,
    status:command.data.status,
-   updated_at:new Date().toISOString(),
   });
   if(error)throw new ApiError(error.message);
   return;

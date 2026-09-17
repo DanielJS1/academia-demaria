@@ -13,6 +13,7 @@ export function AcademyProvider({children}:{children:ReactNode}){
  const path=usePathname();const [state,setState]=useState(empty);const current=useRef(state);
  const [me,setMe]=useState<Me|null>(null);const [authenticated,setAuthenticated]=useState(false);const [ready,setReady]=useState(false);const [sessionChecked,setSessionChecked]=useState(false);
  const [error,setError]=useState("");const [busy,setBusy]=useState(false);const busyRef=useRef(false);const [toast,setToast]=useState("");const [theme,setTheme]=useState("light");const identity=useRef("");
+ const [simulatedCartorioId, setSimulatedCartorioId] = useState<string | null>(null);
  const auth=browserAuth();
  const request=useCallback(async(command?:Command)=>{
   const client=browserAuth();const session=await client?.auth.getSession();const token=session?.data.session?.access_token;
@@ -60,7 +61,6 @@ export function AcademyProvider({children}:{children:ReactNode}){
  if(!auth||!authenticated||path==="/acesso")return <AccessScreen configured={!!auth} signedIn={authenticated}/>;
  if(error&&!ready)return <div className="access-page"><section className="panel access-card"><h1>Vamos conferir seu acesso</h1><p role="alert">{error}</p><button className="button button-primary" onClick={()=>void refresh()}>Tentar novamente</button><button className="button button-secondary" onClick={signOut}>Sair da conta</button></section></div>;
  if(!ready||!me)return <div className="access-page"><p>Carregando sua jornada…</p></div>;
- const [simulatedCartorioId, setSimulatedCartorioId] = useState<string | null>(null);
 
  const activeCartorio = (me?.cartorioId ? state.cartorios.find(c => c.id === me.cartorioId) : null)
   || (simulatedCartorioId ? state.cartorios.find(c => c.id === simulatedCartorioId) : null)
