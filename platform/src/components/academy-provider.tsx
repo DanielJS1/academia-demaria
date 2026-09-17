@@ -36,7 +36,7 @@ export function AcademyProvider({children}:{children:ReactNode}){
  useEffect(()=>{
   try{const saved=localStorage.getItem("doc-academy.theme");setTheme(saved|| (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"));}catch{}
   if(!auth){setSessionChecked(true);return;}
-  const {data}=auth.auth.onAuthStateChange((_event,session)=>{
+   const {data}=auth.auth.onAuthStateChange((_event: any,session: any)=>{
    const id=session?.user.id??"";
    if(identity.current!==id){identity.current=id;setMe(null);setReady(false);current.current=empty;setState(empty);setError("");}
    setAuthenticated(!!session);setSessionChecked(true);

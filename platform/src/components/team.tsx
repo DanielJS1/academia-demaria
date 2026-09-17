@@ -1070,7 +1070,7 @@ function TeamCoursesView({
                           >
                             {item.progress}%
                           </span>
-                          {item.score !== undefined && (
+                          {item.score !== undefined && item.score !== null && (
                             <small
                               style={{
                                 display: "block",

@@ -49,6 +49,7 @@ describe("regras da demonstração", () => {
       uf: "SP" as const,
       city: "Santos",
       modules: ["WIN:C", "WIN:E", "AOL:D"],
+      status: "active" as const,
       createdAt: "2026-09-17",
       updatedAt: "2026-09-17",
     };

@@ -93,17 +93,17 @@ export function ClientDashboard({ cartorio }: ClientDashboardProps) {
 
           <div className="client-hero-actions">
             {isCertified ? (
-              <Button variant="mint" size="lg" onClick={() => setCertOpen(true)}>
+              <Button variant="mint" onClick={() => setCertOpen(true)}>
                 <Award size={18} /> Visualizar Certificado DeMaria
               </Button>
             ) : continuing[0] ? (
-              <Button asChild variant="primary" size="lg">
+              <Button asChild variant="default">
                 <Link href={`/aprender/${continuing[0].id}/aula`}>
                   <PlayCircle size={18} /> Continuar: {continuing[0].title}
                 </Link>
               </Button>
             ) : (
-              <Button asChild variant="secondary" size="lg">
+              <Button asChild variant="secondary">
                 <Link href="/aprender">
                   <BookOpen size={18} /> Iniciar primeiro curso
                 </Link>

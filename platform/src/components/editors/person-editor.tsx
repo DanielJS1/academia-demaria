@@ -30,6 +30,8 @@ export function PersonEditor({ id }: { id: string }) {
           status: "pending",
           xp: 0,
           progress: 0,
+          audience: "internal",
+          cartorioId: null,
         }
   );
   const [error, setError] = useState("");

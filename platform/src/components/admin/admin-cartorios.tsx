@@ -344,7 +344,7 @@ export function AdminCartorios() {
                 <Button type="button" variant="ghost" onClick={cancelEdit} disabled={busy}>
                   Cancelar
                 </Button>
-                <Button type="submit" variant="primary" disabled={busy}>
+                <Button type="submit" variant="default" disabled={busy}>
                   {busy ? "Salvando…" : isCreating ? "Cadastrar Cartório" : "Salvar Alterações"}
                 </Button>
               </footer>
@@ -381,7 +381,7 @@ export function AdminCartorios() {
           </select>
         </div>
 
-        <Button onClick={startCreate} variant="primary">
+        <Button onClick={startCreate} variant="default">
           <Plus size={16} /> Cadastrar Cartório
         </Button>
       </div>

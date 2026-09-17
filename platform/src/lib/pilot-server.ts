@@ -36,7 +36,7 @@ function ensure(result:{error:unknown}){if(result.error)throw new ApiError("Não
 export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  async function all(table:string,columns="*",field?:string,value?:string){
   const rows:Record<string,any>[]=[];
-  for(let offset=0;;offset+=1000){let query=db.from(table).select(columns).range(offset,offset+999);query=table==="academy_progress"?query.order("user_id").order("course_id").order("version").order("lesson_id"):query.order("id");if(field)query=query.eq(field,value!);const result=await query;ensure(result);const page=result.data??[];rows.push(...page as unknown as Record<string,any>[]);if(page.length<1000)break;}
+  for(let offset=0;;offset+=1000){let query=db.from(table).select(columns).range(offset,offset+999);query=table==="academy_progress"?query.order("user_id").order("course_id").order("version").order("lesson_id"):query.order("id");if(field)query=query.eq(field,value!);const result=await query;if(result.error){if(table==="academy_cartorios")return {data:[],error:null};ensure(result);}const page=result.data??[];rows.push(...page as unknown as Record<string,any>[]);if(page.length<1000)break;}
   return {data:rows,error:null};
  }
  const results=await Promise.all([
@@ -49,13 +49,13 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  ]);
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,xp,preferences,cartoriosResult]=results;
- const courses:Course[]=(resources.data??[]).filter(r=>r.kind==="course"&&r.published).map(r=>({...r.published,xp:courseXp(r.published)}));
+ const courses:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,xp:courseXp(r.published)}));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))}))});
  const completion:Record<string,string[]>={};
  for(const row of progress.data??[])if(row.user_id===me.id&&row.done&&courses.some(c=>c.id===row.course_id&&c.version===row.version))(completion[row.course_id]??=[]).push(row.lesson_id);
  const season=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric"});
  const norm = (s?: string) => (s || "").trim().toLowerCase();
- const managedIds=new Set((profiles.data??[]).filter(p=>me.role==="admin"||p.manager_id===me.id||(me.role==="manager"&&me.department&&p.department&&norm(p.department)===norm(me.department))||p.id===me.id).map(p=>p.id));
+ const managedIds=new Set((profiles.data??[]).filter((p: any)=>me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(!p.manager_id&&p.department&&norm(p.department)===norm(me.department))))).map((p: any)=>p.id));
  const teamProgress:Record<string,Record<string,string[]>>={};
  if(me.role==="admin"||me.role==="manager"){
   for(const row of progress.data??[]){
@@ -65,10 +65,10 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
    }
   }
  }
- const people=(profiles.data??[]).filter(p=>p.status!=="inactive"||me.role==="admin"||p.id===me.id).map(p=>{
-  const report=me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(p.department&&p.department&&norm(p.department)===norm(me.department))));
-  const total=courses.reduce((n,c)=>n+c.lessons.filter(l=>l.type!=="quiz").length,0);
-  const done=(progress.data??[]).filter(r=>r.user_id===p.id&&r.done&&courses.some(c=>c.id===r.course_id&&c.version===r.version&&c.lessons.some(l=>l.id===r.lesson_id&&l.type!=="quiz"))).length;
+ const people=(profiles.data??[]).filter((p: any)=>p.status!=="inactive"||me.role==="admin"||p.id===me.id).map((p: any)=>{
+  const report=me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(!p.manager_id&&p.department&&norm(p.department)===norm(me.department))));
+  const total=courses.reduce((n: number,c: Course)=>n+c.lessons.filter(l=>l.type!=="quiz").length,0);
+  const done=(progress.data??[]).filter((r: any)=>r.user_id===p.id&&r.done&&courses.some(c=>c.id===r.course_id&&c.version===r.version&&c.lessons.some(l=>l.id===r.lesson_id&&l.type!=="quiz"))).length;
   return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter((x: any)=>x.user_id===p.id&&x.season===season).reduce((n: number,x: any)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0,audience:(p.audience??"internal") as "internal"|"client",cartorioId:p.cartorio_id??undefined};
  });
  const cartorios:Cartorio[]=(cartoriosResult.data??[]).map((c: any)=>({
@@ -76,12 +76,12 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   keyUserId:c.key_user_id??undefined,keyUserName:c.key_user_name??undefined,keyUserEmail:c.key_user_email??undefined,
   status:c.status??"active",createdAt:c.created_at??new Date().toISOString()
  }));
- const visibleAttempts=(attempts.data??[]).filter(a=>me.role==="admin"||managedIds.has(a.user_id));
+ const visibleAttempts=(attempts.data??[]).filter((a: any)=>me.role==="admin"||managedIds.has(a.user_id));
  const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:(resources.data??[]).filter((r: any)=>r.kind==="article"&&r.published).map((r: any)=>r.published as Article),articleDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="article"&&r.draft).map((r: any)=>r.draft):[],people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
   teamProgress,cartorios};
- return {state,me:{id:me.id,name:me.name,email:me.email,department:me.department,role:me.role}};
+ return {state,me:{id:me.id,name:me.name,email:me.email,department:me.department,role:me.role,audience:me.audience??"internal",cartorioId:me.cartorio_id??null}};
 }
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");

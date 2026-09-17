@@ -9,6 +9,7 @@ const lessons = (prefix: string): Lesson[] => [
 ];
 const base: Omit<Course, "id" | "title" | "description" | "product" | "accent" | "lessons"> = {
   category: "Produtos", level: "Essencial", status: "published", xp: 420, required: false, banner: "", author: "Equipe DOC-Academy", passingScore: 70, retryPolicy: "free", version: 1,
+  audience: "internal", requiredModules: [], isSelagem: false,
   questions: [
     { id: "q1", prompt: "Onde você encontra a sequência de aulas nesta demonstração?", type: "choice", options: ["No programa do curso, ao lado da atividade", "Somente no painel administrativo", "A sequência não está disponível"], correct: "No programa do curso, ao lado da atividade" },
     { id: "q2", prompt: "O que tornaria esta experiência de aprendizado mais útil no seu dia a dia?", type: "text", options: [], correct: "" },
@@ -84,12 +85,12 @@ export const initialState: AcademyState = {
   ],
   departments: ["Comercial", "Financeiro", "Desenvolvimento WIN", "Suporte técnico"], products: ["DOC-Windows", "DOC-MultiScan", "Conhecimentos gerais", "DOC-Academy"],
   people: [
-    { id: "daniel", name: "Daniel", email: "daniel@example.com", department: "Comercial", managerId: "daniel", role: "admin", status: "active", xp: 1320, progress: 50 },
-    { id: "ana", name: "Ana Martins", email: "ana@example.com", department: "Comercial", managerId: "daniel", role: "student", status: "active", xp: 2860, progress: 88 },
-    { id: "lucas", name: "Lucas Oliveira", email: "lucas@example.com", department: "Comercial", managerId: "daniel", role: "student", status: "active", xp: 2540, progress: 75 },
-    { id: "mariana", name: "Mariana Costa", email: "mariana@example.com", department: "Financeiro", managerId: "mariana", role: "manager", status: "active", xp: 2280, progress: 68 },
-    { id: "pedro", name: "Pedro Santos", email: "pedro@example.com", department: "Financeiro", managerId: "mariana", role: "student", status: "active", xp: 1950, progress: 61 },
-    { id: "julia", name: "Júlia Lima", email: "julia@example.com", department: "Comercial", managerId: "daniel", role: "student", status: "active", xp: 1680, progress: 54 },
+    { id: "daniel", name: "Daniel", email: "daniel@example.com", department: "Comercial", managerId: "daniel", role: "admin", status: "active", xp: 1320, progress: 50, audience: "internal" },
+    { id: "ana", name: "Ana Martins", email: "ana@example.com", department: "Comercial", managerId: "daniel", role: "student", status: "active", xp: 2860, progress: 88, audience: "internal" },
+    { id: "lucas", name: "Lucas Oliveira", email: "lucas@example.com", department: "Comercial", managerId: "daniel", role: "student", status: "active", xp: 2540, progress: 75, audience: "internal" },
+    { id: "mariana", name: "Mariana Costa", email: "mariana@example.com", department: "Financeiro", managerId: "mariana", role: "manager", status: "active", xp: 2280, progress: 68, audience: "internal" },
+    { id: "pedro", name: "Pedro Santos", email: "pedro@example.com", department: "Financeiro", managerId: "mariana", role: "student", status: "active", xp: 1950, progress: 61, audience: "internal" },
+    { id: "julia", name: "Júlia Lima", email: "julia@example.com", department: "Comercial", managerId: "daniel", role: "student", status: "active", xp: 1680, progress: 54, audience: "internal" },
     { id: "maria-cartorio", name: "Maria Helena Souza", email: "maria@cartoriosantos.com.br", department: "Cartório Cliente", managerId: "", role: "student", status: "active", xp: 540, progress: 60, audience: "client", cartorioId: "cart-santos-1" },
   ],
   completed: { "doc-windows": ["win-1", "win-2"], "multiscan": ["scan-1"] }, bookmarks: ["atendimento"],
