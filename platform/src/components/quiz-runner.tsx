@@ -207,7 +207,7 @@ export function QuizRunner({
             Questão <strong>{currentIndex + 1}</strong> de {questions.length}
           </span>
         </div>
-        <div className="quiz-runner-progressbar" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100}>
+        <div className="quiz-runner-progressbar" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progresso da avaliação: ${progressPercent}%`}>
           <div className="quiz-runner-progress-fill" style={{ width: `${progressPercent}%` }} />
         </div>
       </div>
@@ -236,6 +236,7 @@ export function QuizRunner({
                         value={option}
                         checked={isSelected}
                         onChange={() => handleSelectChoice(option)}
+                        aria-label={option}
                       />
                       <span className="choice-text">{option}</span>
                       {isSelected && <Check size={16} className="choice-check-icon" />}

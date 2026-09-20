@@ -5,41 +5,58 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 9px 16px;
-  min-height: 40px;
+  padding: 8px 16px;
+  min-height: 38px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.16s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.16s cubic-bezier(0.16, 1, 0.3, 1), 
+              color 0.16s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
+  user-select: none;
 }
 
 .button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
-.button-primary {
-  background: var(--primary);
-  color: white;
+.button:active:not(:disabled) {
+  transform: scale(0.98) translateY(1px);
 }
 
-.button-primary:hover {
+.button-primary {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+.button-primary:hover:not(:disabled) {
   background: var(--primary-hover);
+  box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
 }
 
 [data-theme="dark"] .button-primary {
-  color: #181126;
+  color: #ffffff;
 }
 
 .button-secondary {
   background: var(--surface);
   border-color: var(--line);
   color: var(--ink);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
 }
 
-.button-secondary:hover {
+.button-secondary:hover:not(:disabled) {
   background: var(--surface2);
+  border-color: #cbd5e1;
+}
+
+[data-theme="dark"] .button-secondary:hover:not(:disabled) {
+  border-color: #334155;
 }
 
 .button-ghost {
@@ -47,23 +64,41 @@
   color: var(--muted);
 }
 
-.button-ghost:hover {
+.button-ghost:hover:not(:disabled) {
   background: var(--surface2);
   color: var(--ink);
 }
 
 .button-mint {
   background: var(--mint);
-  color: #1e3d36;
+  color: #ffffff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
 }
 
-.button-mint:hover {
-  background: #c0f6e6;
+.button-mint:hover:not(:disabled) {
+  background: #047857;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .button-mint {
+  background: #059669;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .button-mint:hover:not(:disabled) {
+  background: #10b981;
 }
 
 .button-danger {
-  background: #fbe8e8;
-  color: #aa4141;
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .button-danger {
+  background: #450a0a;
+  border-color: #7f1d1d;
+  color: #fca5a5;
 }
 
 .button-sm {
@@ -73,10 +108,10 @@
 }
 
 .button-icon {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
   padding: 8px;
 }
 
@@ -85,22 +120,42 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--lavender);
+  background: var(--accent-subtle);
+  border: 1px solid rgba(79, 70, 229, 0.15);
   color: var(--primary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 4px 10px;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
   border-radius: 6px;
 }
 
+[data-theme="dark"] .pill {
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
 .pill.green {
-  background: #ddf2e9;
-  color: #317a62;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+[data-theme="dark"] .pill.green {
+  background: #064e3b33;
+  border-color: #065f46;
+  color: #34d399;
 }
 
 .pill.amber {
-  background: #f8edce;
-  color: #916a23;
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+[data-theme="dark"] .pill.amber {
+  background: #78350f33;
+  border-color: #92400e;
+  color: #fbbf24;
 }
 
 /* Tabs */
@@ -172,12 +227,13 @@
   min-height: 40px;
   border-radius: 8px;
   color: var(--muted);
-  transition: border-color 0.15s ease;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .field-search:focus-within,
 .select-field:focus-within {
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 
 .field-search {

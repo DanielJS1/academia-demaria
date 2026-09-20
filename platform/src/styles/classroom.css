@@ -608,21 +608,23 @@ input[type="checkbox"] {
   gap: 12px;
   padding: 14px 16px;
   border-radius: 10px;
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--line);
   background: var(--surface);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
   user-select: none;
 }
 
 .choice-card:hover {
-  border-color: var(--primary);
-  background: var(--lavender);
+  border-color: rgba(99, 102, 241, 0.4);
+  background: var(--surface2);
+  transform: translateY(-1px);
 }
 
 .choice-card.is-selected {
   border-color: var(--primary);
-  background: var(--lavender);
+  background: var(--accent-subtle);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 .choice-card input[type="radio"] {

@@ -1,31 +1,37 @@
 :root {
-  --background: #f7f8fc;
+  --background: #f8fafc;
   --surface: #ffffff;
-  --surface2: #f2f3f8;
-  --ink: #262337;
-  --muted: #7c7b8d;
-  --line: #e9e8f0;
-  --primary: #7854d6;
-  --primary-hover: #6442bd;
-  --lavender: #f0eafa;
-  --mint: #abedda;
-  --shadow: 0 8px 32px #24104406;
-  --radius: 16px;
+  --surface2: #f1f5f9;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --lavender: #eef2ff;
+  --accent-subtle: #eef2ff;
+  --mint: #059669;
+  --mint-subtle: #ecfdf5;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 8px 24px -4px rgb(0 0 0 / 0.05);
+  --shadow-hover: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 16px 32px -6px rgb(0 0 0 / 0.08);
+  --radius: 12px;
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --background: #0b0c10;
-  --surface: #14161c;
-  --surface2: #1c1f27;
-  --ink: #eceef4;
-  --muted: #a6adbd;
-  --line: #2c303b;
-  --primary: #a586f4;
-  --primary-hover: #b79ff6;
-  --lavender: #242135;
-  --mint: #95dfc9;
-  --shadow: 0 8px 32px #00000013;
+  --background: #090d16;
+  --surface: #0f1523;
+  --surface2: #161e31;
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --line: #1e293b;
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --lavender: #1e1b4b;
+  --accent-subtle: #1e1b4b;
+  --mint: #10b981;
+  --mint-subtle: #064e3b33;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 8px 24px -4px rgb(0 0 0 / 0.35);
+  --shadow-hover: 0 4px 8px -2px rgb(0 0 0 / 0.35), 0 16px 32px -6px rgb(0 0 0 / 0.45);
   color-scheme: dark;
 }
 
@@ -37,9 +43,11 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--ink);
-  font-family: 'Inter Variable', Inter, system-ui, sans-serif;
+  font-family: 'Inter Variable', Inter, system-ui, -apple-system, sans-serif;
   font-size: 14px;
   line-height: 1.6;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -71,11 +79,13 @@ h1, h2, h3, h4 {
 }
 
 button, input, textarea, select {
-  outline-offset: 4px;
+  outline-offset: 2px;
 }
 
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 3px solid var(--primary);
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 
 svg {
@@ -87,8 +97,8 @@ input, textarea, select {
 }
 
 ::selection {
-  background: #d6c4ff;
-  color: #211539;
+  background: var(--accent-subtle);
+  color: var(--primary);
 }
 
 .skip-link {

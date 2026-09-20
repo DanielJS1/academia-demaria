@@ -67,9 +67,9 @@
   gap: 8px;
   background: var(--surface2);
   border: 1px solid var(--line);
-  border-radius: 9px;
-  padding: 10px 14px;
-  font-weight: 650;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
   font-size: 13px;
   margin-bottom: 24px;
 }
@@ -77,8 +77,9 @@
 .workspace-dot {
   width: 7px;
   height: 7px;
-  background: #4cb999;
+  background: var(--mint);
   border-radius: 50%;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
 }
 
 .workspace-tag {
@@ -106,13 +107,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  margin-bottom: 4px;
+  padding: 9px 12px;
+  margin-bottom: 3px;
   border-radius: 8px;
   color: var(--muted);
   font-size: 13px;
-  font-weight: 550;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  font-weight: 500;
+  transition: background-color 0.16s ease, color 0.16s ease;
 }
 
 .nav-item:hover {
@@ -121,17 +122,19 @@
 }
 
 .nav-item.active {
-  background: var(--lavender);
+  background: var(--accent-subtle);
   color: var(--primary);
-  font-weight: 650;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .nav-ai {
   margin-left: auto;
-  border: 1px solid #a18eb34d;
+  border: 1px solid rgba(79, 70, 229, 0.25);
   color: var(--primary);
+  background: var(--accent-subtle);
   padding: 1px 6px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   border-radius: 4px;
 }
