@@ -32,9 +32,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted);
+  transition: color 0.15s ease;
 }
 
 .focus-toggle-btn:hover {
@@ -81,14 +82,14 @@
   background: transparent;
   border: 1px solid var(--line);
   color: var(--muted);
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .dock-expand-btn:hover {
@@ -98,7 +99,7 @@
 }
 
 .dock-progress-pill {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--primary);
 }

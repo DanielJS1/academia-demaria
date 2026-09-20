@@ -4,13 +4,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  padding: 11px 17px;
+  gap: 8px;
+  padding: 9px 16px;
+  min-height: 40px;
   border-radius: 8px;
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 1.5;
-  transition: background 0.16s, transform 0.16s;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
   white-space: nowrap;
 }
 
@@ -66,14 +67,17 @@
 }
 
 .button-sm {
-  padding: 7px 12px;
-  font-size: 10px;
+  padding: 6px 12px;
+  min-height: 32px;
+  font-size: 12px;
 }
 
 .button-icon {
-  width: 35px;
-  height: 35px;
-  padding: 7px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 8px;
 }
 
 /* Pills & Badges */
@@ -83,9 +87,10 @@
   gap: 6px;
   background: var(--lavender);
   color: var(--primary);
-  font-size: 9px;
-  padding: 4px 8px;
-  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 
 .pill.green {
@@ -112,13 +117,15 @@
   border: 0;
   background: transparent;
   color: var(--muted);
-  padding: 11px 0 14px;
+  padding: 12px 2px 14px;
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 11px;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 550;
   border-bottom: 2px solid transparent;
   white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .tabs .selected {
@@ -134,16 +141,16 @@
 }
 
 .tab-pill-soon {
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: var(--surface2);
   border: 1px solid var(--line);
   color: var(--muted);
-  letter-spacing: 0.4px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  margin-left: 5px;
+  margin-left: 6px;
 }
 
 /* Filter Bar & Search Fields */
@@ -161,9 +168,16 @@
   gap: 10px;
   background: var(--surface);
   border: 1px solid var(--line);
-  padding: 10px 13px;
+  padding: 8px 14px;
+  min-height: 40px;
   border-radius: 8px;
   color: var(--muted);
+  transition: border-color 0.15s ease;
+}
+
+.field-search:focus-within,
+.select-field:focus-within {
+  border-color: var(--primary);
 }
 
 .field-search {
@@ -174,30 +188,36 @@
   width: 100%;
   background: transparent;
   border: 0;
-  font-size: 11px;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
 }
 
 .select-field select {
   border: 0;
   background: transparent;
-  font-size: 11px;
+  font-size: 14px;
+  color: var(--ink);
   min-width: 160px;
+  outline: none;
 }
 
 .select-standalone {
-  padding: 11px 13px;
+  padding: 8px 14px;
+  min-height: 40px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 14px;
+  color: var(--ink);
 }
 
 .results-label {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   margin-bottom: 18px;
   display: flex;
-  gap: 5px;
+  gap: 6px;
 }
 
 .results-label strong {
@@ -206,7 +226,7 @@
 
 .results-label > span {
   margin-left: auto;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 /* Empty State */

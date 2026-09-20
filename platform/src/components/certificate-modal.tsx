@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Award, CheckCircle2, Download, Printer, ShieldCheck, X } from "lucide-react";
 import { Button } from "./ui/button";
 import type { Cartorio } from "@/lib/model";
@@ -20,6 +21,17 @@ export function CertificateModal({
   onClose,
   completionDate,
 }: CertificateModalProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const dateFormatted = completionDate
@@ -41,13 +53,19 @@ export function CertificateModal({
   };
 
   return (
-    <div className="cert-modal-overlay" role="dialog" aria-modal="true">
-      <div className="cert-modal-dialog">
+    <div
+      className="cert-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cert-modal-title"
+      onClick={onClose}
+    >
+      <div className="cert-modal-dialog" onClick={event => event.stopPropagation()}>
         <div className="cert-modal-actions no-print">
           <Button variant="secondary" onClick={handlePrint}>
             <Printer size={16} /> Imprimir / Salvar PDF
           </Button>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar certificado">
             <X size={20} />
           </Button>
         </div>
@@ -71,7 +89,7 @@ export function CertificateModal({
               {/* Title */}
               <div className="cert-title-block">
                 <span className="cert-pretitle">CERTIFICADO DE CAPACITAÇÃO & CERTIFICAÇÃO OFICIAL</span>
-                <h1>Certificado de Proficiência</h1>
+                <h1 id="cert-modal-title">Certificado de Proficiência</h1>
                 <p>Por cumprimento integral do programa de capacitação técnica operacional.</p>
               </div>
 

@@ -215,24 +215,27 @@
 }
 
 .knowledge-callout .eyebrow {
-  font-size: 7px;
-  letter-spacing: 1.5px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .knowledge-callout h2 {
   font-size: 24px;
-  max-width: 300px;
-  letter-spacing: -0.8px;
+  max-width: 320px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
   line-height: 1.25;
   position: relative;
   z-index: 2;
 }
 
 .knowledge-callout p {
-  font-size: 10px;
-  line-height: 1.9;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--muted);
-  margin: 13px 0 22px;
+  margin: 12px 0 20px;
   position: relative;
   z-index: 2;
 }
@@ -267,8 +270,9 @@
 .coming-label {
   display: block;
   color: var(--muted);
-  font-size: 7px;
-  margin-top: 19px;
+  font-size: 11px;
+  font-weight: 550;
+  margin-top: 18px;
 }
 
 .knowledge-hero {
