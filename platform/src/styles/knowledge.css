@@ -23,32 +23,38 @@
 }
 
 .catalog-banner strong {
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink);
 }
 
 .catalog-banner p {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
 .catalog-banner .mini-icon {
-  width: 43px;
-  height: 43px;
+  width: 44px;
+  height: 44px;
   background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
 .catalog-count {
   margin-left: auto;
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 .catalog-count small {
   display: block;
-  font-size: 8px;
-  font-weight: 400;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--muted);
 }
 

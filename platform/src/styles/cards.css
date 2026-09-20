@@ -751,6 +751,23 @@
   color: var(--primary);
 }
 
+.completed-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mint);
+  font-weight: 600;
+}
+
+.progress-label {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.card-progress strong.completed-percent {
+  color: var(--mint);
+}
+
 .course-card h3 {
   font-size: 15px;
   font-weight: 650;
