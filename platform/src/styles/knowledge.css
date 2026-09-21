@@ -589,6 +589,235 @@
 }
 
 /* Evolution & Gamification */
+.evolution-profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 22px 26px;
+  margin-bottom: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.06);
+}
+
+.profile-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.profile-card-avatar-wrap {
+  position: relative;
+}
+
+.profile-card-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #e8ddf9;
+  color: #7955b4;
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--line), 0 6px 14px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.profile-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-card-initial {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.profile-card-avatar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-card-btn {
+  font-size: 11.5px;
+  height: 30px;
+  padding: 0 10px;
+  gap: 6px;
+}
+
+.profile-card-remove-btn {
+  font-size: 11.5px;
+  height: 30px;
+  padding: 0 8px;
+  color: #ef4444;
+  gap: 4px;
+}
+
+.profile-card-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.profile-card-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile-card-eyebrow {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--primary);
+  text-transform: uppercase;
+  display: block;
+}
+
+.profile-card-name {
+  font-size: 20px;
+  font-weight: 750;
+  color: var(--ink);
+  letter-spacing: -0.4px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.profile-card-email {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+}
+
+.profile-card-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.profile-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.profile-tag.department-tag {
+  background: var(--surface2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.profile-tag.role-tag {
+  background: var(--accent-subtle);
+  color: var(--primary);
+}
+
+.profile-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.profile-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-stat-box {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 14px;
+  text-align: right;
+  min-width: 100px;
+}
+
+.profile-stat-box .stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.profile-stat-box .stat-value {
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.profile-stat-box .stat-value.level-stat {
+  color: var(--primary);
+}
+
+.profile-stat-box .stat-value.xp-stat small {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.profile-card-security {
+  display: flex;
+  align-items: center;
+}
+
+.profile-change-password-btn {
+  font-size: 12px;
+  height: 34px;
+  gap: 7px;
+  padding: 0 14px;
+}
+
+@media (max-width: 860px) {
+  .evolution-profile-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+    padding: 18px;
+  }
+  .profile-card-left {
+    align-items: flex-start;
+  }
+  .profile-card-right {
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  .profile-stat-box {
+    text-align: left;
+  }
+  .profile-stat-box .stat-value {
+    justify-content: flex-start;
+  }
+}
+
 .evolution-hero {
   display: flex;
   gap: 30px;
