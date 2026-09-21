@@ -133,6 +133,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="sidebar-header">
           <Link href="/" className="brand" aria-label="DOC-Academy — início" onClick={() => setMobileOpen(false)}>
             <img className="brand-official" src="/doc-academy-logo-oficial.png" alt="DOC-Academy"/>
+            {!isDocked && (
+              <span className="brand-title">
+                <strong>DOC·<span>Academy</span></strong>
+              </span>
+            )}
           </Link>
           {isMobile ? (
             <Button
@@ -158,137 +163,134 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {isDocked ? (
-          <nav className="sidebar-dock-items" aria-label="Atalhos principais">
-            {allNavItems.map((item, index) => {
-              const isCurrent = active(item.href);
-              const Icon = item.icon;
-              const dist = hoveredNavIndex === null ? null : Math.abs(hoveredNavIndex - index);
+          <>
+            <nav className="sidebar-dock-items" aria-label="Atalhos principais">
+              {allNavItems.map((item, index) => {
+                const isCurrent = active(item.href);
+                const Icon = item.icon;
+                const dist = hoveredNavIndex === null ? null : Math.abs(hoveredNavIndex - index);
 
-              let scale = 1;
-              let transX = 0;
-              let zIndex = 1;
+                let scale = 1;
+                let transX = 0;
+                let zIndex = 1;
 
-              if (dist === 0) {
-                scale = 1.28;
-                transX = 8;
-                zIndex = 30;
-              } else if (dist === 1) {
-                scale = 1.15;
-                transX = 4;
-                zIndex = 20;
-              } else if (dist === 2) {
-                scale = 1.06;
-                transX = 2;
-                zIndex = 10;
-              }
+                if (dist === 0) {
+                  scale = 1.28;
+                  transX = 8;
+                  zIndex = 30;
+                } else if (dist === 1) {
+                  scale = 1.15;
+                  transX = 4;
+                  zIndex = 20;
+                } else if (dist === 2) {
+                  scale = 1.06;
+                  transX = 2;
+                  zIndex = 10;
+                }
 
-              return (
-                <div
-                  key={item.href}
-                  className="sidebar-dock-item-wrap"
-                  style={{
-                    transform: `scale(${scale}) translateX(${transX}px)`,
-                    zIndex,
-                    transition: "transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                  }}
-                  onMouseEnter={() => setHoveredNavIndex(index)}
-                >
-                  <Link
-                    href={item.href}
-                    className={`sidebar-dock-item-btn ${isCurrent ? "active" : ""}`}
-                    aria-label={item.label}
-                    aria-current={isCurrent ? "page" : undefined}
+                return (
+                  <div
+                    key={item.href}
+                    className="sidebar-dock-item-wrap"
+                    style={{
+                      transform: `scale(${scale}) translateX(${transX}px)`,
+                      zIndex,
+                      transition: "transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    }}
+                    onMouseEnter={() => setHoveredNavIndex(index)}
                   >
-                    <Icon size={20} />
-                  </Link>
-                  {hoveredNavIndex === index && (
-                    <div className="sidebar-dock-tooltip" role="tooltip">
-                      <span>{item.label}</span>
-                      {"badge" in item && item.badge && <span className="nav-ai">{item.badge}</span>}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
+                    <Link
+                      href={item.href}
+                      className={`sidebar-dock-item-btn ${isCurrent ? "active" : ""}`}
+                      aria-label={item.label}
+                      aria-current={isCurrent ? "page" : undefined}
+                    >
+                      <Icon size={20} />
+                    </Link>
+                    {hoveredNavIndex === index && (
+                      <div className="sidebar-dock-tooltip" role="tooltip">
+                        <span>{item.label}</span>
+                        {"badge" in item && item.badge && <span className="nav-ai">{item.badge}</span>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+            <div className="sidebar-dock-bottom">
+              <Link
+                href="/sobre"
+                className="sidebar-dock-item-btn"
+                aria-label="Sobre a plataforma"
+                title="Sobre a plataforma"
+              >
+                <CircleHelp size={18} />
+              </Link>
+            </div>
+          </>
         ) : (
           <>
-            {isClientEnvironment ? (
-              <div className="workspace-label">
-                <span className="workspace-dot" style={{ background: "var(--mint-9)" }}/>
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {activeCartorio ? activeCartorio.name : "Cartório Parceiro"}
-                </span>
-                <span className="workspace-tag" style={{ background: "var(--mint-4)", color: "var(--mint-11)" }}>
-                  {activeCartorio?.uf || "CLIENTE"}
-                </span>
-              </div>
-            ) : (
-              <div className="workspace-label"><span className="workspace-dot"/> DeMaria <span className="workspace-tag">INTERNO</span></div>
-            )}
-            <span className="nav-label">{isClientEnvironment ? "CAPACITAÇÃO" : "SEU ESPAÇO"}</span>
-            <nav>
-              {currentNav.map(({ href, label, icon: Icon, badge }: any) => (
-                <Link
-                  className={`nav-item ${active(href) ? "active" : ""}`}
-                  href={href}
-                  key={href}
-                  aria-current={active(href) ? "page" : undefined}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <Icon size={19}/>
-                  <span>{label}</span>
-                  {badge && <span className="nav-ai">{badge}</span>}
-                </Link>
-              ))}
-            </nav>
-            {!isClientEnvironment && me.role !== "student" && <span className="nav-label manage-label">GESTÃO</span>}
-            {!isClientEnvironment && (
-              <nav>
-                {me.role !== "student" && (
-                  <Link
-                    href="/equipe"
-                    className={`nav-item ${active("/equipe") ? "active" : ""}`}
-                    aria-current={active("/equipe") ? "page" : undefined}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <Users size={19}/> <span>Minha equipe</span>
-                  </Link>
-                )}
-                {me.role === "admin" && (
-                  <Link
-                    href="/admin"
-                    className={`nav-item ${active("/admin") ? "active" : ""}`}
-                    aria-current={active("/admin") ? "page" : undefined}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <Settings2 size={19}/> <span>Administração</span>
-                  </Link>
-                )}
-              </nav>
-            )}
-            <div className="sidebar-bottom">
-              {!isMobile && (
-                isClientEnvironment ? (
-                  activeCartorio && (
-                    <div className="sidebar-note">
-                      <span className="little-star"><ShieldCheck size={17}/></span>
-                      <strong>{activeCartorio.modules.length} módulos ativos</strong>
-                      <p>Trilha personalizada para as rotinas do seu cartório.</p>
-                      <Link href="/aprender">Ver meus cursos <ArrowUpRight size={16}/></Link>
-                    </div>
-                  )
-                ) : (
-                  <div className="sidebar-note">
-                    <span className="little-star"><Sparkles size={17}/></span>
-                    <strong>Conhecimento abre caminhos.</strong>
-                    <p>Um novo aprendizado.<br/>Uma nova possibilidade.</p>
-                    <Link href="/aprender">Explore os cursos <ArrowUpRight size={16}/></Link>
-                  </div>
-                )
+            <div className="sidebar-nav-scroll">
+              {isClientEnvironment ? (
+                <div className="workspace-label">
+                  <span className="workspace-dot" style={{ background: "var(--mint-9)" }}/>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {activeCartorio ? activeCartorio.name : "Cartório Parceiro"}
+                  </span>
+                  <span className="workspace-tag" style={{ background: "var(--mint-4)", color: "var(--mint-11)" }}>
+                    {activeCartorio?.uf || "CLIENTE"}
+                  </span>
+                </div>
+              ) : (
+                <div className="workspace-label"><span className="workspace-dot"/> DeMaria <span className="workspace-tag">INTERNO</span></div>
               )}
-              <Link className="help-link" href="/sobre" onClick={() => setMobileOpen(false)}><CircleHelp size={17}/> <span>Sobre a plataforma</span></Link>
-              {isMobile ? (
+              <span className="nav-label">{isClientEnvironment ? "CAPACITAÇÃO" : "SEU ESPAÇO"}</span>
+              <nav>
+                {currentNav.map(({ href, label, icon: Icon, badge }: any) => (
+                  <Link
+                    className={`nav-item ${active(href) ? "active" : ""}`}
+                    href={href}
+                    key={href}
+                    aria-current={active(href) ? "page" : undefined}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Icon size={19}/>
+                    <span>{label}</span>
+                    {badge && <span className="nav-ai">{badge}</span>}
+                  </Link>
+                ))}
+              </nav>
+              {!isClientEnvironment && me.role !== "student" && <span className="nav-label manage-label">GESTÃO</span>}
+              {!isClientEnvironment && (
+                <nav>
+                  {me.role !== "student" && (
+                    <Link
+                      href="/equipe"
+                      className={`nav-item ${active("/equipe") ? "active" : ""}`}
+                      aria-current={active("/equipe") ? "page" : undefined}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <Users size={19}/> <span>Minha equipe</span>
+                    </Link>
+                  )}
+                  {me.role === "admin" && (
+                    <Link
+                      href="/admin"
+                      className={`nav-item ${active("/admin") ? "active" : ""}`}
+                      aria-current={active("/admin") ? "page" : undefined}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <Settings2 size={19}/> <span>Administração</span>
+                    </Link>
+                  )}
+                </nav>
+              )}
+            </div>
+            <div className="sidebar-bottom">
+              <Link className="help-link" href="/sobre" onClick={() => setMobileOpen(false)}>
+                <CircleHelp size={17}/> <span>Sobre a plataforma</span>
+              </Link>
+              {isMobile && (
                 <div className="mobile-drawer-account">
                   <Link href="/acesso" className="nav-item" onClick={() => setMobileOpen(false)}>
                     Minha senha
@@ -297,8 +299,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     Sair da conta
                   </button>
                 </div>
-              ) : (
-                <div className="sidebar-footer"><Link href="/" className="brand"><strong>DOC-<span>Academy</span></strong></Link></div>
               )}
             </div>
           </>
