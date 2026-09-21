@@ -11,7 +11,7 @@ function fixture(){
   academy_attempts:[{id:"answer",user_id:"other",course_id:"course",version:1,snapshot:initialState.courses[0],answers:{private:"Resposta de outra pessoa"},status:"pending",submitted_at:"2026-09-15"}],
   academy_xp:[],academy_preferences:[],
  };
- const db={from(table:string){let rows=tables[table]??[];let single=false;const chain={select(){return chain;},eq(key:string,value:unknown){rows=rows.filter(row=>row[key]===value);return chain;},range(){return chain;},order(){return chain;},single(){single=true;return chain;},maybeSingle(){single=true;return chain;},then(resolve:(value:unknown)=>unknown){return Promise.resolve({data:single?rows[0]??null:rows,error:null}).then(resolve);}};return chain;}};
+ const db={rpc:async()=>({data:{articles:[],articleDrafts:[]},error:null}),from(table:string){let rows=tables[table]??[];let single=false;const chain={select(){return chain;},eq(key:string,value:unknown){rows=rows.filter(row=>row[key]===value);return chain;},range(){return chain;},order(){return chain;},single(){single=true;return chain;},maybeSingle(){single=true;return chain;},then(resolve:(value:unknown)=>unknown){return Promise.resolve({data:single?rows[0]??null:rows,error:null}).then(resolve);}};return chain;}};
  return {me,db:db as unknown as Parameters<typeof readAcademy>[0]};
 }
 describe("API: isolamento de dados",()=>{

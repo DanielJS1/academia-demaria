@@ -5,6 +5,7 @@ import { DEPARTMENTS } from "./departments";
 import { courseXp } from "./rewards";
 import { videoIsComplete } from "./video-completion";
 import { commandSchema, mergeWatched } from "./pilot-contract";
+import { executeCommunity, readCommunity } from "./community-server";
 import { courseSchema, articleSchema, vimeoEmbed, safeImage, type AcademyState, type Course, type Article, type Cartorio } from "./model";
 export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
 export function database(){
@@ -40,7 +41,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   return {data:rows,error:null};
  }
  const results=await Promise.all([
-  all("academy_resources"),all("academy_profiles"),
+  all("academy_resources","*","kind","course"),all("academy_profiles"),
   db.from("academy_settings").select("*").single(),
   all("academy_progress","user_id,course_id,version,lesson_id,done"),
   all("academy_attempts","*",me.role==="student"?"user_id":undefined,me.role==="student"?me.id:undefined),
@@ -49,6 +50,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  ]);
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,xp,preferences,cartoriosResult]=results;
+ const community=await readCommunity(db,me);
  const courses:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,xp:courseXp(r.published)}));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))})),proficiencyQuestions:course.proficiencyQuestions?.map(q=>({...q,correct:""}))});
  const completion:Record<string,string[]>={};
@@ -77,7 +79,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   status:c.status??"active",createdAt:c.created_at??new Date().toISOString()
  }));
  const visibleAttempts=(attempts.data??[]).filter((a: any)=>me.role==="admin"||managedIds.has(a.user_id));
- const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:(resources.data??[]).filter((r: any)=>r.kind==="article"&&r.published).map((r: any)=>r.published as Article),articleDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="article"&&r.draft).map((r: any)=>r.draft):[],people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
+ const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
   teamProgress,cartorios};
@@ -86,6 +88,10 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");
  const command=parsed.data;
+ if(command.type.startsWith("community-")){await executeCommunity(db,me,command);return;}
+ if(command.type==="save-resource"&&command.kind==="article"){
+  await executeCommunity(db,me,{type:"community-save",data:articleSchema.parse(command.data),publish:command.publish,expectedVersion:command.expectedVersion});return;
+ }
  if(command.type==="delete-user"||command.type==="reject-user"){
   if(me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
   if(command.id===me.id)throw new ApiError("Você não pode excluir ou reprovar sua própria conta.");

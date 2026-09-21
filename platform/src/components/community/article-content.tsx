@@ -1,0 +1,49 @@
+import { Fragment, type ReactNode } from "react";
+import type { Article, ArticleBlock } from "@/lib/model";
+
+// Render a small formatting vocabulary as React elements. User HTML is always text.
+export function InlineArticleText({ text }: { text: string }) {
+  const parts: ReactNode[] = [];
+  const pattern = /(\*\*([^*\n]+)\*\*|_([^_\n]+)_|`([^`\n]+)`|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\))/g;
+  let cursor = 0;
+  for (const match of text.matchAll(pattern)) {
+    parts.push(text.slice(cursor, match.index));
+    const key = match.index;
+    if (match[2]) parts.push(<strong key={key}>{match[2]}</strong>);
+    else if (match[3]) parts.push(<em key={key}>{match[3]}</em>);
+    else if (match[4]) parts.push(<code key={key}>{match[4]}</code>);
+    else parts.push(<a key={key} href={match[6]} target="_blank" rel="noopener noreferrer">{match[5]}</a>);
+    cursor = match.index + match[0].length;
+  }
+  parts.push(text.slice(cursor));
+  return <>{parts.map((part, index) => <Fragment key={index}>{part}</Fragment>)}</>;
+}
+
+export function blocksPlainText(blocks: ArticleBlock[]) {
+  return blocks.map(block => block.type === "image" ? (block.caption || "") : block.items?.join("\n") || block.text || "").join("\n\n");
+}
+
+export function ArticleContent({ article }: { article: Pick<Article, "content" | "blocks"> }) {
+  if (!article.blocks?.length) return <div className="community-prose"><p>{article.content}</p></div>;
+  return (
+    <div className="community-prose">
+      {article.blocks.map(block => {
+        if (block.type === "image") {
+          if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(block.src || "")) return null;
+          return <figure key={block.id}><img src={block.src} alt={block.alt || ""} loading="lazy" decoding="async" />{block.caption && <figcaption>{block.caption}</figcaption>}</figure>;
+        }
+        if (block.type === "steps" || block.type === "bullets") {
+          const List = block.type === "steps" ? "ol" : "ul";
+          return <List key={block.id}>{block.items?.map((item, index) => <li key={index}><InlineArticleText text={item} /></li>)}</List>;
+        }
+        if (block.type === "heading") return <h2 key={block.id}><InlineArticleText text={block.text || ""} /></h2>;
+        if (block.type === "callout") return <aside className="community-callout" key={block.id}><InlineArticleText text={block.text || ""} /></aside>;
+        return <p key={block.id}><InlineArticleText text={block.text || ""} /></p>;
+      })}
+    </div>
+  );
+}
+
+export function CommunityXpRules() {
+  return <details className="community-xp-rules"><summary>Como o conhecimento gera XP</summary><ul><li>Publicação: 10 XP, para até 2 novos posts por semana.</li><li>Curtida: 1 XP · Hype: 2 XP · Comentário: 1 XP ao autor.</li><li>Cada colega conta uma vez por tipo de interação. Interações próprias e repetições não geram XP.</li><li>Interações rendem até 20 XP por artigo durante toda a vida do post. O total da biblioteca é limitado a 40 XP por autor por semana.</li><li>Editar ou republicar não recompensa novamente. Cursos e avaliações continuam sendo o principal caminho de evolução.</li></ul></details>;
+}

@@ -7,6 +7,8 @@ import { Button } from "./ui/button";
 import { EmptyState, SectionHeading } from "./shared";
 import { normalize } from "@/lib/utils";
 import { getAllUserNotes, exportCourseNotesTxt } from "./lesson-notepad";
+import { CommunityLibrary } from "./community/community-library";
+import { CommunityArticle } from "./community/community-article";
 
 const salesAssistants = [
   {
@@ -97,12 +99,11 @@ export function Knowledge() {
         </button>
         <button
           type="button"
-          className="tab-disabled"
-          disabled
-          aria-disabled="true"
-          title="Biblioteca de materiais em breve"
+          className={tab === "Biblioteca" ? "selected" : ""}
+          aria-pressed={tab === "Biblioteca"}
+          onClick={() => setTab("Biblioteca")}
         >
-          <BookOpen size={16}/> Biblioteca <span className="tab-pill-soon">Em breve</span>
+          <BookOpen size={16}/> Biblioteca ({published.length})
         </button>
       </div>
 
@@ -191,39 +192,7 @@ export function Knowledge() {
           )}
         </section>
       ) : tab === "Biblioteca" ? (
-        <>
-          <SectionHeading
-            title={search ? `Resultados para “${search}”` : "Conhecimento para o seu dia a dia"}
-            description={`${articles.length} materiais publicados · disponíveis para toda a equipe`}
-          />
-          {articles.length ? (
-            <div className="article-grid">
-              {articles.map(article => (
-                <Link href={`/conhecimento/${article.id}`} key={article.id} className="article-card panel">
-                  <span className="article-icon"><FileText size={24}/></span>
-                  <div><span className="pill">{article.category}</span></div>
-                  <h3>{article.title}</h3>
-                  <p>{article.content}</p>
-                  <div className="article-footer">
-                    <span>Versão {article.revision} · {article.product}</span>
-                    <ArrowRight size={16}/>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={<Search size={28}/>}
-              title="Ainda não encontramos esse assunto"
-              description="Experimente outro termo ou cadastre um novo artigo pelo painel administrativo."
-            >
-              <Button variant="secondary" onClick={() => setSearch("")}>Ver todos os materiais</Button>
-            </EmptyState>
-          )}
-          <div className="info-note section-space">
-            <ShieldCheck size={16} style={{ display: "inline", verticalAlign: "middle" }}/> Os materiais desta biblioteca serão incluídos pela DeMaria.
-          </div>
-        </>
+        <CommunityLibrary search={search} clearSearch={() => setSearch("")} />
       ) : (
         <section className="assistant-directory">
           <div className="assistant-intro panel">
@@ -345,25 +314,5 @@ export function Knowledge() {
 }
 
 export function ArticleDetail({ id }: { id: string }) {
-  const { state, ready } = useAcademy();
-  const article = state.articles.find(item => item.id === id && item.status === "published");
-  if (!ready) return <div className="empty-state">Abrindo material…</div>;
-  if (!article) return <EmptyState title="Material indisponível" description="Este artigo não está publicado na biblioteca."/>;
-  return (
-    <article className="article-page page-enter">
-      <Link href="/conhecimento" className="back-link"><ArrowLeft size={15}/> Voltar ao conhecimento</Link>
-      <div className="panel">
-        <span className="pill">{article.category}</span>
-        <h1>{article.title}</h1>
-        <div className="article-meta">
-          <span>{article.author}</span>
-          <span>Versão {article.revision}</span>
-          <span><Clock3 size={11} style={{ display: "inline" }}/> {new Date(article.updatedAt + "T12:00:00").toLocaleDateString("pt-BR")}</span>
-          <span>{article.product}</span>
-        </div>
-        <div className="prose">{article.content}</div>
-        <div className="info-note" style={{ marginTop: 30 }}>Fonte: artigo publicado na DOC-Academy · versão {article.revision}. Conteúdo compartilhado com os colaboradores.</div>
-      </div>
-    </article>
-  );
+  return <CommunityArticle id={id} />;
 }

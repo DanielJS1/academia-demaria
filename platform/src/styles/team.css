@@ -3,6 +3,36 @@
    ========================================================================== */
 
 /* Topo e Cabeçalho de Gestão */
+.team-engagement-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.team-engagement-controls h2, .team-member-engagement h3 { margin: 0 0 6px; font-size: 16px; }
+.team-engagement-controls p, .team-member-engagement p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.team-engagement-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.team-engagement-actions .team-select-field { min-height: 44px; font-size: 13px; }
+.team-engagement-actions select { font-size: 13px; }
+.team-engagement-actions select:focus-visible, .team-member-engagement summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.team-engagement-note { flex-basis: 100%; }
+.team-presence-value { display: inline-block; font-size: 12px; font-variant-numeric: tabular-nums; }
+.team-member-engagement { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface2); margin-bottom: 20px; }
+.team-engagement-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin: 16px 0; }
+.team-engagement-summary dt { font-size: 12px; color: var(--muted); }
+.team-engagement-summary dd { margin: 5px 0 0; font-weight: 650; font-size: 15px; }
+.team-member-engagement summary { cursor: pointer; min-height: 44px; padding: 12px 0; font-size: 13px; }
+.team-engagement-days { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.team-engagement-days li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+@media (max-width: 600px) {
+  .team-engagement-controls { padding: 16px; }
+  .team-engagement-actions { width: 100%; }
+  .team-engagement-actions > * { flex: 1 1 auto; }
+}
+
 .team-header-meta {
   display: flex;
   align-items: center;

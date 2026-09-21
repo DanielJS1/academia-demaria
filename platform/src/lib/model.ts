@@ -28,7 +28,22 @@ export const courseSchema = z.object({
   lessons: z.array(lessonSchema), questions: z.array(questionSchema), passingScore: z.number().int().min(0).max(100),
   retryPolicy: z.enum(["free", "review", "admin"]), version: z.number().int().positive(),
 });
-export const articleSchema = z.object({ id: z.string(), title: z.string().min(3), product: z.string(), category: z.string(), content: z.string(), status: z.enum(["draft", "published"]), revision: z.number().int().positive(), updatedAt: z.string(), author: z.string() });
+export const articleBlockSchema = z.object({
+  id: z.string().min(1).max(100), type: z.enum(["paragraph", "heading", "steps", "bullets", "callout", "image"]),
+  text: z.string().max(12000).optional(), items: z.array(z.string().max(3000)).max(60).optional(),
+  src: z.string().max(350 * 1024).optional(), alt: z.string().max(300).optional(), caption: z.string().max(500).optional(),
+});
+export const articleSchema = z.object({
+  id: z.string().min(1).max(100), title: z.string().min(3).max(120), product: z.string().max(100), category: z.string().max(100), content: z.string().max(100000),
+  status: z.enum(["draft", "published"]), revision: z.number().int().positive(), updatedAt: z.string(), author: z.string(),
+  authorId: z.string().uuid().optional(), community: z.boolean().optional(), blocks: z.array(articleBlockSchema).max(80).optional(),
+  summary: z.string().max(300).optional(), bodyLoaded: z.boolean().optional(),
+  likeCount: z.number().int().nonnegative().optional(), hypeCount: z.number().int().nonnegative().optional(), commentCount: z.number().int().nonnegative().optional(),
+  liked: z.boolean().optional(), hyped: z.boolean().optional(),
+  updateRequest: z.object({ message: z.string(), requestedAt: z.string(), requestedBy: z.string() }).nullable().optional(),
+});
+export type ArticleBlock = z.infer<typeof articleBlockSchema>;
+export type ArticleComment = { id: string; articleId: string; userId: string; author: string; content: string; createdAt: string };
 export const personSchema = z.object({
   id: z.string(),
   name: z.string().min(2),

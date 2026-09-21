@@ -14,7 +14,7 @@ const navigation = [
   { href: "/conquistas", label: "Minha evolução", icon: Trophy },
 ];
 
-const notices = [
+const defaultNotices = [
   { id: "welcome", title: "Seu próximo nível começa aqui", text: "Conheça o novo espaço de aprendizado.", href: "/aprender" },
   { id: "knowledge", title: "Conhecimento sempre por perto", text: "Explore os guias da plataforma.", href: "/conhecimento" },
 ];
@@ -104,6 +104,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/sobre", label: "Sobre esta versão" },
   ].find(item => item.href !== "/" && active(item.href))?.label || "Visão geral";
 
+  const updateNotices = isClientEnvironment ? [] : state.articles
+    .filter(article => article.authorId === me.id && article.updateRequest)
+    .map(article => ({
+      id: `update:${article.id.slice(0, 60)}:${Date.parse(article.updateRequest!.requestedAt)}`,
+      title: `Atualize seu artigo: ${article.title}`,
+      text: article.updateRequest!.message,
+      href: `/conhecimento/${encodeURIComponent(article.id)}/editar`,
+    }));
+  const notices = [...updateNotices, ...defaultNotices];
   const unread = notices.filter(item => !state.readNotices.includes(item.id)).length;
 
   const allNavItems = isClientEnvironment

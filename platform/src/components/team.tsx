@@ -31,6 +31,8 @@ import { Button } from "./ui/button";
 import { CourseArt, EmptyState, PageHeading, Progress } from "./shared";
 import { csvCell, initials, normalize } from "@/lib/utils";
 import { courseProgress, minutes, type Attempt, type Course, type Person } from "@/lib/model";
+import { formatActiveTime, formatLastAccess, type EngagementMember } from "@/lib/engagement";
+import { EngagementControls, MemberEngagement, useTeamEngagement } from "./team-engagement";
 
 // Determina se o curso é voltado especificamente para o departamento do colaborador
 function isCourseForSector(course: Course, department: string): boolean {
@@ -112,13 +114,14 @@ function analyzeAttempt(attempt: Attempt): {
 }
 
 export function Team() {
-  const { state, me, notify } = useAcademy();
+  const { state, me, notify, isClientEnvironment } = useAcademy();
+  const engagement = useTeamEngagement(me.id, !isClientEnvironment && me.role !== "student");
   const [activeTab, setActiveTab] = useState<"people" | "courses" | "assessments">("people");
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending">("all");
   const [progressFilter, setProgressFilter] = useState<"all" | "not_started" | "in_progress" | "completed" | "at_risk">("all");
-  const [sortBy, setSortBy] = useState<"progress_desc" | "progress_asc" | "xp_desc" | "name_asc">("progress_desc");
+  const [sortBy, setSortBy] = useState<"last_access" | "frequency" | "active_time" | "progress_desc" | "progress_asc" | "xp_desc" | "name_asc">("last_access");
 
   // Colaborador e tentativa selecionados para modais
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
@@ -131,8 +134,9 @@ export function Team() {
       person =>
         (me.role === "admin" ||
           person.managerId === me.id ||
-          (me.role === "manager" && currentDept && normalize(person.department) === normalize(currentDept))) &&
+          (me.role === "manager" && !person.managerId && currentDept && person.department.trim().toLowerCase() === currentDept.trim().toLowerCase())) &&
         person.id !== me.id &&
+        person.audience !== "client" &&
         person.status !== "inactive"
     );
   }, [state.people, me.role, me.id, currentDept]);
@@ -308,13 +312,17 @@ export function Team() {
         return matchesSearch && matchesDept && matchesStatus && matchesProgress;
       })
       .sort((a, b) => {
+        const first = engagement.members.get(a.id), second = engagement.members.get(b.id);
+        if (sortBy === "last_access") return (second?.lastAccessAt ?? "").localeCompare(first?.lastAccessAt ?? "");
+        if (sortBy === "frequency") return (second?.activeDays ?? -1) - (first?.activeDays ?? -1);
+        if (sortBy === "active_time") return (second?.activeSeconds ?? -1) - (first?.activeSeconds ?? -1);
         if (sortBy === "progress_desc") return b.progress - a.progress;
         if (sortBy === "progress_asc") return a.progress - b.progress;
         if (sortBy === "xp_desc") return b.xp - a.xp;
         if (sortBy === "name_asc") return a.name.localeCompare(b.name, "pt-BR");
         return 0;
       });
-  }, [people, search, departmentFilter, statusFilter, progressFilter, sortBy]);
+  }, [people, search, departmentFilter, statusFilter, progressFilter, sortBy, engagement.members]);
 
   // Lista de departamentos presentes na equipe para filtro
   const availableDepartments = useMemo(() => {
@@ -334,17 +342,19 @@ export function Team() {
       "Conteúdos Assistidos",
       "Total de Conteúdos do Catálogo",
       "Taxa de Absorção (%)",
-      "Cursos do Setor Feitos",
-      "Total Cursos do Setor",
-      "Taxa Cursos do Setor (%)",
+      "Último Acesso (Brasília)",
+      `Dias com Acesso (${engagement.days} dias)`,
+      `Tempo Ativo em Minutos (${engagement.days} dias)`,
+      "Início da Coleta de Presença",
       "Total Avaliações",
       "Média em Avaliações (%)",
-      "Horas de Estudo",
+      "Horas Estimadas das Aulas Concluídas",
       "XP da Temporada",
     ];
 
     const rows = filteredPeople.map(person => {
       const m = peopleMetrics.get(person.id);
+      const presence = engagement.members.get(person.id);
       return [
         person.name,
         person.email,
@@ -355,9 +365,10 @@ export function Team() {
         m?.watchedCount || 0,
         totalAvailableLessons,
         m?.watchedPercent || 0,
-        m?.sectorCompleted || 0,
-        m?.sectorTotal || 0,
-        m?.sectorPercent || 0,
+        engagement.data ? formatLastAccess(presence?.lastAccessAt) : "Indisponível",
+        presence ? presence.activeDays : "Sem registro",
+        presence ? (presence.activeSeconds / 60).toFixed(1) : "Sem registro",
+        engagement.data ? formatLastAccess(engagement.data.collectedSince) : "Indisponível",
         m?.attemptsCount || 0,
         m?.averageScore || 0,
         m ? (m.studyMinutes / 60).toFixed(1) : "0.0",
@@ -431,7 +442,7 @@ export function Team() {
       <PageHeading
         eyebrow="INTELIGÊNCIA DE TREINAMENTO & EQUIPE"
         title="Gestão de Talentos & Aprendizado"
-        description="Acompanhe métricas profundas, adesão aos cursos, diagnóstico de erros e o desenvolvimento contínuo da sua equipe."
+        description="Acompanhe acessos, constância e aprendizado para orientar o PDI da sua equipe."
       >
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <Button variant="secondary" onClick={exportGeneralReport}>
@@ -482,6 +493,8 @@ export function Team() {
         </div>
       )}
 
+      <EngagementControls report={engagement} />
+
       {/* Grid de Métricas Principais (Team Pulse) */}
       <div className="team-stats-grid">
         {/* Card 1: Pessoas */}
@@ -523,24 +536,21 @@ export function Team() {
           </div>
         </section>
 
-        {/* Card 3: Cursos do Setor Concluídos */}
+        {/* Card 3: Frequência real no período */}
         <section className="panel team-stat-card">
           <div className="team-stat-header">
-            <span>Cursos do Setor Concluídos</span>
+            <span>Equipe com acesso · {engagement.days} dias</span>
             <div className="team-stat-icon green">
               <Target size={17} />
             </div>
           </div>
           <div>
-            <div className="team-stat-value">{teamStats.sectorRate}%</div>
+            <div className="team-stat-value">{engagement.data ? engagement.data.members.filter(member => member.activeDays > 0).length : "—"}</div>
             <div className="team-stat-footer">
               <span>
-                <strong>{teamStats.totalSectorDone}</strong> de {teamStats.totalSectorAssigned} cursos específicos
+                de {engagement.data?.members.length ?? "—"} colaboradores ativos
               </span>
-              <span className="team-badge primary">Específicos</span>
-            </div>
-            <div className="team-stat-bar green">
-              <div style={{ width: `${teamStats.sectorRate}%` }} />
+              <span className="team-badge primary">Presença</span>
             </div>
           </div>
         </section>
@@ -564,19 +574,19 @@ export function Team() {
           </div>
         </section>
 
-        {/* Card 5: Horas de Treinamento */}
+        {/* Card 5: Tempo de atividade registrado */}
         <section className="panel team-stat-card">
           <div className="team-stat-header">
-            <span>Horas Dedicadas</span>
+            <span>Tempo ativo · {engagement.days} dias</span>
             <div className="team-stat-icon">
               <Clock3 size={17} />
             </div>
           </div>
           <div>
-            <div className="team-stat-value">{teamStats.totalHours}h</div>
+            <div className="team-stat-value">{engagement.data ? formatActiveTime(engagement.data.members.reduce((sum, member) => sum + member.activeSeconds, 0)) : "—"}</div>
             <div className="team-stat-footer">
-              <span>Investimento em evolução</span>
-              <span>Tempo de capacitação</span>
+              <span>Estimativa de uso em foco</span>
+              <span>Sem pausas prolongadas</span>
             </div>
           </div>
         </section>
@@ -667,6 +677,9 @@ export function Team() {
                 onChange={e => setSortBy(e.target.value as any)}
                 aria-label="Ordenar colaboradores"
               >
+                <option value="last_access">Acesso mais recente</option>
+                <option value="frequency">Mais dias com acesso</option>
+                <option value="active_time">Maior tempo ativo</option>
                 <option value="progress_desc">Maior progresso</option>
                 <option value="progress_asc">Menor progresso</option>
                 <option value="xp_desc">Mais XP na temporada</option>
@@ -683,8 +696,9 @@ export function Team() {
                   <tr>
                     <th>COLABORADOR</th>
                     <th>DEPARTAMENTO</th>
-                    <th>ASSISTIDOS X DISPONÍVEIS</th>
-                    <th>CURSOS DO SETOR</th>
+                    <th>ÚLTIMO ACESSO</th>
+                    <th>FREQUÊNCIA · {engagement.days} DIAS</th>
+                    <th>TEMPO ATIVO · {engagement.days} DIAS</th>
                     <th>PROGRESSO GERAL</th>
                     <th>PROVAS / MÉDIA</th>
                     <th>EXPERIÊNCIA</th>
@@ -692,8 +706,9 @@ export function Team() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPeople.map((person, index) => {
+                  {filteredPeople.map(person => {
                     const m = peopleMetrics.get(person.id);
+                    const presence = engagement.members.get(person.id);
                     return (
                       <tr
                         key={person.id}
@@ -714,25 +729,13 @@ export function Team() {
                           <span className="team-badge">{person.department}</span>
                         </td>
                         <td>
-                          <div style={{ fontSize: 11 }}>
-                            <strong>{m?.watchedCount || 0}</strong> de {totalAvailableLessons} aulas
-                          </div>
-                          <small style={{ color: "var(--muted)" }}>
-                            {m?.watchedPercent || 0}% do catálogo absorvido
-                          </small>
+                          <span className="team-presence-value">{engagement.loading ? "Carregando…" : engagement.error ? "Indisponível" : formatLastAccess(presence?.lastAccessAt)}</span>
                         </td>
                         <td>
-                          <span
-                            className={`team-badge ${
-                              m && m.sectorTotal > 0 && m.sectorCompleted === m.sectorTotal
-                                ? "green"
-                                : m && m.sectorCompleted > 0
-                                ? "amber"
-                                : ""
-                            }`}
-                          >
-                            {m?.sectorCompleted || 0} / {m?.sectorTotal || 0} feitos ({m?.sectorPercent || 0}%)
-                          </span>
+                          <span className="team-presence-value">{presence ? `${presence.activeDays} de ${engagement.days} dias` : "—"}</span>
+                        </td>
+                        <td>
+                          <span className="team-presence-value">{presence ? formatActiveTime(presence.activeSeconds) : "—"}</span>
                         </td>
                         <td>
                           <div className="team-progress-cell">
@@ -839,6 +842,9 @@ export function Team() {
           currentUserId={me.id}
           completedMap={state.completed}
           attempts={teamAttempts.filter(a => a.userId === selectedPerson.id)}
+          engagement={engagement.members.get(selectedPerson.id)}
+          engagementDays={engagement.days}
+          engagementUnavailable={!engagement.data}
           onClose={() => setSelectedPerson(null)}
           onSelectAttempt={attempt => {
             setSelectedAttempt(attempt);
@@ -1361,6 +1367,9 @@ function CollaboratorModal({
   currentUserId,
   completedMap,
   attempts,
+  engagement,
+  engagementDays,
+  engagementUnavailable,
   onClose,
   onSelectAttempt,
 }: {
@@ -1371,6 +1380,9 @@ function CollaboratorModal({
   currentUserId: string;
   completedMap: Record<string, string[]>;
   attempts: Attempt[];
+  engagement?: EngagementMember;
+  engagementDays: number;
+  engagementUnavailable: boolean;
   onClose: () => void;
   onSelectAttempt: (attempt: Attempt) => void;
 }) {
@@ -1482,6 +1494,7 @@ function CollaboratorModal({
 
         {/* Corpo do Modal */}
         <div className="team-modal-body">
+          <MemberEngagement member={engagement} days={engagementDays} unavailable={engagementUnavailable} />
           {/* Indicadores do Colaborador */}
           <div className="team-modal-kpi-row">
             <div className="team-modal-kpi-item">
@@ -1493,11 +1506,9 @@ function CollaboratorModal({
             </div>
 
             <div className="team-modal-kpi-item">
-              <small>CURSOS DO SETOR ({person.department})</small>
-              <strong style={{ color: metrics.sectorCompleted === metrics.sectorTotal ? "#10b981" : "inherit" }}>
-                {metrics.sectorCompleted} / {metrics.sectorTotal}
-              </strong>
-              <span>{metrics.sectorPercent}% concluídos</span>
+              <small>DIAS COM ACESSO</small>
+              <strong>{engagement ? `${engagement.activeDays} / ${engagementDays}` : "—"}</strong>
+              <span>Constância no período</span>
             </div>
 
             <div className="team-modal-kpi-item">

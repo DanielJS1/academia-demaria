@@ -5,9 +5,9 @@ const headers={"Cache-Control":"no-store, private"};
 function failure(error:unknown){return Response.json({error:error instanceof ApiError?error.message:"Não foi possível concluir a solicitação."},{status:error instanceof ApiError?error.status:500,headers});}
 export async function GET(request:Request){try{const {db,me}=await authenticate(request);return Response.json(await readAcademy(db,me),{headers});}catch(error){return failure(error);}}
 export async function POST(request:Request){try{
- if(Number(request.headers.get("content-length")??0)>1_000_000)throw new ApiError("Conteúdo muito grande.",413);
+ if(Number(request.headers.get("content-length")??0)>2_000_000)throw new ApiError("Conteúdo muito grande.",413);
  const {db,me}=await authenticate(request);
- const raw=await request.text();if(raw.length>1_000_000)throw new ApiError("Conteúdo muito grande.",413);
+ const raw=await request.text();if(Buffer.byteLength(raw,"utf8")>2_000_000)throw new ApiError("Conteúdo muito grande.",413);
  let input;try{input=JSON.parse(raw);}catch{throw new ApiError("Solicitação inválida.");}
  await executeCommand(db,me,input);
  if(input.type==="video"){

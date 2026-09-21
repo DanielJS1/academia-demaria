@@ -2,6 +2,11 @@ import { z } from "zod";
 import { articleSchema, courseSchema, personSchema, cartorioSchema, type AcademyState } from "./model";
 const id = z.string().min(1).max(100);
 export const commandSchema = z.discriminatedUnion("type", [
+ z.object({ type:z.literal("community-save"), data:articleSchema, publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
+ z.object({ type:z.literal("community-react"), articleId:id, reaction:z.enum(["like","hype"]), active:z.boolean() }),
+ z.object({ type:z.literal("community-comment"), articleId:id, commentId:z.string().uuid(), content:z.string().trim().min(2).max(2000) }),
+ z.object({ type:z.literal("community-delete"), articleId:id }),
+ z.object({ type:z.literal("community-request-update"), articleId:id, message:z.string().trim().min(5).max(1500) }),
  z.object({ type:z.literal("save-resource"), kind:z.enum(["course","article"]), data:z.union([courseSchema,articleSchema]), publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
  z.object({ type:z.literal("complete"), courseId:id, version:z.number().int().positive(), lessonId:id }),
  z.object({ type:z.literal("video"), courseId:id, version:z.number().int().positive(), lessonId:id, duration:z.number().positive().max(86400), position:z.number().nonnegative().max(86400).optional(), ranges:z.array(z.tuple([z.number().nonnegative(),z.number().nonnegative()])).max(2000) }),

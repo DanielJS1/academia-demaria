@@ -5,6 +5,7 @@ import { browserAuth } from "@/lib/supabase-browser";
 import { stateCommand, type Command } from "@/lib/pilot-contract";
 import type { AcademyState, Cartorio } from "@/lib/model";
 import { AccessScreen } from "./access-screen";
+import { EngagementTracker } from "./engagement-tracker";
 type Me={id:string;name:string;email:string;department?:string;role:"admin"|"manager"|"student";audience?:"internal"|"client";cartorioId?:string|null};
 type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(base64:string|null)=>void;};
 const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[],teamProgress:{},cartorios:[]};
@@ -20,7 +21,7 @@ export function AcademyProvider({children}:{children:ReactNode}){
   const client=browserAuth();const session=await client?.auth.getSession();const token=session?.data.session?.access_token;
   if(!token)throw new Error("Entre na sua conta para continuar.");
   const response=await fetch("/api/academy",{method:command?"POST":"GET",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},...(command?{body:JSON.stringify(command)}:{}),cache:"no-store"});
-  const data=await response.json();if(!response.ok){if(response.status===401||response.status===403){setReady(false);setMe(null);current.current=empty;setState(empty);}throw new Error(data.error||"Não foi possível salvar.");}
+  const data=await response.json();if(!response.ok){if(response.status===401||(!command&&response.status===403)){setReady(false);setMe(null);current.current=empty;setState(empty);}throw new Error(data.error||"Não foi possível salvar.");}
   if(data.progress){
    if(identity.current!==data.userId)return;
    const xpEvents:AcademyState["xpEvents"]=data.xpEvents??current.current.xpEvents;
@@ -85,6 +86,6 @@ export function AcademyProvider({children}:{children:ReactNode}){
   || (!simulatedCartorioId && path.startsWith("/equipe") && me.role === "student")
   || (me.audience === "client" && !simulatedCartorioId && (path.startsWith("/admin") || path.startsWith("/equipe") || path.startsWith("/conhecimento") || path.startsWith("/conquistas")));
 
- return <AcademyContext.Provider value={{state,me,update,mutate,refresh,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut,activeCartorio,simulatedCartorioId,setSimulatedCartorioId,isClientEnvironment,avatar,setAvatar}}>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
+ return <AcademyContext.Provider value={{state,me,update,mutate,refresh,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut,activeCartorio,simulatedCartorioId,setSimulatedCartorioId,isClientEnvironment,avatar,setAvatar}}><EngagementTracker/>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
 }
 export function useAcademy(){const context=useContext(AcademyContext);if(!context)throw new Error("AcademyProvider ausente");return context;}

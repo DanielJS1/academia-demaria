@@ -11,3 +11,5 @@ out/
 test-results/
 playwright-report/
 .legacy/
+__pycache__/
+*.pyc
