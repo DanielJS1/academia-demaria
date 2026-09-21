@@ -56,6 +56,19 @@
   outline: none;
   max-width: 260px;
   text-overflow: ellipsis;
+  color-scheme: inherit;
+}
+
+.sim-select option,
+.sim-select optgroup {
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .sim-select option,
+[data-theme="dark"] .sim-select optgroup {
+  background-color: #0f1523;
+  color: #f8fafc;
 }
 
 .sim-select:focus {

@@ -21,5 +21,20 @@ export const metadata: Metadata = {
   }
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pt-BR"><body><AcademyProvider><AppShell>{children}</AppShell></AcademyProvider></body></html>;
+  return (
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("doc-academy.theme")||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",t);if(t==="dark")document.documentElement.classList.add("dark");}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body>
+        <AcademyProvider>
+          <AppShell>{children}</AppShell>
+        </AcademyProvider>
+      </body>
+    </html>
+  );
 }

@@ -144,7 +144,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
             aria-label="Pesquisar no catálogo"
           />
         </div>
-        <div className="select-field">
+        <label className="select-field">
           <SlidersHorizontal size={16} />
           <select
             value={product}
@@ -156,7 +156,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
               <option key={item}>{item}</option>
             ))}
           </select>
-        </div>
+        </label>
         <select
           className="select-standalone"
           value={level}

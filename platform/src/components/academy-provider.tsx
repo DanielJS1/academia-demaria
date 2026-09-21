@@ -49,7 +49,14 @@ export function AcademyProvider({children}:{children:ReactNode}){
  },[auth,refresh]);
  useEffect(()=>{if(authenticated&&!busyRef.current)void refresh();},[path,authenticated,refresh]);
  useEffect(()=>{const onFocus=()=>{if(authenticated&&!busyRef.current)void refresh();};window.addEventListener("focus",onFocus);return()=>window.removeEventListener("focus",onFocus);},[authenticated,refresh]);
- useEffect(()=>{document.documentElement.dataset.theme=theme;},[theme]);
+  useEffect(()=>{
+    document.documentElement.dataset.theme=theme;
+    if(theme==="dark"){
+      document.documentElement.classList.add("dark");
+    }else{
+      document.documentElement.classList.remove("dark");
+    }
+  },[theme]);
  useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(""),6000);return()=>clearTimeout(timer);},[toast]);
  useEffect(()=>{
   if(!me?.id){setAvatarState(null);return;}

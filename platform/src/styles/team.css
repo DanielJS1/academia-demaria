@@ -236,6 +236,17 @@
   outline: none;
   cursor: pointer;
   padding-right: 4px;
+  color-scheme: inherit;
+}
+
+.team-select-field select option {
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .team-select-field select option {
+  background-color: #0f1523;
+  color: #f8fafc;
 }
 
 /* Tabela de Pessoas / Talentos */

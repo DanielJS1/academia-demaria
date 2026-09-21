@@ -5,6 +5,8 @@
   --ink: #0f172a;
   --muted: #64748b;
   --line: #e2e8f0;
+  --border: var(--line);
+  --foreground: var(--ink);
   --primary: #4f46e5;
   --primary-hover: #4338ca;
   --lavender: #eef2ff;
@@ -17,13 +19,16 @@
   color-scheme: light;
 }
 
-[data-theme="dark"] {
+[data-theme="dark"],
+html.dark {
   --background: #090d16;
   --surface: #0f1523;
   --surface2: #161e31;
   --ink: #f8fafc;
   --muted: #94a3b8;
   --line: #1e293b;
+  --border: var(--line);
+  --foreground: var(--ink);
   --primary: #6366f1;
   --primary-hover: #818cf8;
   --lavender: #1e1b4b;
@@ -94,6 +99,36 @@ svg {
 
 input, textarea, select {
   color: var(--ink);
+  color-scheme: light;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+html.dark input,
+html.dark textarea,
+html.dark select {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background-color: var(--surface, #ffffff);
+  color: var(--ink, #0f172a);
+}
+
+[data-theme="dark"] select option,
+[data-theme="dark"] select optgroup,
+html.dark select option,
+html.dark select optgroup {
+  background-color: #0f1523;
+  color: #f8fafc;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
 }
 
 ::selection {
