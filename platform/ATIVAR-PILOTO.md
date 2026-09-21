@@ -46,12 +46,19 @@ Na DOC-Academy → **Administração → Pessoas → Cadastrar pessoa**:
 
 Contas existentes não têm seu e-mail alterado nesse editor. Desativar uma conta impede novas consultas e alterações pela API.
 
-## 5. Configurar e-mail, quando necessário
+## 5. Configurar e-mail e templates
 
-No Supabase → Authentication, configure o Site URL e os Redirect URLs autorizados:
+No Supabase → **Authentication**, configure o Site URL e os Redirect URLs autorizados:
 
 - `https://doc-academy-hazel.vercel.app/acesso`
 - `http://127.0.0.1:4174/acesso` (somente para teste local)
+
+### Remetente e Template de Redefinição de Senha
+No painel do Supabase do projeto (`ktmymzokgxmmkleacclq`), acesse **Authentication → Email Templates → Reset Password**:
+
+- **Subject (Assunto):** `DOC-Academy, resete sua senha`
+- **Sender Name (Nome do Remetente):** `DOC-Academy` (configurado em **Authentication → Email Settings**)
+- **Body (Corpo do E-mail):** utilizar o template HTML em português com o link obrigatório `{{ .ConfirmationURL }}`.
 
 Desative o cadastro público de novos usuários. O cadastro interno é feito pelo administrador da plataforma. Para convites e recuperação em e-mails de colaboradores, configure SMTP próprio e faça um envio de teste; o serviço padrão do Supabase possui restrições. As credenciais SMTP devem ser inseridas diretamente no painel, nunca no GitHub.
 
