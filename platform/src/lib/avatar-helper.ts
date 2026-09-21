@@ -2,7 +2,7 @@
  * Converte e redimensiona um arquivo de imagem local para Base64 leve (WebP/JPEG),
  * aplicando crop quadrado centralizado (1:1) com dimensões máximas otimizadas para perfil.
  * 
- * Totalmente client-side: sem chamadas de rede ou persistência em banco de dados.
+ * Processamento client-side com compressão otimizada antes da persistência no perfil.
  */
 export function processImageFileToBase64(file: File, maxSize = 180): Promise<string> {
   return new Promise((resolve, reject) => {

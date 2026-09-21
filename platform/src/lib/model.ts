@@ -56,6 +56,7 @@ export const personSchema = z.object({
   progress: z.number().min(0).max(100),
   audience: z.enum(["internal", "client"]).optional().default("internal"),
   cartorioId: z.string().nullable().optional(),
+  avatar: z.string().nullable().optional(),
 });
 export const cartorioSchema = z.object({
   id: z.string(),

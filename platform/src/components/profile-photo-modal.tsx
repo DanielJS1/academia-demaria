@@ -38,9 +38,13 @@ export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
 
     try {
       const base64 = await processImageFileToBase64(file, 200);
-      setAvatar(base64);
-      notify("Foto de perfil atualizada!");
-      onClose();
+      const ok = await setAvatar(base64);
+      if (ok) {
+        notify("Foto de perfil atualizada em todos os navegadores!");
+        onClose();
+      } else {
+        setErrorMessage("Não foi possível salvar a foto no servidor.");
+      }
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Falha ao processar a imagem.");
     } finally {
@@ -49,10 +53,21 @@ export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
     }
   };
 
-  const handleRemovePhoto = () => {
-    setAvatar(null);
-    notify("Foto de perfil removida.");
-    onClose();
+  const handleRemovePhoto = async () => {
+    setLoading(true);
+    try {
+      const ok = await setAvatar(null);
+      if (ok) {
+        notify("Foto de perfil removida.");
+        onClose();
+      } else {
+        setErrorMessage("Não foi possível remover a foto do servidor.");
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Falha ao remover a foto.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -128,7 +143,7 @@ export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
           </div>
 
           <p className="profile-photo-hint">
-            A imagem é convertida em <strong>Base64</strong> localmente no seu navegador, sem armazenamento no banco de dados.
+            Sua foto fica salva no seu perfil e visível para a equipe em <strong>qualquer navegador e dispositivo</strong>.
           </p>
         </div>
       </div>

@@ -30,7 +30,7 @@ export function AdminPeople({ search }: { search: string }) {
               <tr key={person.id}>
                 <td>
                   <div className="table-person">
-                    <span className="avatar">{initials(person.name)}</span>
+                    <span className="avatar" style={{ overflow: "hidden", padding: 0 }}>{person.avatar ? <img src={person.avatar} alt={person.name} className="avatar-img" /> : initials(person.name)}</span>
                     <div>
                       <strong>{person.name}</strong>
                       <small>{person.email}</small>

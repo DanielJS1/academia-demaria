@@ -655,3 +655,12 @@
     gap: 8px;
   }
 }
+
+.team-avatar .avatar-img,
+.team-modal-avatar .avatar-img {
+  border-radius: inherit;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

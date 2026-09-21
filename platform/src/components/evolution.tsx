@@ -292,7 +292,14 @@ export function Evolution() {
               <span className={`rank-position rank-${index + 1}`}>
                 {index === 0 ? <Trophy size={15} /> : String(index + 1).padStart(2, "0")}
               </span>
-              <span className={`avatar avatar-${index % 5}`}>{initials(person.name)}</span>
+              {(() => {
+                const personAvatar = person.avatar || (person.id === me.id ? avatar : undefined);
+                return (
+                  <span className={`avatar avatar-${index % 5}`} style={{ overflow: "hidden", padding: 0 }}>
+                    {personAvatar ? <img src={personAvatar} alt={person.name} className="avatar-img" /> : initials(person.name)}
+                  </span>
+                );
+              })()}
               <span className="ranking-name">
                 <strong>{person.name}{person.id === me.id ? " · você" : ""}</strong>
                 <small>{person.department}</small>

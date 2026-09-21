@@ -6,8 +6,8 @@ import { stateCommand, type Command } from "@/lib/pilot-contract";
 import type { AcademyState, Cartorio } from "@/lib/model";
 import { AccessScreen } from "./access-screen";
 import { EngagementTracker } from "./engagement-tracker";
-type Me={id:string;name:string;email:string;department?:string;role:"admin"|"manager"|"student";audience?:"internal"|"client";cartorioId?:string|null};
-type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(base64:string|null)=>void;};
+type Me={id:string;name:string;email:string;department?:string;role:"admin"|"manager"|"student";audience?:"internal"|"client";cartorioId?:string|null;avatar?:string|null};
+type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(base64:string|null)=>Promise<boolean>;};
 const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[],teamProgress:{},cartorios:[]};
 const AcademyContext=createContext<Context|null>(null);
 export function AcademyProvider({children}:{children:ReactNode}){
@@ -53,16 +53,28 @@ export function AcademyProvider({children}:{children:ReactNode}){
  useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(""),6000);return()=>clearTimeout(timer);},[toast]);
  useEffect(()=>{
   if(!me?.id){setAvatarState(null);return;}
-  try{const saved=localStorage.getItem(`doc-academy.avatar.${me.id}`);setAvatarState(saved||null);}catch{}
- },[me?.id]);
- const setAvatar=useCallback((base64:string|null)=>{
-  if(!me?.id)return;
+  if(me.avatar!==undefined){
+   setAvatarState(me.avatar);
+   try{
+    if(me.avatar)localStorage.setItem(`doc-academy.avatar.${me.id}`,me.avatar);
+    else localStorage.removeItem(`doc-academy.avatar.${me.id}`);
+   }catch{}
+  }else{
+   try{const saved=localStorage.getItem(`doc-academy.avatar.${me.id}`);setAvatarState(saved||null);}catch{}
+  }
+ },[me?.id,me?.avatar]);
+ const setAvatar=useCallback(async(base64:string|null)=>{
+  if(!me?.id)return false;
+  setAvatarState(base64);
   try{
-   if(base64){localStorage.setItem(`doc-academy.avatar.${me.id}`,base64);}
-   else{localStorage.removeItem(`doc-academy.avatar.${me.id}`);}
-   setAvatarState(base64);
+   if(base64)localStorage.setItem(`doc-academy.avatar.${me.id}`,base64);
+   else localStorage.removeItem(`doc-academy.avatar.${me.id}`);
   }catch(e){console.error("Erro ao salvar avatar",e);}
- },[me?.id]);
+  setMe(prev=>prev?{...prev,avatar:base64}:prev);
+  setState(prev=>({...prev,people:prev.people.map(p=>p.id===me.id?{...p,avatar:base64}:p)}));
+  current.current={...current.current,people:current.current.people.map(p=>p.id===me.id?{...p,avatar:base64}:p)};
+  return await mutate({type:"avatar",avatar:base64});
+ },[me?.id,mutate]);
  const mutate=useCallback(async(command:Command)=>{
   if(busyRef.current){setToast("Aguarde a gravação em andamento.");return false;}
   busyRef.current=true;setBusy(true);

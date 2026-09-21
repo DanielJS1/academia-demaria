@@ -22,6 +22,7 @@ export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("delete-setting"), kind:z.enum(["departments","products"]), name:z.string().trim().min(1).max(80) }),
  z.object({ type:z.literal("save-cartorio"), data:cartorioSchema, initialPassword:z.string().min(6).max(128).optional() }),
  z.object({ type:z.literal("delete-cartorio"), id:id }),
+ z.object({ type:z.literal("avatar"), avatar:z.string().max(350*1024).nullable() }),
 ]);
 export type Command = z.infer<typeof commandSchema>;
 export function normalizeVimeoRanges(values:unknown[]):[number,number][]{
