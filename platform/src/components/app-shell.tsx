@@ -2,10 +2,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Search, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
+import { ArrowUpRight, Bell, BookOpen, Camera, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Search, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { experience } from "@/lib/gamification";
+import { ProfilePhotoModal } from "./profile-photo-modal";
 
 const navigation = [
   { href: "/", label: "Visão geral", icon: Home },
@@ -22,8 +23,9 @@ const notices = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
-  const { state, me, update, theme, toggleTheme, storageError, signOut, activeCartorio, simulatedCartorioId, setSimulatedCartorioId, isClientEnvironment } = useAcademy();
+  const { state, me, update, theme, toggleTheme, storageError, signOut, activeCartorio, simulatedCartorioId, setSimulatedCartorioId, isClientEnvironment, avatar } = useAcademy();
   const exp = experience(state);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -291,6 +293,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
               {isMobile && (
                 <div className="mobile-drawer-account">
+                  <button
+                    type="button"
+                    className="nav-item"
+                    style={{ background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer", color: "var(--ink)" }}
+                    onClick={() => { setMobileOpen(false); setIsPhotoModalOpen(true); }}
+                  >
+                    <Camera size={18} /> <span>Foto de perfil</span>
+                  </button>
                   <Link href="/acesso" className="nav-item" onClick={() => setMobileOpen(false)}>
                     Minha senha
                   </Link>
@@ -384,10 +394,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <span className="topbar-divider"/>
             {isClientEnvironment ? (
-              <div className="profile" style={{ cursor: "default" }}>
-                <span className="avatar avatar-daniel" style={{ background: "var(--mint-9)", color: "#fff" }}>
-                  {me.name.slice(0, 1)}
-                </span>
+              <div className="profile">
+                <button
+                  type="button"
+                  className="avatar-btn"
+                  onClick={() => setIsPhotoModalOpen(true)}
+                  title="Alterar foto de perfil"
+                  aria-label="Alterar foto de perfil"
+                >
+                  <span className="avatar avatar-daniel" style={{ background: avatar ? "transparent" : "var(--mint-9)", color: "#fff" }}>
+                    {avatar ? (
+                      <img src={avatar} alt={me.name} className="avatar-img" />
+                    ) : (
+                      me.name.slice(0, 1)
+                    )}
+                    <span className="avatar-edit-badge"><Camera size={10} /></span>
+                  </span>
+                </button>
                 <span className="profile-details desktop-only">
                   <strong>{me.name.split(" ")[0]}</strong>
                   <span className="profile-level-badge" style={{ background: "var(--mint-3)", color: "var(--mint-11)" }}>
@@ -396,15 +419,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </span>
               </div>
             ) : (
-              <Link href="/conquistas" className="profile" aria-label={`Ver minha evolução — Nível ${exp.level}, ${exp.total} XP`}>
-                <span className="avatar avatar-daniel">{me.name.slice(0, 1)}</span>
-                <span className="profile-details desktop-only">
+              <div className="profile">
+                <button
+                  type="button"
+                  className="avatar-btn"
+                  onClick={() => setIsPhotoModalOpen(true)}
+                  title="Alterar foto de perfil"
+                  aria-label="Alterar foto de perfil"
+                >
+                  <span className="avatar avatar-daniel" style={{ background: avatar ? "transparent" : undefined }}>
+                    {avatar ? (
+                      <img src={avatar} alt={me.name} className="avatar-img" />
+                    ) : (
+                      me.name.slice(0, 1)
+                    )}
+                    <span className="avatar-edit-badge"><Camera size={10} /></span>
+                  </span>
+                </button>
+                <Link href="/conquistas" className="profile-details desktop-only" aria-label={`Ver minha evolução — Nível ${exp.level}, ${exp.total} XP`}>
                   <strong>{me.name.split(" ")[0]}</strong>
                   <span className="profile-level-badge">
                     <Trophy size={10} /> Nível {exp.level} · {exp.total} XP
                   </span>
-                </span>
-              </Link>
+                </Link>
+              </div>
             )}
             <Link className="help-link desktop-only" href="/acesso">Minha senha</Link>
             <Button variant="ghost" className="desktop-only" onClick={signOut}>Sair</Button>
@@ -427,6 +465,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span>Ambiente interno · progresso salvo na sua conta</span>
         </footer>
       </div>
+      <ProfilePhotoModal isOpen={isPhotoModalOpen} onClose={() => setIsPhotoModalOpen(false)} />
     </div>
   );
 }

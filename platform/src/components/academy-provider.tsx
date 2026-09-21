@@ -6,7 +6,7 @@ import { stateCommand, type Command } from "@/lib/pilot-contract";
 import type { AcademyState, Cartorio } from "@/lib/model";
 import { AccessScreen } from "./access-screen";
 type Me={id:string;name:string;email:string;department?:string;role:"admin"|"manager"|"student";audience?:"internal"|"client";cartorioId?:string|null};
-type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean};
+type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(base64:string|null)=>void;};
 const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[],teamProgress:{},cartorios:[]};
 const AcademyContext=createContext<Context|null>(null);
 export function AcademyProvider({children}:{children:ReactNode}){
@@ -14,6 +14,7 @@ export function AcademyProvider({children}:{children:ReactNode}){
  const [me,setMe]=useState<Me|null>(null);const [authenticated,setAuthenticated]=useState(false);const [ready,setReady]=useState(false);const [sessionChecked,setSessionChecked]=useState(false);
  const [error,setError]=useState("");const [busy,setBusy]=useState(false);const busyRef=useRef(false);const [toast,setToast]=useState("");const [theme,setTheme]=useState("light");const identity=useRef("");
  const [simulatedCartorioId, setSimulatedCartorioId] = useState<string | null>(null);
+ const [avatar, setAvatarState] = useState<string | null>(null);
  const auth=browserAuth();
  const request=useCallback(async(command?:Command)=>{
   const client=browserAuth();const session=await client?.auth.getSession();const token=session?.data.session?.access_token;
@@ -49,13 +50,25 @@ export function AcademyProvider({children}:{children:ReactNode}){
  useEffect(()=>{const onFocus=()=>{if(authenticated&&!busyRef.current)void refresh();};window.addEventListener("focus",onFocus);return()=>window.removeEventListener("focus",onFocus);},[authenticated,refresh]);
  useEffect(()=>{document.documentElement.dataset.theme=theme;},[theme]);
  useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(""),6000);return()=>clearTimeout(timer);},[toast]);
+ useEffect(()=>{
+  if(!me?.id){setAvatarState(null);return;}
+  try{const saved=localStorage.getItem(`doc-academy.avatar.${me.id}`);setAvatarState(saved||null);}catch{}
+ },[me?.id]);
+ const setAvatar=useCallback((base64:string|null)=>{
+  if(!me?.id)return;
+  try{
+   if(base64){localStorage.setItem(`doc-academy.avatar.${me.id}`,base64);}
+   else{localStorage.removeItem(`doc-academy.avatar.${me.id}`);}
+   setAvatarState(base64);
+  }catch(e){console.error("Erro ao salvar avatar",e);}
+ },[me?.id]);
  const mutate=useCallback(async(command:Command)=>{
   if(busyRef.current){setToast("Aguarde a gravação em andamento.");return false;}
   busyRef.current=true;setBusy(true);
   try{await request(command);return true;}catch(err){setToast(err instanceof Error?err.message:"Não foi possível salvar. Tente novamente.");return false;}finally{busyRef.current=false;setBusy(false);}
  },[request]);
  const update=useCallback(async(change:(current:AcademyState)=>AcademyState)=>{try{const command=stateCommand(current.current,change(current.current));return command?await mutate(command):true;}catch(err){setToast(err instanceof Error?err.message:"Ação inválida.");return false;}},[mutate]);
- const signOut=()=>{identity.current="";current.current=empty;setState(empty);setMe(null);setReady(false);setAuthenticated(false);void auth?.auth.signOut();};
+ const signOut=()=>{identity.current="";current.current=empty;setState(empty);setMe(null);setReady(false);setAuthenticated(false);setAvatarState(null);void auth?.auth.signOut();};
  const toggleTheme=()=>setTheme(value=>{const next=value==="light"?"dark":"light";try{localStorage.setItem("doc-academy.theme",next);}catch{}return next;});
  if(!sessionChecked)return <div className="access-page"><p>Preparando seu acesso…</p></div>;
  if(!auth||!authenticated||path==="/acesso")return <AccessScreen configured={!!auth} signedIn={authenticated}/>;
@@ -72,6 +85,6 @@ export function AcademyProvider({children}:{children:ReactNode}){
   || (!simulatedCartorioId && path.startsWith("/equipe") && me.role === "student")
   || (me.audience === "client" && !simulatedCartorioId && (path.startsWith("/admin") || path.startsWith("/equipe") || path.startsWith("/conhecimento") || path.startsWith("/conquistas")));
 
- return <AcademyContext.Provider value={{state,me,update,mutate,refresh,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut,activeCartorio,simulatedCartorioId,setSimulatedCartorioId,isClientEnvironment}}>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
+ return <AcademyContext.Provider value={{state,me,update,mutate,refresh,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut,activeCartorio,simulatedCartorioId,setSimulatedCartorioId,isClientEnvironment,avatar,setAvatar}}>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
 }
 export function useAcademy(){const context=useContext(AcademyContext);if(!context)throw new Error("AcademyProvider ausente");return context;}
