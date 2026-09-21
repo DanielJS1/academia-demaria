@@ -132,8 +132,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="sidebar-header">
           <Link href="/" className="brand" aria-label="DOC-Academy — início" onClick={() => setMobileOpen(false)}>
-            <img className="brand-official" src="/doc-academy-logo-oficial.png" alt="DOC-Academy"/>
-            {!isDocked && (
+            {isDocked ? (
+              <img className="brand-official" src="/doc-academy-logo-oficial.png" alt="DOC-Academy"/>
+            ) : (
               <span className="brand-title">
                 <strong>DOC·<span>Academy</span></strong>
               </span>
@@ -231,18 +232,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ) : (
           <>
             <div className="sidebar-nav-scroll">
-              {isClientEnvironment ? (
+              {isClientEnvironment && activeCartorio && (
                 <div className="workspace-label">
                   <span className="workspace-dot" style={{ background: "var(--mint-9)" }}/>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {activeCartorio ? activeCartorio.name : "Cartório Parceiro"}
+                    {activeCartorio.name}
                   </span>
                   <span className="workspace-tag" style={{ background: "var(--mint-4)", color: "var(--mint-11)" }}>
                     {activeCartorio?.uf || "CLIENTE"}
                   </span>
                 </div>
-              ) : (
-                <div className="workspace-label"><span className="workspace-dot"/> DeMaria <span className="workspace-tag">INTERNO</span></div>
               )}
               <span className="nav-label">{isClientEnvironment ? "CAPACITAÇÃO" : "SEU ESPAÇO"}</span>
               <nav>
