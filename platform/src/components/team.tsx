@@ -82,12 +82,20 @@ function analyzeAttempt(attempt: Attempt): {
     isCorrect: boolean;
   }>;
 } {
+  const formatAnswer = (val: string) => {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed.join(" · ");
+    } catch {}
+    return val;
+  };
+
   const details = attempt.questions.map(question => {
-    const userAnswer = attempt.answers[question.id] || "Sem resposta";
+    const rawAnswer = attempt.answers[question.id] || "Sem resposta";
     let isCorrect = false;
 
     if (question.type === "choice") {
-      isCorrect = Boolean(question.correct && normalize(userAnswer) === normalize(question.correct));
+      isCorrect = Boolean(question.correct && normalize(rawAnswer) === normalize(question.correct));
     } else {
       isCorrect = Boolean(attempt.correctTextIds?.includes(question.id));
     }
@@ -96,8 +104,8 @@ function analyzeAttempt(attempt: Attempt): {
       id: question.id,
       prompt: question.prompt,
       type: question.type,
-      userAnswer,
-      correctAnswer: question.correct || (question.type === "text" ? "Avaliado pelo gestor/admin" : ""),
+      userAnswer: formatAnswer(rawAnswer),
+      correctAnswer: formatAnswer(question.correct) || (question.type === "text" ? "Avaliado pelo gestor/admin" : ""),
       isCorrect,
     };
   });

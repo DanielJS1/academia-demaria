@@ -1,0 +1,1821 @@
+[
+  {
+    "twygoId": 45351,
+    "title": "Averbações",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 5,
+    "aulasComVimeo": 5,
+    "lessons": [
+      {
+        "contentId": "849319",
+        "title": "T-AV-001 - Averbações - Manipulação",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371220682"
+      },
+      {
+        "contentId": "849320",
+        "title": "T-AV-002 - Averbações - Definição de minutas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371221359"
+      },
+      {
+        "contentId": "849321",
+        "title": "T-AV-003 - Averbações - Configurações em geral",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371221937"
+      },
+      {
+        "contentId": "849322",
+        "title": "T-AV-004 - Averbações - Impressão de etiqueta",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371223028"
+      },
+      {
+        "contentId": "849323",
+        "title": "T-AV-005 - Averbações - Comunicação ARPEN-SP",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371223571"
+      }
+    ]
+  },
+  {
+    "twygoId": 45352,
+    "title": "Comunicações",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 3,
+    "aulasComVimeo": 3,
+    "lessons": [
+      {
+        "contentId": "849324",
+        "title": "T-CO-001 - Comunicações",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371218597"
+      },
+      {
+        "contentId": "849325",
+        "title": "T-CO-002 - Comunicações - Pesquisa",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371219241"
+      },
+      {
+        "contentId": "849326",
+        "title": "T-CO-003 - Comunicações - Envio",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371219745"
+      }
+    ]
+  },
+  {
+    "twygoId": 45353,
+    "title": "DOC-Backup",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 2,
+    "aulasComVimeo": 2,
+    "lessons": [
+      {
+        "contentId": "849327",
+        "title": "T-BK-001 - Backup incremental e log de auditoria",
+        "description": "Este vídeo demonstra como configurar o backup incremental e visualizar o log de auditoria do aplicativo de backup do DOC-Windows.",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/693536707"
+      },
+      {
+        "contentId": "850902",
+        "title": "T-BK-002 - DOC-Backup",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/739632748"
+      }
+    ]
+  },
+  {
+    "twygoId": 45356,
+    "title": "e-Notariado",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 2,
+    "aulasComVimeo": 2,
+    "lessons": [
+      {
+        "contentId": "849335",
+        "title": "T-NT-001 - E-Notariado - Parte 1 (Carga inicial)",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/521445573"
+      },
+      {
+        "contentId": "849336",
+        "title": "T-NT-002 - E - Notariado - Parte 2 (Envio diário)",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/521453793"
+      }
+    ]
+  },
+  {
+    "twygoId": 45357,
+    "title": "Escrituras",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 2,
+    "totalAulas": 18,
+    "aulasComVimeo": 18,
+    "lessons": [
+      {
+        "contentId": "849338",
+        "title": "T-ES-001 - Inclusão Escritura",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/649677474"
+      },
+      {
+        "contentId": "849339",
+        "title": "T-ES-002 - Inclusão Escrituras - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/649670738"
+      },
+      {
+        "contentId": "849340",
+        "title": "T-ES-003 - CENSEC/DOI",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/649700168"
+      },
+      {
+        "contentId": "849341",
+        "title": "T-ES-004 - Definição de minutas - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/649703103"
+      },
+      {
+        "contentId": "849342",
+        "title": "T-ES-005 - Definição de minutas - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/662390940"
+      },
+      {
+        "contentId": "849343",
+        "title": "T-ES-006 - Definição de minutas - Parte 3",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/662389814"
+      },
+      {
+        "contentId": "849344",
+        "title": "T-ES-007 - Definição de minutas - Parte 4",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/610093086"
+      },
+      {
+        "contentId": "849345",
+        "title": "T-ES-008 - Configuração do negócio ou transação",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/610097841"
+      },
+      {
+        "contentId": "849346",
+        "title": "T-ES-009 - Justificativas de testemunhas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/610102504"
+      },
+      {
+        "contentId": "849347",
+        "title": "T-ES-010 - Relatórios/Preferências de notas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/610108454"
+      },
+      {
+        "contentId": "849348",
+        "title": "T-ES-011 - Configuração dos documentos e declarações",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/612653675"
+      },
+      {
+        "contentId": "849349",
+        "title": "T-ES-012 - Configuração dos tipos de imóveis",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/612667212"
+      },
+      {
+        "contentId": "849350",
+        "title": "T-ES-013 - Cadastro de qualidades das partes",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/612678608"
+      },
+      {
+        "contentId": "849351",
+        "title": "T-ES-014 - Numeração automática",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/612684739"
+      },
+      {
+        "contentId": "849352",
+        "title": "T-ES-015 - Log de modificações e teclas programáveis",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/612745318"
+      },
+      {
+        "contentId": "849353",
+        "title": "T-ES-016 - Variáveis adicionais",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/612754784"
+      },
+      {
+        "contentId": "849354",
+        "title": "T-ES-017 - Definição de imagens",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/612766380"
+      },
+      {
+        "contentId": "2636466",
+        "title": "T-ES-018 - Envio de informações ao SISCOAF",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/894155635"
+      }
+    ]
+  },
+  {
+    "twygoId": 45358,
+    "title": "Firmas",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 13,
+    "aulasComVimeo": 13,
+    "lessons": [
+      {
+        "contentId": "849355",
+        "title": "T-FA-001 - Firmas - Configurações iniciais - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372356803"
+      },
+      {
+        "contentId": "849356",
+        "title": "T-FA-002 - Firmas - Configurações iniciais - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372366242"
+      },
+      {
+        "contentId": "849357",
+        "title": "T-FA-003 - Firmas - Configuração de etiquetas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372366834"
+      },
+      {
+        "contentId": "849358",
+        "title": "T-FA-004 - Firmas - Modalidades e definição de fichas/termos",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372369223"
+      },
+      {
+        "contentId": "849359",
+        "title": "T-FA-005 - Firmas - Manipulação de firmas - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372370080"
+      },
+      {
+        "contentId": "849360",
+        "title": "T-FA-006 - Firmas - Manipulação de firmas - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372371209"
+      },
+      {
+        "contentId": "849361",
+        "title": "T-FA-007 - Firmas - Impressão de etiquetas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372372975"
+      },
+      {
+        "contentId": "849362",
+        "title": "T-FA-008 - Firmas - Impressão do termo de comparecimento",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372374030"
+      },
+      {
+        "contentId": "849363",
+        "title": "T-FA-009 - Firmas - Consulta dos históricos",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372375130"
+      },
+      {
+        "contentId": "849364",
+        "title": "T-FA-010 - Firmas - Arquivo XML para SEFAZ SP",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372376364"
+      },
+      {
+        "contentId": "849365",
+        "title": "T-FA-011 - Firmas - Relatórios",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372377168"
+      },
+      {
+        "contentId": "849366",
+        "title": "T-FA-012 - Firmas - Sinal público",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372383027"
+      },
+      {
+        "contentId": "849367",
+        "title": "T-FA-001-SP - Firmas - Termo de comparecimento de transferência de veículos SP",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372365691"
+      }
+    ]
+  },
+  {
+    "twygoId": 45359,
+    "title": "Procurações",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 2,
+    "totalAulas": 16,
+    "aulasComVimeo": 16,
+    "lessons": [
+      {
+        "contentId": "849368",
+        "title": "T-PR-001 - Inclusão procuração - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/498053248"
+      },
+      {
+        "contentId": "849369",
+        "title": "T-PR-002 - Inclusão procuração - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/498102325"
+      },
+      {
+        "contentId": "849370",
+        "title": "T-PR-003 - CENSEC/CEP",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/498111540"
+      },
+      {
+        "contentId": "849371",
+        "title": "T-PR-004 - Configuração de minutas - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/507188995"
+      },
+      {
+        "contentId": "849372",
+        "title": "T-PR-005 - Configuração de minutas - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/507192510"
+      },
+      {
+        "contentId": "849373",
+        "title": "T-PR-006 - Configuração de minutas - Parte 3",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/507555780"
+      },
+      {
+        "contentId": "849374",
+        "title": "T-PR-007 - Configuração de minutas - Parte 4",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/507198876"
+      },
+      {
+        "contentId": "849375",
+        "title": "T-PR-008 - Configuração dos Poderes - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/507559952"
+      },
+      {
+        "contentId": "849376",
+        "title": "T-PR-009 - Configuração Poderes - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/507207669"
+      },
+      {
+        "contentId": "849377",
+        "title": "T-PR-010 - Numeração automática",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/507275283"
+      },
+      {
+        "contentId": "849378",
+        "title": "T-PR-011 - Justificativas de testemunhas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/498105106"
+      },
+      {
+        "contentId": "849379",
+        "title": "T-PR-012 - Assistente de configuração - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/508003980"
+      },
+      {
+        "contentId": "849380",
+        "title": "T-PR-013 - Assistente de configuração - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/508013325"
+      },
+      {
+        "contentId": "849381",
+        "title": "T-PR-014 - Assistente de configuração - Parte 3",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/507268967"
+      },
+      {
+        "contentId": "849382",
+        "title": "T-PR-015 - Log de modificações e teclas programáveis",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/498113730"
+      },
+      {
+        "contentId": "849383",
+        "title": "T-PR-016 - Cadastro de qualidades e restrição de PF/PJ",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/498115347"
+      }
+    ]
+  },
+  {
+    "twygoId": 45361,
+    "title": "Registro Civil",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 4,
+    "totalAulas": 46,
+    "aulasComVimeo": 46,
+    "lessons": [
+      {
+        "contentId": "849402",
+        "title": "T-RC-001 - Inclusão de Registros",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371136744"
+      },
+      {
+        "contentId": "849403",
+        "title": "T-RC-002 - Manipulação de registros",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371152681"
+      },
+      {
+        "contentId": "849404",
+        "title": "T-RC-003 - Certidão negativa",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371155801"
+      },
+      {
+        "contentId": "849405",
+        "title": "T-RC-004 - Edital de fora",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371162419"
+      },
+      {
+        "contentId": "849406",
+        "title": "T-RC-005 - Índices",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371164075"
+      },
+      {
+        "contentId": "849407",
+        "title": "T-RC-006 - Configurações gerais - Parte 1 - Cadastros auxiliares",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371165405"
+      },
+      {
+        "contentId": "849408",
+        "title": "T-RC-007 - Configurações gerais - Parte 2 - Conteúdo prévio dos campos",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371166294"
+      },
+      {
+        "contentId": "849409",
+        "title": "T-RC-008 - Configurações gerais - Parte 3 - Definições de imagens",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371172701"
+      },
+      {
+        "contentId": "849410",
+        "title": "T-RC-009 - Configurações gerais - Parte 4 - Variáveis adicionais",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371175472"
+      },
+      {
+        "contentId": "849411",
+        "title": "T-RC-010 - Configurações gerais - Parte 5 - Variáveis globais",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371176304"
+      },
+      {
+        "contentId": "849412",
+        "title": "T-RC-011 - Configurações gerais - Parte 6 - Numeração automática",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371177147"
+      },
+      {
+        "contentId": "849413",
+        "title": "T-RC-012 - Estatísticas - IBGE - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371178232"
+      },
+      {
+        "contentId": "849414",
+        "title": "T-RC-013 - Estatísticas - IBGE - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371179375"
+      },
+      {
+        "contentId": "849415",
+        "title": "T-RC-014 - Estatísticas - SIRC - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371180225"
+      },
+      {
+        "contentId": "849416",
+        "title": "T-RC-015 - Estatísticas - SIRC - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371180813"
+      },
+      {
+        "contentId": "849417",
+        "title": "T-RC-016 - Definição de minutas - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371188844"
+      },
+      {
+        "contentId": "849418",
+        "title": "T-RC-017 - Definição de minutas - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371189883"
+      },
+      {
+        "contentId": "849419",
+        "title": "T-RC-018 - Definição de minutas - Parte 3",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371190773"
+      },
+      {
+        "contentId": "849420",
+        "title": "T-RC-019 - Definição de minutas - Parte 4",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371191724"
+      },
+      {
+        "contentId": "849421",
+        "title": "T-RC-020 - Preferências do Registro Civil",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371194232"
+      },
+      {
+        "contentId": "849422",
+        "title": "T-RC-021 - Alterações SIRC versão 3.0",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/447516264"
+      },
+      {
+        "contentId": "849423",
+        "title": "T-RC-022 - Preferências SIRC",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/459114079"
+      },
+      {
+        "contentId": "849424",
+        "title": "T-RC-023 - Seleção automática de minutas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/469119039"
+      },
+      {
+        "contentId": "849425",
+        "title": "T-RC-024 - Envio de registros que sofreram alteração para a CRC",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/473205581"
+      },
+      {
+        "contentId": "849426",
+        "title": "T-RC-025 - Envio de registros por faixa para CRC Nacional",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/534924160"
+      },
+      {
+        "contentId": "849427",
+        "title": "T-RC-026 - Gerador de relatórios",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/693544164"
+      },
+      {
+        "contentId": "849428",
+        "title": "T-RC-027 - Gerador de relatórios - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/696169363"
+      },
+      {
+        "contentId": "849429",
+        "title": "T-RC-028 - Exclusão de DNV/DO",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/696171465"
+      },
+      {
+        "contentId": "849430",
+        "title": "T-RC-029 - Selo Registral",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/696172921"
+      },
+      {
+        "contentId": "849431",
+        "title": "T-RC-030 - Utilização DOC-WEB-UI",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/667950157"
+      },
+      {
+        "contentId": "916472",
+        "title": "T-RC-031 - CRC Nacional",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/751249265"
+      },
+      {
+        "contentId": "849432",
+        "title": "T-RC-033 - Blocklist",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/697098047"
+      },
+      {
+        "contentId": "849433",
+        "title": "T-RC-034 - Inclusão de registros de gêmeos",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/697101502"
+      },
+      {
+        "contentId": "849434",
+        "title": "T-RC-035 - E-cartório (RJ)",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/723835861"
+      },
+      {
+        "contentId": "1246098",
+        "title": "T-RC-036 - Pesquisa de CPF no banco de dados da serventia",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/829889858"
+      },
+      {
+        "contentId": "1642023",
+        "title": "T-RC-037 - Envio dos índices para a CRC Nacional",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/849558007"
+      },
+      {
+        "contentId": "1642024",
+        "title": "T-RC-038 - Personalização das funções de qualificação de pessoas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/841339567"
+      },
+      {
+        "contentId": "1642025",
+        "title": "T-RC-039 - Utilização da aba partes",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/849558438"
+      },
+      {
+        "contentId": "849435",
+        "title": "T-LE-001 - Livro E - Criação de ato genérico",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371217702"
+      },
+      {
+        "contentId": "2192706",
+        "title": "T-RC-042 - Cadastro de feriados",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/873466452"
+      },
+      {
+        "contentId": "2192707",
+        "title": "T-RC-043 - Exclusão de registros duplicados em lote",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/873467019"
+      },
+      {
+        "contentId": "2335435",
+        "title": "T-RC-044 - Criação de usuário",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/880212176"
+      },
+      {
+        "contentId": "2335436",
+        "title": "T-RC-045 - Geração arquivo Infodip e Junta militar",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/880212318"
+      },
+      {
+        "contentId": "2636117",
+        "title": "T-LE-002 - Inclusão de termo declaratório de união estável",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/894155633"
+      },
+      {
+        "contentId": "2636204",
+        "title": "T-RC-046 - Inclusão de vídeos e URL nos registros",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/894155636"
+      },
+      {
+        "contentId": "2636203",
+        "title": "T-RC-047 - Inclusão de registro de Transporte e Restauração",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/894155638"
+      }
+    ]
+  },
+  {
+    "twygoId": 45363,
+    "title": "Selagem",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 2,
+    "totalAulas": 25,
+    "aulasComVimeo": 25,
+    "lessons": [
+      {
+        "contentId": "849436",
+        "title": "T-SE-001 - Selagem - Inclusão de lotes de selos e certidões",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371709632"
+      },
+      {
+        "contentId": "849437",
+        "title": "T-SE-002 - Selagem - Integração com Reg Civil e Firmas - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371907543"
+      },
+      {
+        "contentId": "849438",
+        "title": "T-SE-003 - Selagem - Integração com Reg Civil e Firmas - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371921489"
+      },
+      {
+        "contentId": "849440",
+        "title": "T-SE-004 - Selagem - Utilização manual de selo, pesquisa e verificação de estoque",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371930772"
+      },
+      {
+        "contentId": "849443",
+        "title": "T-SE-005 - Selagem - Relatórios",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371931604"
+      },
+      {
+        "contentId": "849447",
+        "title": "T-SE-006 - Selagem - Uso e controle de selo",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371933643"
+      },
+      {
+        "contentId": "849450",
+        "title": "T-SE-007 - Selagem - Selo avulso e selar documento externo",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371935676"
+      },
+      {
+        "contentId": "849453",
+        "title": "T-SE-008 - Selagem - Controle de certidões e envio Infopel",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371936453"
+      },
+      {
+        "contentId": "849456",
+        "title": "T-SE-009 - Controle de estoque de selos e certidões",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/723469081"
+      },
+      {
+        "contentId": "849459",
+        "title": "T-SE-001-PE - Selagem - Aquisição de selo digital PE",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371715421"
+      },
+      {
+        "contentId": "849462",
+        "title": "T-SE-002-PE - Selagem - Selo digital PE - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371914306"
+      },
+      {
+        "contentId": "849465",
+        "title": "T-SE-003-PE - Selagem - Selo digital PE - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371924102"
+      },
+      {
+        "contentId": "849468",
+        "title": "T-SE-005-PE - Planilha de atos gratuitos para o FERC",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/463167862"
+      },
+      {
+        "contentId": "849470",
+        "title": "T-SE-001-SP - Selagem - Selo digital SP - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371903639"
+      },
+      {
+        "contentId": "849473",
+        "title": "T-SE-002-SP - Selagem - Selo digital SP - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371917379"
+      },
+      {
+        "contentId": "849476",
+        "title": "T-SE-003-SP - Selagem - Selo digital SP - Parte 3",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371930127"
+      },
+      {
+        "contentId": "849479",
+        "title": "T-SE-001-RJ - Selagem - Aquisição de selo digital RJ",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371716249"
+      },
+      {
+        "contentId": "849481",
+        "title": "T-SE-002-RJ - Selagem - Selo digital RJ - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371914906"
+      },
+      {
+        "contentId": "849484",
+        "title": "T-SE-003-RJ - Selagem - Selo digital RJ - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371925245"
+      },
+      {
+        "contentId": "849488",
+        "title": "T-SE-001-MG - Selagem - Aquisição de selo digital MG",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371712237"
+      },
+      {
+        "contentId": "849491",
+        "title": "T-SE-002-MG - Selagem - Selo digital MG - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371909530"
+      },
+      {
+        "contentId": "849494",
+        "title": "T-SE-003-MG - Selagem - Selo digital MG - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371923420"
+      },
+      {
+        "contentId": "849497",
+        "title": "T-SE-001-MS - Selagem - Aquisição de selo digital MS",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/371712642"
+      },
+      {
+        "contentId": "849500",
+        "title": "T-SE-001-CE - Selagem - Selo digital CE",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/733350990"
+      },
+      {
+        "contentId": "849503",
+        "title": "T-SE-001-PA - Selagem - Selo digital PA",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/740711080"
+      }
+    ]
+  },
+  {
+    "twygoId": 45373,
+    "title": "Financeiro",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 2,
+    "totalAulas": 14,
+    "aulasComVimeo": 14,
+    "lessons": [
+      {
+        "contentId": "849853",
+        "title": "T-FI-001 - Financeiro - Configurações iniciais - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372384694"
+      },
+      {
+        "contentId": "849854",
+        "title": "T-FI-002 - Financeiro - Configurações iniciais - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372390188"
+      },
+      {
+        "contentId": "849855",
+        "title": "T-FI-003 - Financeiro - Manipulação de Ordem de Serviço - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372395162"
+      },
+      {
+        "contentId": "849856",
+        "title": "T-FI-004 - Financeiro - Manipulação de Ordem de Serviço - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372396289"
+      },
+      {
+        "contentId": "849857",
+        "title": "T-FI-005 - Financeiro - Lançamentos",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372397223"
+      },
+      {
+        "contentId": "849858",
+        "title": "T-FI-006 - Financeiro - Relatórios",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372398957"
+      },
+      {
+        "contentId": "849859",
+        "title": "T-FI-007 - Financeiro - Livros",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372399865"
+      },
+      {
+        "contentId": "849860",
+        "title": "T-FI-008 - Financeiro - Informações adicionais",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372400573"
+      },
+      {
+        "contentId": "849861",
+        "title": "T-FI-009 - Financeiro - Protocolo - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372402232"
+      },
+      {
+        "contentId": "849862",
+        "title": "T-FI-010 - Financeiro - Protocolo - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/372403177"
+      },
+      {
+        "contentId": "1642040",
+        "title": "T-FI-011 - Manipulação de selo na Ordem de serviço",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/841339984"
+      },
+      {
+        "contentId": "1207532",
+        "title": "T-FI-001-PR - Atos padronizados",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/827741707"
+      },
+      {
+        "contentId": "2636478",
+        "title": "T-FI-012 - Configuração de metas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/894206671"
+      },
+      {
+        "contentId": "2663841",
+        "title": "T-FI-013 - Ajuste tabela de emolumentos para o ano seguinte",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/895804414"
+      }
+    ]
+  },
+  {
+    "twygoId": 46053,
+    "title": "MasterClass",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 10,
+    "aulasComVimeo": 10,
+    "lessons": [
+      {
+        "contentId": "860279",
+        "title": "MasterClass - 1ª edição - Facilidades e Recursos do DOC-Windows",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=Mo0XnoUBL-M&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi"
+      },
+      {
+        "contentId": "860280",
+        "title": "MasterClass - 2ª edição - Envio de dados para o SIRC",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=r_UE7_8qcn8&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=2"
+      },
+      {
+        "contentId": "860281",
+        "title": "MasterClass - 3ª edição - Configuração de Documentos - Registro Civil",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=ajlAlAp89QQ&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=3"
+      },
+      {
+        "contentId": "860282",
+        "title": "MasterClass - 4ª edição - Configuração de Documentos - Firmas",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=KnI_E0JTkJY&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=4"
+      },
+      {
+        "contentId": "860283",
+        "title": "MasterClass - 5ª edição - Configuração de Documentos - Procurações",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=wBu5fJaObr8&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=5"
+      },
+      {
+        "contentId": "860284",
+        "title": "MasterClass - 6ª edição - Configuração de Documentos - Escrituras",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=3J2EItPZxoU&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=6"
+      },
+      {
+        "contentId": "860285",
+        "title": "MasterClass - 7ª edição - Envio e Recebimento de Dados da CRC",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=4pgJrWKJX50&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=7"
+      },
+      {
+        "contentId": "860286",
+        "title": "MasterClass - 8ª edição - Módulo Financeiro - Parte I",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=lJlNM1KjxG8&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=8"
+      },
+      {
+        "contentId": "860287",
+        "title": "MasterClass - 9ª edição - Módulo Financeiro - Parte II",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=9HuzVSa9IFQ&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=10"
+      },
+      {
+        "contentId": "893452",
+        "title": "MasterClass - 10ª edição - Facilidades e Recursos DOC-Windows - Parte II",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=PfsUGAz3Ek8&list=PLKXCjewKGrgRT3LWdQTr1biYnXa6ZY5Pi&index=11"
+      }
+    ]
+  },
+  {
+    "twygoId": 61777,
+    "title": "Desvendando o código (OBRIGATÓRIO)",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 6,
+    "aulasComVimeo": 6,
+    "lessons": [
+      {
+        "contentId": "1090376",
+        "title": "Aula 1 - Arquitetura do projeto",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://youtu.be/UnWsv4of_4c"
+      },
+      {
+        "contentId": "1090982",
+        "title": "Aula 2 - Módulo de Nascimento",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://youtu.be/T307X1b3ABQ"
+      },
+      {
+        "contentId": "1096069",
+        "title": "Aula 3 - Módulo de Casamento",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://youtu.be/8_FZ5bK12JA"
+      },
+      {
+        "contentId": "1096120",
+        "title": "Aula 4 - Módulo de Óbito",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://youtu.be/I13op4gsnG4"
+      },
+      {
+        "contentId": "1096121",
+        "title": "Aula 5 - Módulo Livro-E",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://youtu.be/4iraMiAu6CA"
+      },
+      {
+        "contentId": "1097761",
+        "title": "Aula 5 - Banco de dados básico (Registro Civil)",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://youtu.be/pVFs-zh8EHg"
+      }
+    ]
+  },
+  {
+    "twygoId": 159040,
+    "title": "Proclamas Online (POL)",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 2,
+    "aulasComVimeo": 2,
+    "lessons": [
+      {
+        "contentId": "2192687",
+        "title": "Proclamas Online - Parte 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/865934104"
+      },
+      {
+        "contentId": "2192688",
+        "title": "Proclamas Online - Parte 2",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/865934246"
+      }
+    ]
+  },
+  {
+    "twygoId": 174987,
+    "title": "DOC-Serviços",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 1,
+    "aulasComVimeo": 1,
+    "lessons": [
+      {
+        "contentId": "2386419",
+        "title": "DOC-Serviços",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/883354942"
+      }
+    ]
+  },
+  {
+    "twygoId": 186373,
+    "title": "Apresentação do Núcleo de UX/UI Design",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 1,
+    "aulasComVimeo": 1,
+    "lessons": [
+      {
+        "contentId": "2513229",
+        "title": "Apresentação do Núcleo de UX/UI Design",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/889628441?share=copy"
+      }
+    ]
+  },
+  {
+    "twygoId": 368579,
+    "title": "Desenvolvimento - C# Princípios SOLID ",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 2,
+    "aulasComVimeo": 2,
+    "lessons": [
+      {
+        "contentId": "5114982",
+        "title": "SOLID",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=6SfrO3D4dHM"
+      },
+      {
+        "contentId": "5115366",
+        "title": "BONUS: LINQ",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "youtube",
+        "videoUrl": "https://www.youtube.com/watch?v=b0g2noP5BzU"
+      }
+    ]
+  },
+  {
+    "twygoId": 655548,
+    "title": "Uso do botão ESPECIAL no Financeiro",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 1,
+    "aulasComVimeo": 1,
+    "lessons": [
+      {
+        "contentId": "7964622",
+        "title": "Aula 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/1102255606"
+      }
+    ]
+  },
+  {
+    "twygoId": 723388,
+    "title": "DOC-Bot.IA AO VIVO na Sede",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 2,
+    "aulasComVimeo": 2,
+    "lessons": [
+      {
+        "contentId": "8617970",
+        "title": "Parte 1 - Configurações",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/1133963197?share=copy&fl=sv&fe=ci"
+      },
+      {
+        "contentId": "8618000",
+        "title": "Parte 2 - Utilização",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/1134282175?share=copy&fl=sv&fe=ci"
+      }
+    ]
+  },
+  {
+    "twygoId": 780032,
+    "title": "Livro Diário Auxiliar Eletrônico - RJ",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 1,
+    "aulasComVimeo": 1,
+    "lessons": [
+      {
+        "contentId": "9102560",
+        "title": "Aula",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/1163243225"
+      }
+    ]
+  },
+  {
+    "twygoId": 866535,
+    "title": "ShortCast - Departamento Implantações",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 1,
+    "aulasComVimeo": 1,
+    "lessons": [
+      {
+        "contentId": "9843907",
+        "title": "Episódio 1",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/1200129024?share=copy&fl=sv&fe=ci"
+      }
+    ]
+  },
+  {
+    "twygoId": 877377,
+    "title": "InvoiCy Sheets - Emissão de Notas Fiscais Eletrônicas",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 1,
+    "aulasComVimeo": 1,
+    "lessons": [
+      {
+        "contentId": "9923428",
+        "title": "NFS-e - Invoicy Sheets",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/1206331305?share=copy&fl=sv&fe=ci"
+      }
+    ]
+  },
+  {
+    "twygoId": 913645,
+    "title": "Financeiro: NFS-e - Suporte Técnico",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 1,
+    "aulasComVimeo": 1,
+    "lessons": [
+      {
+        "contentId": "10132196",
+        "title": "NFS-e: Suporte Técnico",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/1224903505?fl=ip&fe=ec&share=copy"
+      }
+    ]
+  },
+  {
+    "twygoId": 915199,
+    "title": "DOC-Mobile - Treinamento completo",
+    "description": "",
+    "status": "draft",
+    "workloadHours": 1,
+    "totalAulas": 1,
+    "aulasComVimeo": 1,
+    "lessons": [
+      {
+        "contentId": "10145275",
+        "title": "DOC-Mobile",
+        "description": "",
+        "type": "video",
+        "mediaType": "video",
+        "externalType": "vimeo",
+        "videoUrl": "https://vimeo.com/1225971773?share=copy&fl=sv&fe=ci"
+      }
+    ]
+  }
+]

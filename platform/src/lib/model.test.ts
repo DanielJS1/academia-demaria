@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { initialState } from "./seed";
-import { completeActivity, courseProgress, getCartorioLessons, isCourseAvailableForCartorio, publishReview, stateSchema, vimeoEmbed, type Attempt } from "./model";
+import { completeActivity, courseProgress, getCartorioLessons, isCourseAvailableForCartorio, publishReview, questionSchema, stateSchema, vimeoEmbed, youtubeEmbed, type Attempt } from "./model";
+import { isCorrectAnswerValid } from "./course-activities";
 import { experience } from "./gamification";
 
 describe("regras da demonstração", () => {
@@ -40,6 +41,32 @@ describe("regras da demonstração", () => {
     expect(vimeoEmbed("https://vimeo.com.evil.example/123")).toBeNull();
     expect(vimeoEmbed("javascript:alert(1)")).toBeNull();
     expect(vimeoEmbed("http://vimeo.com/123")).toBeNull();
+  });
+  it("aceita vídeos do YouTube válidos nos formatos padrão, encurtado, embed, live, com parâmetros e espaços", () => {
+    expect(youtubeEmbed("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe("https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1");
+    expect(youtubeEmbed("https://youtu.be/dQw4w9WgXcQ")).toBe("https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1");
+    expect(youtubeEmbed("https://www.youtube.com/embed/dQw4w9WgXcQ")).toBe("https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1");
+    expect(youtubeEmbed("https://www.youtube.com/live/dQw4w9WgXcQ")).toBe("https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1");
+    expect(youtubeEmbed("https://www.youtube.com/shorts/dQw4w9WgXcQ")).toBe("https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1");
+    expect(youtubeEmbed("  https://www.youtube.com/watch?v=6SfrO3D4dHM&list=PL123&t=45s  ")).toBe("https://www.youtube.com/embed/6SfrO3D4dHM?enablejsapi=1");
+    expect(youtubeEmbed("https://youtube.com.evil.example/dQw4w9WgXcQ")).toBeNull();
+    expect(youtubeEmbed("javascript:alert(1)")).toBeNull();
+    expect(youtubeEmbed("https://youtube.com/watch?v=invalid")).toBeNull();
+  });
+  it("valida questões com múltipla escolha (uma ou mais respostas)", () => {
+    const qSingle = { id: "q1", prompt: "Enunciado", type: "choice" as const, options: ["A", "B", "C"], correct: "A", multiple: false };
+    expect(questionSchema.safeParse(qSingle).success).toBe(true);
+    expect(isCorrectAnswerValid(qSingle)).toBe(true);
+
+    const qMultiple = { id: "q2", prompt: "Enunciado", type: "choice" as const, options: ["A", "B", "C"], correct: JSON.stringify(["A", "C"]), multiple: true };
+    expect(questionSchema.safeParse(qMultiple).success).toBe(true);
+    expect(isCorrectAnswerValid(qMultiple)).toBe(true);
+
+    const qMultipleInvalid = { ...qMultiple, correct: JSON.stringify(["A", "D"]) }; // "D" not in options
+    expect(isCorrectAnswerValid(qMultipleInvalid)).toBe(false);
+
+    const qMultipleEmpty = { ...qMultiple, correct: JSON.stringify([]) };
+    expect(isCorrectAnswerValid(qMultipleEmpty)).toBe(false);
   });
   it("filtra cursos por módulos contratados do cartório", () => {
     const mockCartorio = {

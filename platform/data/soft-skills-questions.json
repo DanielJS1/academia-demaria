@@ -1,0 +1,455 @@
+[
+  {
+    "questionListId": 14541,
+    "courseName": "Inteligência Emocional",
+    "courseIdTwygo": 51825,
+    "nome": "Inteligência Emocional - Prova",
+    "questoes": [
+      {
+        "id": "a6920ad1-07b2-4f37-9411-9992325d35de",
+        "externalId": 106112,
+        "type": "text",
+        "prompt": "O que é a inteligência emocional?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "54ad21c0-cbf4-4598-b803-2284b12f3caf",
+        "externalId": 106113,
+        "type": "choice",
+        "prompt": "Para ter bons relacionamentos interpessoais, nós precisamos manter em uso as seguintes habilidades:",
+        "options": [
+          "Criar novos relacionamentos interpessoais tanto na vida pessoal quanto na profissional.",
+          "Manter e cuidar bem dos relacionamentos existentes, mantendo reciprocidade e satisfação mútua.",
+          "Restaurar (quando possível) relacionamentos que estejam rompidos ou prejudicados.",
+          "Todas as alternativas anteriores."
+        ],
+        "correct": "Todas as alternativas anteriores."
+      },
+      {
+        "id": "de260f36-fe5f-494a-8e4d-3d57f47585e8",
+        "externalId": 106114,
+        "type": "choice",
+        "prompt": "Qual hábito mental atrapalha o desenvolvimento da autoestima (capacidade de se aceitar como se é)?",
+        "options": [
+          "Bom senso",
+          "Autorreflexão",
+          "Criticar-se de forma exagerada e não construtiva",
+          "Permitir-se ficar satisfeito com suas conquistas"
+        ],
+        "correct": "Criticar-se de forma exagerada e não construtiva"
+      },
+      {
+        "id": "192c96cf-3a18-4689-84c4-441df05337cc",
+        "externalId": 106115,
+        "type": "choice",
+        "prompt": "Qual das habilidades da inteligência emocional ajuda a reforçar a EMPATIA?",
+        "options": [
+          "Consciência Emocional:  Porque entender nossos próprios sentimentos ajuda também a entender e interpretar como os outros estão se sentindo.",
+          "Controle de Impulsos: Porque para ser empático é preciso saber se controlar para não ficar irritado(a).",
+          "Senso de Propósito: Porque somente quem sabe seu propósito consegue ter tempo para olhar para os outros.",
+          "Nenhuma das alternativas anteriores."
+        ],
+        "correct": "Consciência Emocional:  Porque entender nossos próprios sentimentos ajuda também a entender e interpretar como os outros estão se sentindo."
+      },
+      {
+        "id": "afaabb85-ce66-449d-9dc1-54b3d6c10aa6",
+        "externalId": 106116,
+        "type": "choice",
+        "prompt": "Qual das seguintes habilidades da inteligência emocional você deve priorizar para começar a se desenvolver?",
+        "options": [
+          "Autoestima",
+          "Senso de propósito",
+          "Flexibilidade",
+          "Consciência Emocional"
+        ],
+        "correct": "Consciência Emocional"
+      },
+      {
+        "id": "62d7ed53-2d30-4f68-b7a1-70a102306cc6",
+        "externalId": 106117,
+        "type": "choice",
+        "prompt": "Marque as habilidades que tenham relação com a inteligência emocional?",
+        "options": [
+          "Empatia",
+          "Resiliência",
+          "Autoritarismo",
+          "Relacionamentos Interpessoais"
+        ],
+        "correct": "Empatia"
+      },
+      {
+        "id": "548b8eec-530a-42f2-867e-02ab0c284da2",
+        "externalId": 106118,
+        "type": "text",
+        "prompt": "Quais são os benefícios da inteligência emocional?",
+        "options": [],
+        "correct": ""
+      }
+    ]
+  },
+  {
+    "questionListId": 14544,
+    "courseName": "Comunicação Assertiva",
+    "courseIdTwygo": 51826,
+    "nome": "Comunicação Assertiva - Atividade",
+    "questoes": [
+      {
+        "id": "3c666021-a359-4540-8f33-cc66c2060741",
+        "externalId": 106135,
+        "type": "choice",
+        "prompt": "Fico quieto quando gritam comigo para não gerar confusão.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Passivo"
+      },
+      {
+        "id": "4e31bf05-2129-4d7d-910a-70bcac7416c5",
+        "externalId": 106136,
+        "type": "choice",
+        "prompt": "Eu digo aos outros o que penso, mesmo que fiquem chateados.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Agressivo"
+      },
+      {
+        "id": "8b3503ea-55fd-4448-9881-006594fb99c8",
+        "externalId": 106137,
+        "type": "choice",
+        "prompt": "Falo o que penso de modo claro, mas sem ofender ou agredir.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Assertivo"
+      },
+      {
+        "id": "05c56ba5-d74f-4671-8ee0-694cdd914ca0",
+        "externalId": 106138,
+        "type": "choice",
+        "prompt": "Digo muitas vezes SIM, quando no fundo quero dizer NÃO.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Passivo"
+      },
+      {
+        "id": "3e01202f-0e0e-4f04-9712-c1b7e67d074a",
+        "externalId": 106139,
+        "type": "choice",
+        "prompt": "Sempre digo a verdade, mesmo que o outro não esteja preparado para ouvir.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Agressivo"
+      },
+      {
+        "id": "e216019f-7a3d-4642-8b9f-17c7cb076b83",
+        "externalId": 106140,
+        "type": "choice",
+        "prompt": "Procuro resolver divergências sem prejudicar meus relacionamentos.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Assertivo"
+      },
+      {
+        "id": "5e95b35d-9674-41da-9117-5cbc311dba25",
+        "externalId": 106141,
+        "type": "choice",
+        "prompt": "Não consigo recusar tarefas que não fazem parte da minha atribuição para agradar o outro.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Passivo"
+      },
+      {
+        "id": "9b8cfd24-74f3-4d94-b5ad-4eb2a86bfbd3",
+        "externalId": 106142,
+        "type": "choice",
+        "prompt": "Na maior parte das vezes sou autoritário e decidido.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Agressivo"
+      },
+      {
+        "id": "117797b7-5772-43b8-9c7a-6e6157128e83",
+        "externalId": 106143,
+        "type": "choice",
+        "prompt": "Avalio o momento adequado para dizer uma verdade.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Assertivo"
+      },
+      {
+        "id": "634aad05-2fa6-417f-bbf2-631e5288f72e",
+        "externalId": 106144,
+        "type": "choice",
+        "prompt": "Evito entrar em discussões para continuar sendo bem visto por todos,",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Passivo"
+      },
+      {
+        "id": "cb1ab9b8-8bd1-480f-b599-9037a7d0b6b1",
+        "externalId": 106145,
+        "type": "choice",
+        "prompt": "Sempre aumento meu tom de voz para vencer uma discussão.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Agressivo"
+      },
+      {
+        "id": "9482f3b3-7e0d-4b6d-8f56-8f6179945ef2",
+        "externalId": 106146,
+        "type": "choice",
+        "prompt": "Durante um conflito, prefiro pensar e analisar o cenário antes do meu posicionamento.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Assertivo"
+      },
+      {
+        "id": "02a00405-a2b3-442d-ad8f-807a23b6901a",
+        "externalId": 106147,
+        "type": "choice",
+        "prompt": "Muitas vezes sou criticado por ter um espírito contraditório durante minhas conversas.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Passivo"
+      },
+      {
+        "id": "04f32c6e-914f-43bb-b074-533935d7bfa3",
+        "externalId": 106148,
+        "type": "choice",
+        "prompt": "Falo primeiro e penso depois.",
+        "options": ["Agressivo", "Passivo", "Assertativo"],
+        "correct": "Agressivo"
+      },
+      {
+        "id": "6d7c819b-4c4f-4649-956f-e912ef58b1ea",
+        "externalId": 106149,
+        "type": "choice",
+        "prompt": "Prefiro estabelecer relações fundadas sobre a confiança ao invés da dominação.",
+        "options": ["Agressivo", "Passivo", "Assertativo"],
+        "correct": "Assertativo"
+      },
+      {
+        "id": "c4de7d4e-ba1b-4ace-b2e8-8177f69a6db6",
+        "externalId": 106150,
+        "type": "choice",
+        "prompt": "Não respeito minhas convicções para agradar o outro.",
+        "options": ["Agressivo", "Passivo", "Assertativo"],
+        "correct": "Passivo"
+      },
+      {
+        "id": "5da80657-63fd-47c6-84d6-7974ca55368f",
+        "externalId": 106151,
+        "type": "choice",
+        "prompt": "Tenho o costume de interromper a fala do outro quando não estou de acordo.",
+        "options": ["Agressivo", "Passivo", "Assertativo"],
+        "correct": "Agressivo"
+      },
+      {
+        "id": "9862d297-d68a-49ad-8b38-e9af53ec7b19",
+        "externalId": 106152,
+        "type": "choice",
+        "prompt": "Faço questão de me posicionar de forma respeitosa quando não estou de acordo.",
+        "options": ["Agressivo", "Passivo", "Assertativo"],
+        "correct": "Assertativo"
+      },
+      {
+        "id": "5f8fc191-0cf9-4344-b87d-9c614662284f",
+        "externalId": 106153,
+        "type": "choice",
+        "prompt": "Durante um debate prefiro que outros se expressem em meu nome.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Passivo"
+      },
+      {
+        "id": "2f9765df-0137-4f41-b434-20c6c2f96340",
+        "externalId": 106154,
+        "type": "choice",
+        "prompt": "Prefiro criar conflitos do que reduzir tensões.",
+        "options": ["Agressivo", "Passivo", "Assertivo"],
+        "correct": "Agressivo"
+      },
+      {
+        "id": "0c3b7e26-1a5b-4b9e-b4ac-fa1bc7aee2e3",
+        "externalId": 106155,
+        "type": "choice",
+        "prompt": "Procuro protestar com clareza, mas sem abusar da agressividade.",
+        "options": ["Agressivo", "Passivo", "Assertativo"],
+        "correct": "Assertativo"
+      }
+    ]
+  },
+  {
+    "questionListId": 14546,
+    "courseName": "Comunicação Assertiva",
+    "courseIdTwygo": 51826,
+    "nome": "Comunicação Assertiva - Prova",
+    "questoes": [
+      {
+        "id": "e0e13f37-abab-4c31-9027-99518bed791c",
+        "externalId": 106156,
+        "type": "text",
+        "prompt": "Qual a diferença entre a comunicação assertiva, agressiva e passiva?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "276fc296-c97e-4ff4-b7e4-ae4628757244",
+        "externalId": 106157,
+        "type": "text",
+        "prompt": "O que podemos fazer para sermos mais assertivos?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "1c72b3d1-2340-4fe9-8561-65996d480955",
+        "externalId": 106158,
+        "type": "text",
+        "prompt": "Quais são as vantagens de termos uma comunicação assertiva?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "c0c95064-88dd-4373-a116-bb1d46f36720",
+        "externalId": 106159,
+        "type": "text",
+        "prompt": "Em quais áreas da vida você poderá se beneficiar por ser uma pessoa assertiva?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "5a703a53-9a1b-47d5-869c-c40415f0594d",
+        "externalId": 106160,
+        "type": "text",
+        "prompt": "Analise a imagem abaixo e responda o que faltou nessa comunicação:",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "bb1796a7-384e-45ac-ac5e-2dc7ee7f08ea",
+        "externalId": 106161,
+        "type": "choice",
+        "prompt": "Analise a imagem abaixo e responda se a comunicação foi assertiva, passiva ou agressiva:",
+        "options": ["Agressiva", "Passiva", "Assertiva"],
+        "correct": "Agressiva"
+      },
+      {
+        "id": "b49609ac-c96f-4e59-a6ba-75f15e87f7ef",
+        "externalId": 106162,
+        "type": "text",
+        "prompt": "“Olá! Sei que hoje seria meu dia de organizar os documentos do escritório, mas você poderia quebrar meu galho mais uma vez? Hoje marquei um encontro e não queria chegar atrasado.”\n\nResponda seu colega de trabalho de forma assertiva. Lembre-se que é a terceira semana seguida que ele não cumpre com sua responsabilidade e pede para que você faça em seu lugar.",
+        "options": [],
+        "correct": ""
+      }
+    ]
+  },
+  {
+    "questionListId": 14554,
+    "courseName": "Trabalho em Equipe",
+    "courseIdTwygo": 51828,
+    "nome": "Trabalho em Equipe - Prova",
+    "questoes": [
+      {
+        "id": "69888d8a-ced8-47f3-8ff7-b96b9bd02986",
+        "externalId": 106186,
+        "type": "text",
+        "prompt": "O que é o trabalho em equipe?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "4c6d2014-b3df-4dac-a6ff-06ed9762d2de",
+        "externalId": 106187,
+        "type": "text",
+        "prompt": "Quais os benefícios do trabalho em equipe?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "a9faca48-faaf-4d97-a36a-7d80426c799d",
+        "externalId": 106188,
+        "type": "text",
+        "prompt": "Quais características são indispensáveis para que uma equipe obtenha o sucesso?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "d65f7e86-b892-41f0-84ef-c0ebb4ee0433",
+        "externalId": 106189,
+        "type": "text",
+        "prompt": "Quais atitudes podem impedir que um grupo de trabalho torne-se uma equipe sólida?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "543fb217-b568-4d79-b005-29e809e57bcf",
+        "externalId": 106190,
+        "type": "text",
+        "prompt": "Imagine que você é um fazendeiro que foi às compras e precisa voltar para a casa com todas as suas aquisições. Você comprou um cachorro para patrulhar sua fazenda, uma galinha e um saco de arroz.\n\nPara chegar até sua casa é preciso atravessar um rio de barco, mas devido a fragilidade do barco só é possível atravessar com um item de cada vez.\n\nVocê não pode deixar o cachorro sozinho com a galinha, porque o cachorro irá comê-la. Você também não pode deixar a galinha sozinha com o saco de arroz, porque ela irá comê-lo.\n\nE agora? O que você ira fazer para chegar em casa com o cachorro, a galinha e o arroz?\n\nQue tal pedir a ajuda de seus colegas para decifrar esse enigma? Afinal de contas, a união faz a força.",
+        "options": [],
+        "correct": ""
+      }
+    ]
+  },
+  {
+    "questionListId": 14558,
+    "courseName": "Trabalho em Equipe",
+    "courseIdTwygo": 51828,
+    "nome": "Trabalho em Equipe - Atividade",
+    "questoes": [
+      {
+        "id": "27565a04-12b9-4ce5-9432-48a2b10643a4",
+        "externalId": 106212,
+        "type": "text",
+        "prompt": "Trabalho em equipe",
+        "options": [],
+        "correct": ""
+      }
+    ]
+  },
+  {
+    "questionListId": 14564,
+    "courseName": "Resiliência",
+    "courseIdTwygo": 51827,
+    "nome": "Resiliência - Prova",
+    "questoes": [
+      {
+        "id": "6d8f4b57-ee77-49e8-9551-3fe4d2073b11",
+        "externalId": 106265,
+        "type": "text",
+        "prompt": "O que é a resiliência?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "6c9ca2c9-cc1d-43b6-8e49-66512110ed6b",
+        "externalId": 106266,
+        "type": "text",
+        "prompt": "Cite cinco atitudes que devem ser encaixadas no nosso dia a dia para desenvolvermos a resiliência.",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "b38e55a8-1683-49d1-8a6f-c8dbf7a251e1",
+        "externalId": 106267,
+        "type": "text",
+        "prompt": "Quais os benefícios da resiliência?",
+        "options": [],
+        "correct": ""
+      },
+      {
+        "id": "6b4f5245-fefe-443e-8de5-41df16d25827",
+        "externalId": 106268,
+        "type": "choice",
+        "prompt": "Assinale as alternativas verdadeiras",
+        "options": [
+          "Ser resiliente significa saber voltar ao estado natural (mental e físico) mesmo após uma grande carga de estresse.",
+          "Ser resiliênte significa encarar o desafio como uma forma de nos aperfeiçoarmos.",
+          "Ser resiliente significa esperar que o cenário se molde de acordo com nossos desejos.",
+          "Ser resiliente significa acreditar que independente dos nossos esforços não seremos capazes de vencer aquele obstáculo.",
+          "Nenhuma das alternativas está correta."
+        ],
+        "correct": "Ser resiliente significa saber voltar ao estado natural (mental e físico) mesmo após uma grande carga de estresse."
+      },
+      {
+        "id": "88e7ea15-cc8e-42d7-a317-21a8c4d248d5",
+        "externalId": 106270,
+        "type": "choice",
+        "prompt": "Assinale quais características podem te ajudar a acalmar um cliente nervoso:",
+        "options": [
+          "Confiança em si próprio",
+          "Empatia",
+          "Linguagem agressiva",
+          "Paciência",
+          "Saber ouvir"
+        ],
+        "correct": "Confiança em si próprio"
+      }
+    ]
+  }
+]

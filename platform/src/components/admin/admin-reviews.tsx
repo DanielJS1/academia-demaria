@@ -133,6 +133,13 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
         const studentComment = attempt.answers[`${question.id}__comment`];
         const isChoice = question.type === "choice";
         const isCorrectChoice = isChoice && studentAnswer === question.correct;
+        const formatChoiceDisplay = (raw: string) => {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed.join(" · ");
+          } catch {}
+          return raw;
+        };
         const currentGrade = correctTextIds.includes(question.id)
           ? "correct"
           : partialTextIds.includes(question.id)
@@ -156,7 +163,7 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
 
             <p style={{ margin: "8px 0", background: "var(--surface)", padding: 10, borderRadius: 6, border: "1px solid var(--line)" }}>
               <strong style={{ color: "var(--muted)", fontSize: 11, display: "block" }}>Resposta do aluno:</strong>
-              {studentAnswer}
+              {formatChoiceDisplay(studentAnswer)}
             </p>
 
             {studentComment && (
@@ -167,7 +174,7 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
 
             {isChoice && (
               <small style={{ display: "block", color: "var(--muted)" }}>
-                Gabarito oficial: <strong>{question.correct}</strong>
+                Gabarito oficial: <strong>{formatChoiceDisplay(question.correct)}</strong>
               </small>
             )}
 

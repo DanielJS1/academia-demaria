@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { normalizeCourse, courseValidationError } from "@/lib/course-activities";
 import { ActivityQuestions } from "./activity-questions";
 import { PdfAttachmentEditor } from "./pdf-attachment-editor";
-import { courseXp } from "@/lib/rewards";
+import { courseXp, lessonXp } from "@/lib/rewards";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, Eye, Plus, Save, Trash2, X } from "lucide-react";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
@@ -55,21 +55,33 @@ export function CourseEditor({ id }: { id: string }) {
   const [saved, setSaved] = useState(false);
   const [uploads, setUploads] = useState(0);
   const [restored, setRestored] = useState(false);
+  const [hasLocalDraft, setHasLocalDraft] = useState(false);
   const recoveryKey = `doc-academy.course-draft.${me.id}.${id}`;
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(recoveryKey);
       if (raw) {
         const recovered = JSON.parse(raw);
-        // An unfinished title is valid in a local recovery copy.
-        if (courseSchema.safeParse({ ...recovered, title: "Rascunho", product: "Produto",
+        const serverVersion = existing?.version || 1;
+        const draftVersion = recovered?.version || 1;
+        // If server version is strictly higher, local draft is obsolete
+        if (existing && serverVersion > draftVersion) {
+          sessionStorage.removeItem(recoveryKey);
+          setCourse(normalizeCourse(structuredClone(existing)));
+          setHasLocalDraft(false);
+        } else if (courseSchema.safeParse({ ...recovered, title: "Rascunho", product: "Produto",
           lessons: recovered.lessons?.map((lesson: Course["lessons"][number]) => ({...lesson,title:"Aula"})),
           questions: recovered.questions?.map((question: Course["questions"][number]) => ({...question,prompt:"Pergunta"})),
-        }).success) setCourse(normalizeCourse(recovered));
+        }).success) {
+          setCourse(normalizeCourse(recovered));
+          setHasLocalDraft(true);
+        }
+      } else if (existing) {
+        setCourse(normalizeCourse(structuredClone(existing)));
       }
     } catch {}
     setRestored(true);
-  }, [recoveryKey]);
+  }, [recoveryKey, existing]);
   useEffect(() => {
     if (!restored || saved) return;
     try { sessionStorage.setItem(recoveryKey, JSON.stringify(course)); } catch {}
@@ -90,15 +102,17 @@ export function CourseEditor({ id }: { id: string }) {
     if(problem){ setError(problem); notify(problem); return; }
 
     const success = await update(current => {
+      const calculatedXp = courseXp(course);
       if (!publish) {
         return {
           ...current,
-          courseDrafts: [...current.courseDrafts.filter(item => item.id !== course.id), { ...course, status: "draft" }],
+          courseDrafts: [...current.courseDrafts.filter(item => item.id !== course.id), { ...course, xp: calculatedXp, status: "draft" }],
         };
       }
       const published: Course = {
         ...course,
         status: "published",
+        xp: calculatedXp,
         version: (current.courses.find(item => item.id === course.id)?.version || 0) + 1,
       };
       return {
@@ -143,6 +157,24 @@ export function CourseEditor({ id }: { id: string }) {
       >
         <span className="pill">{saved ? "Rascunho salvo" : "Editor de curso"}</span>
       </PageHeading>
+
+      {hasLocalDraft && existing && (
+        <div className="notice-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <span>Você está visualizando um rascunho recuperado localmente do seu navegador.</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              try { sessionStorage.removeItem(recoveryKey); } catch {}
+              setCourse(normalizeCourse(structuredClone(existing)));
+              setHasLocalDraft(false);
+              notify("Rascunho local descartado. Dados do servidor recarregados com sucesso!");
+            }}
+          >
+            Descartar rascunho local e recarregar do servidor
+          </Button>
+        </div>
+      )}
 
       {error && <div className="form-error" role="alert">{error}</div>}
 
@@ -422,12 +454,17 @@ export function CourseEditor({ id }: { id: string }) {
                       }
                     >
                       <option value="reading">Leitura</option>
-                      <option value="video">Vídeo do Vimeo</option>
+                      <option value="video">Vídeo (Vimeo ou YouTube)</option>
                       <option value="quiz">Avaliação</option>
                     </select>
                   </label>
                   <label className="field">
-                    <span>Duração estimada (minutos)</span>
+                    <span>
+                      Duração estimada (minutos) ·{" "}
+                      <strong style={{ color: "var(--accent)", fontWeight: 600 }}>
+                        +{lessonXp(lesson.minutes)} XP
+                      </strong>
+                    </span>
                     <input
                       type="number"
                       min={0}
@@ -470,11 +507,11 @@ export function CourseEditor({ id }: { id: string }) {
                 </div>
                 {lesson.type === "video" && (
                   <label className="field">
-                    <span>Link do Vimeo</span>
+                    <span>Link do Vídeo (Vimeo ou YouTube)</span>
                     <input
                       type="url"
                       value={lesson.videoUrl}
-                      placeholder="https://vimeo.com/123456789"
+                      placeholder="https://vimeo.com/... ou https://youtu.be/..."
                       onChange={event =>
                         field(
                           "lessons",
@@ -486,7 +523,18 @@ export function CourseEditor({ id }: { id: string }) {
                     />
                   </label>
                 )}
-                {lesson.type === "quiz" && <ActivityQuestions questions={lesson.questions || []} onChange={questions => field("lessons",course.lessons.map(item=>item.id===lesson.id?{...item,questions}:item))}/>}
+                {lesson.type === "quiz" && (
+                  <ActivityQuestions
+                    title={`Avaliação: ${lesson.title || "Atividade"}`}
+                    questions={lesson.questions || []}
+                    onChange={questions =>
+                      field(
+                        "lessons",
+                        course.lessons.map(item => (item.id === lesson.id ? { ...item, questions } : item))
+                      )
+                    }
+                  />
+                )}
                 {lesson.type === "reading" && <PdfAttachmentEditor lesson={lesson} onBusyChange={active=>setUploads(n=>Math.max(0,n+(active?1:-1)))} onChange={attachment=>{setCourse(current=>({...current,lessons:current.lessons.map(item=>item.id===lesson.id?{...item,...attachment}:item)}));setSaved(false);}}/>}
                 <label className="field">
                   <span>{lesson.type === "reading" ? "Conteúdo da leitura" : "Descrição da atividade"}</span>
@@ -546,6 +594,7 @@ export function CourseEditor({ id }: { id: string }) {
                     Cadastre as perguntas de validação. Caso nenhuma seja cadastrada aqui, o sistema utilizará as perguntas das avaliações do curso.
                   </p>
                   <ActivityQuestions
+                    title="Prova de Proficiência"
                     questions={course.proficiencyQuestions || []}
                     onChange={questions => field("proficiencyQuestions", questions)}
                   />

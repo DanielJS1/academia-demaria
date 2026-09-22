@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const questionSchema = z.object({ id: z.string(), prompt: z.string().min(1), type: z.enum(["choice", "text"]), options: z.array(z.string()), correct: z.string() });
+export const questionSchema = z.object({ id: z.string(), prompt: z.string().min(1), type: z.enum(["choice", "text"]), options: z.array(z.string()), correct: z.string(), multiple: z.boolean().optional() });
 export const lessonSchema = z.object({
   id: z.string(),
   title: z.string().min(1),
@@ -124,6 +124,33 @@ export function vimeoEmbed(url: string): string | null {
     if (!match) return null;
     const hash = match[2] || parsed.searchParams.get("h");
     return `https://player.vimeo.com/video/${match[1]}${hash ? `?h=${encodeURIComponent(hash)}` : ""}`;
+  } catch { return null; }
+}
+export function youtubeEmbed(url: string): string | null {
+  try {
+    if (!url || typeof url !== "string") return null;
+    const trimmed = url.trim();
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    const host = parsed.hostname.replace(/^www\./, "").replace(/^m\./, "");
+    let videoId = "";
+    if (host === "youtube.com") {
+      if (parsed.pathname === "/watch") {
+        videoId = parsed.searchParams.get("v") || "";
+      } else if (parsed.pathname.startsWith("/embed/")) {
+        videoId = parsed.pathname.replace(/^\/embed\//, "").split("/")[0];
+      } else if (parsed.pathname.startsWith("/v/")) {
+        videoId = parsed.pathname.replace(/^\/v\//, "").split("/")[0];
+      } else if (parsed.pathname.startsWith("/shorts/")) {
+        videoId = parsed.pathname.replace(/^\/shorts\//, "").split("/")[0];
+      } else if (parsed.pathname.startsWith("/live/")) {
+        videoId = parsed.pathname.replace(/^\/live\//, "").split("/")[0];
+      }
+    } else if (host === "youtu.be") {
+      videoId = parsed.pathname.replace(/^\//, "").split("/")[0];
+    }
+    if (!videoId || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) return null;
+    return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`;
   } catch { return null; }
 }
 export function safeImage(url: string) {
