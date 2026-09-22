@@ -70,23 +70,23 @@ export function AcademyProvider({children}:{children:ReactNode}){
    try{const saved=localStorage.getItem(`doc-academy.avatar.${me.id}`);setAvatarState(saved||null);}catch{}
   }
  },[me?.id,me?.avatar]);
- const setAvatar=useCallback(async(base64:string|null)=>{
-  if(!me?.id)return false;
-  setAvatarState(base64);
-  try{
-   if(base64)localStorage.setItem(`doc-academy.avatar.${me.id}`,base64);
-   else localStorage.removeItem(`doc-academy.avatar.${me.id}`);
-  }catch(e){console.error("Erro ao salvar avatar",e);}
-  setMe(prev=>prev?{...prev,avatar:base64}:prev);
-  setState(prev=>({...prev,people:prev.people.map(p=>p.id===me.id?{...p,avatar:base64}:p)}));
-  current.current={...current.current,people:current.current.people.map(p=>p.id===me.id?{...p,avatar:base64}:p)};
-  return await mutate({type:"avatar",avatar:base64});
- },[me?.id,mutate]);
- const mutate=useCallback(async(command:Command)=>{
-  if(busyRef.current){setToast("Aguarde a gravação em andamento.");return false;}
-  busyRef.current=true;setBusy(true);
-  try{await request(command);return true;}catch(err){setToast(err instanceof Error?err.message:"Não foi possível salvar. Tente novamente.");return false;}finally{busyRef.current=false;setBusy(false);}
- },[request]);
+  const mutate=useCallback(async(command:Command)=>{
+   if(busyRef.current){setToast("Aguarde a gravação em andamento.");return false;}
+   busyRef.current=true;setBusy(true);
+   try{await request(command);return true;}catch(err){setToast(err instanceof Error?err.message:"Não foi possível salvar. Tente novamente.");return false;}finally{busyRef.current=false;setBusy(false);}
+  },[request]);
+  const setAvatar=useCallback(async(base64:string|null)=>{
+   if(!me?.id)return false;
+   setAvatarState(base64);
+   try{
+    if(base64)localStorage.setItem(`doc-academy.avatar.${me.id}`,base64);
+    else localStorage.removeItem(`doc-academy.avatar.${me.id}`);
+   }catch(e){console.error("Erro ao salvar avatar",e);}
+   setMe(prev=>prev?{...prev,avatar:base64}:prev);
+   setState(prev=>({...prev,people:prev.people.map(p=>p.id===me.id?{...p,avatar:base64}:p)}));
+   current.current={...current.current,people:current.current.people.map(p=>p.id===me.id?{...p,avatar:base64}:p)};
+   return await mutate({type:"avatar",avatar:base64});
+  },[me?.id,mutate]);
  const update=useCallback(async(change:(current:AcademyState)=>AcademyState)=>{try{const command=stateCommand(current.current,change(current.current));return command?await mutate(command):true;}catch(err){setToast(err instanceof Error?err.message:"Ação inválida.");return false;}},[mutate]);
  const signOut=()=>{identity.current="";current.current=empty;setState(empty);setMe(null);setReady(false);setAuthenticated(false);setAvatarState(null);void auth?.auth.signOut();};
  const toggleTheme=()=>setTheme(value=>{const next=value==="light"?"dark":"light";try{localStorage.setItem("doc-academy.theme",next);}catch{}return next;});
