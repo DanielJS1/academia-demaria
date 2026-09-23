@@ -35,6 +35,11 @@ describe("editor e avaliações por atividade",()=>{
   c.lessons[12].attachmentPath="pdf/11111111-1111-4111-8111-111111111111.pdf";
   expect(courseValidationError(c,true)).toBeNull();
  });
+ it("indica alternativas repetidas na pergunta da avaliação",()=>{
+  const c=course("duplicated-options",[reading("intro"),quiz("assessment")]);
+  c.lessons[1].questions![0].options=["Resposta", "Resposta"];
+  expect(courseValidationError(c,true)).toContain("pergunta 1: há alternativas repetidas");
+ });
  it("preserva o questionário antigo ao converter o rascunho",()=>{
   const old={...course("old",[{...quiz("q1"),questions:undefined},quiz("q2")]),questions:quiz("q1").questions!};
   const converted=normalizeCourse(old);expect(activityQuestions(converted,converted.lessons[0])).toEqual(old.questions);expect(converted.lessons[1].questions).toEqual(old.lessons[1].questions);

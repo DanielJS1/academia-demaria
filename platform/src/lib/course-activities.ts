@@ -38,6 +38,7 @@ export function courseValidationError(course: Course, publish: boolean): string 
     for(const [qi,q] of questions.entries()){
       if(questionIds.has(q.id))return `${label}: identificador de pergunta duplicado.`;
       questionIds.add(q.id);
+      if(publish&&q.type==="choice"&&new Set(q.options).size!==q.options.length)return `${label}, pergunta ${qi+1}: há alternativas repetidas. Altere ou remova as repetidas no Question Studio.`;
       if(publish&&(!q.prompt.trim()||(q.type==="choice"&&(q.options.length<2||new Set(q.options).size!==q.options.length||q.options.some(o=>!o.trim())||!isCorrectAnswerValid(q)))))return `${label}, pergunta ${qi+1}: confira enunciado, alternativas e gabarito.`;
     }
   }

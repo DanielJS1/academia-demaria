@@ -20,7 +20,8 @@ export function ActivityQuestions({
 
   const choiceCount = questions.filter(q => q.type === "choice").length;
   const textCount = questions.filter(q => q.type === "text").length;
-  const invalidCount = questions.filter(q => !isCorrectAnswerValid(q) || !q.prompt.trim()).length;
+  const invalidCount = questions.filter(q => !isCorrectAnswerValid(q) || !q.prompt.trim() ||
+    (q.type === "choice" && (q.options.length < 2 || q.options.some(o => !o.trim()) || new Set(q.options).size !== q.options.length))).length;
 
   return (
     <div
@@ -105,7 +106,8 @@ export function ActivityQuestions({
           }}
         >
           {questions.map((q, idx) => {
-            const valid = isCorrectAnswerValid(q) && !!q.prompt.trim();
+            const valid = isCorrectAnswerValid(q) && !!q.prompt.trim() &&
+              (q.type !== "choice" || (q.options.length >= 2 && q.options.every(o => o.trim()) && new Set(q.options).size === q.options.length));
             const previewText = q.prompt.trim()
               ? q.prompt.length > 30
                 ? `${q.prompt.slice(0, 30)}…`

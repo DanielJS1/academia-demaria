@@ -173,7 +173,8 @@ export function QuestionStudioModal({
   const isQuestionComplete = (q: Question) => {
     if (!q.prompt.trim()) return false;
     if (q.type === "text") return true;
-    return isCorrectAnswerValid(q) && q.options.filter(o => o.trim()).length >= 2;
+    return isCorrectAnswerValid(q) && q.options.length >= 2 &&
+      q.options.every(o => o.trim()) && new Set(q.options).size === q.options.length;
   };
 
   const multipleSelected = getMultipleCorrectArray(activeQ.correct);
@@ -505,9 +506,11 @@ export function QuestionStudioModal({
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {activeQ.options.map((option, optIdx) => {
-                  const isChecked = activeQ.multiple
+                  const duplicateOf = activeQ.options.findIndex((other, idx) => idx < optIdx && other === option);
+                  const isDuplicate = option.trim().length > 0 && duplicateOf !== -1;
+                  const isChecked = !isDuplicate && (activeQ.multiple
                     ? multipleSelected.includes(option) && option.trim().length > 0
-                    : activeQ.correct === option && option.trim().length > 0;
+                    : activeQ.correct === option && option.trim().length > 0);
 
                   return (
                     <div
@@ -526,7 +529,9 @@ export function QuestionStudioModal({
                       {/* Gabarito Selector */}
                       <label
                         title={
-                          isChecked
+                          isDuplicate
+                            ? "Alternativa repetida: altere o texto antes de selecionar"
+                            : isChecked
                             ? "Resposta marcada como correta no gabarito"
                             : "Clique para marcar como resposta correta"
                         }
@@ -541,6 +546,7 @@ export function QuestionStudioModal({
                           type={activeQ.multiple ? "checkbox" : "radio"}
                           name={`studio-gabarito-${activeQ.id}`}
                           checked={isChecked}
+                          disabled={isDuplicate}
                           onChange={() => {
                             if (!option.trim()) return;
                             if (activeQ.multiple) {
@@ -561,6 +567,7 @@ export function QuestionStudioModal({
                       {/* Alternative Text */}
                       <input
                         type="text"
+                        aria-invalid={isDuplicate}
                         value={option}
                         placeholder={`Alternativa ${String.fromCharCode(65 + optIdx)}`}
                         onChange={e => updateOptionText(optIdx, e.target.value)}
@@ -573,6 +580,10 @@ export function QuestionStudioModal({
                           outline: "none",
                         }}
                       />
+
+                      {isDuplicate && (
+                        <span style={{ fontSize: 11, color: "#b45309" }}>Repetida</span>
+                      )}
 
                       {/* Status Tag */}
                       {isChecked && (
@@ -611,6 +622,12 @@ export function QuestionStudioModal({
                   );
                 })}
               </div>
+
+              {new Set(activeQ.options.filter(o => o.trim())).size !== activeQ.options.filter(o => o.trim()).length && (
+                <div role="alert" style={{ marginTop: 12, color: "#b45309", fontSize: 12 }}>
+                  Há alternativas com o mesmo texto. Altere ou remova as repetidas para salvar o curso.
+                </div>
+              )}
 
               {/* Validation helper alert */}
               {!isCorrectAnswerValid(activeQ) && (
