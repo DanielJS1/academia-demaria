@@ -7,8 +7,9 @@ import { BookOpen, Search, StickyNote, X } from "lucide-react";
 import type { Course } from "@/lib/model";
 import { normalize } from "@/lib/utils";
 import { getAllUserNotes } from "./lesson-notepad";
+import { searchArticles } from "./community/article-client";
 
-type Scope = "courses" | "notes";
+type Scope = "courses" | "notes" | "library";
 type Result = { id: string; title: string; detail: string; href: string };
 
 export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: string }) {
@@ -20,6 +21,7 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [notes, setNotes] = useState<Record<string, Record<string, string>>>({});
+  const [libraryResults, setLibraryResults] = useState<Result[]>([]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -36,8 +38,16 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
     if (scope === "notes" && open) setNotes(getAllUserNotes(userId));
   }, [scope, open, userId]);
 
+  useEffect(() => {
+    setLibraryResults([]);
+    if (scope !== "library" || query.trim().length < 2) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => { void searchArticles(query.trim(), controller.signal).then(setLibraryResults).catch(() => {}); }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [scope, query]);
+
   const term = normalize(query.trim());
-  const results: Result[] = !term ? [] : scope === "courses"
+  const results: Result[] = !term ? [] : scope === "library" ? libraryResults.slice(0, 6) : scope === "courses"
     ? courses.filter(course => course.status === "published" && normalize(`${course.title} ${course.product} ${course.description}`).includes(term))
         .slice(0, 6).map(course => ({ id: course.id, title: course.title, detail: course.product, href: `/aprender/${encodeURIComponent(course.id)}/aula` }))
     : courses.flatMap(course => course.lessons.flatMap(lesson => {
@@ -52,6 +62,8 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
       router.push(results[activeIndex].href);
     } else if (scope === "notes") {
       router.push("/conhecimento?aba=anotacoes");
+    } else if (scope === "library") {
+      router.push(`/conhecimento?aba=biblioteca&busca=${encodeURIComponent(query.trim())}`);
     } else {
       router.push(`/aprender?busca=${encodeURIComponent(query.trim())}`);
     }
@@ -63,10 +75,10 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
       onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) { setOpen(false); setActiveIndex(-1); } }}>
       <div className="global-search-field">
         <Search size={18} aria-hidden="true" />
-        <input ref={inputRef} role="combobox" aria-label={scope === "courses" ? "Buscar em Aprender" : "Buscar em Minhas Anotações"}
+        <input ref={inputRef} role="combobox" aria-label={scope === "courses" ? "Buscar em Aprender" : scope === "library" ? "Buscar na Biblioteca" : "Buscar em Minhas Anotações"}
           aria-autocomplete="list" aria-expanded={open && !!term} aria-controls={listId}
           aria-activedescendant={activeIndex >= 0 && results[activeIndex] ? `${listId}-${activeIndex}` : undefined}
-          placeholder={scope === "courses" ? "O que você quer aprender?" : "Buscar nas minhas anotações"}
+          placeholder={scope === "courses" ? "O que você quer aprender?" : scope === "library" ? "Buscar na Biblioteca" : "Buscar nas minhas anotações"}
           value={query} onFocus={() => setOpen(true)}
           onChange={event => { setQuery(event.target.value); setActiveIndex(-1); setOpen(true); }}
           onKeyDown={event => {
@@ -79,6 +91,7 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
         <select className="global-search-scope" aria-label="Onde buscar" value={scope}
           onChange={event => { setScope(event.target.value as Scope); setActiveIndex(-1); setOpen(true); inputRef.current?.focus(); }}>
           <option value="courses">Aprender</option>
+          <option value="library">Biblioteca</option>
           <option value="notes">Minhas Anotações</option>
         </select>
       </div>
@@ -88,12 +101,12 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
             <Link key={result.id} id={`${listId}-${index}`} role="option" aria-selected={activeIndex === index}
               className={activeIndex === index ? "is-active" : ""} href={result.href}
               onMouseEnter={() => setActiveIndex(index)} onClick={() => setOpen(false)}>
-              {scope === "courses" ? <BookOpen size={17} aria-hidden="true" /> : <StickyNote size={17} aria-hidden="true" />}
+              {scope === "notes" ? <StickyNote size={17} aria-hidden="true" /> : <BookOpen size={17} aria-hidden="true" />}
               <span><strong>{result.title}</strong><small>{result.detail}</small></span>
             </Link>
           )) : <p className="global-search-empty">Nenhum resultado. Tente outro termo.</p>}
           <button type="submit" className="global-search-all" onMouseEnter={() => setActiveIndex(-1)}>
-            {scope === "courses" ? "Ver busca em Aprender" : "Ver minhas anotações"}
+            {scope === "courses" ? "Ver busca em Aprender" : scope === "library" ? "Ver busca na Biblioteca" : "Ver minhas anotações"}
           </button>
         </div>
       )}

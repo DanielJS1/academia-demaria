@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Camera, Upload, Trash2, X, AlertCircle } from "lucide-react";
 import { useAcademy } from "./academy-provider";
-import { processImageFileToBase64 } from "@/lib/avatar-helper";
+import { uploadMedia } from "@/lib/storage-service";
 import { Button } from "./ui/button";
 
 interface ProfilePhotoModalProps {
@@ -37,8 +37,8 @@ export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
     setErrorMessage("");
 
     try {
-      const base64 = await processImageFileToBase64(file, 200);
-      const ok = await setAvatar(base64);
+      const url = await uploadMedia(file, "avatar");
+      const ok = await setAvatar(url);
       if (ok) {
         notify("Foto de perfil atualizada em todos os navegadores!");
         onClose();

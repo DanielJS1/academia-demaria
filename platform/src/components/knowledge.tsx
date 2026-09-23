@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
@@ -9,6 +9,7 @@ import { normalize } from "@/lib/utils";
 import { getAllUserNotes, exportCourseNotesTxt } from "./lesson-notepad";
 import { CommunityLibrary } from "./community/community-library";
 import { CommunityArticle } from "./community/community-article";
+import { searchArticles } from "./community/article-client";
 
 const salesAssistants = [
   {
@@ -34,10 +35,19 @@ const windowsAssistants = [
   { title: "Preferências", href: "https://chatgpt.com/g/g-68b85c218248819192b205d84bf879bc-preferencias" },
 ];
 
-export function Knowledge({ initialTab }: { initialTab?: "anotacoes" }) {
+export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "anotacoes" | "biblioteca"; initialSearch?: string }) {
   const { state, me, notify } = useAcademy();
-  const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">(initialTab === "anotacoes" ? "Anotações" : "Consulta assistida");
+  const [search, setSearch] = useState(initialSearch);
+  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">(initialTab === "anotacoes" ? "Anotações" : initialTab === "biblioteca" ? "Biblioteca" : "Consulta assistida");
+  const [matchedIds, setMatchedIds] = useState<string[] | null>(null);
+  useEffect(() => { setSearch(initialSearch); if (initialTab === "biblioteca") setTab("Biblioteca"); }, [initialSearch, initialTab]);
+  useEffect(() => {
+    if (tab !== "Biblioteca" || search.trim().length < 2) { setMatchedIds(null); return; }
+    setMatchedIds(null);
+    const controller = new AbortController();
+    const timer = setTimeout(() => { void searchArticles(search.trim(), controller.signal).then(results => setMatchedIds(results.map(item => item.id))).catch(() => {}); }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [tab, search]);
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
   const userNotes = getAllUserNotes(me.id);
@@ -192,7 +202,7 @@ export function Knowledge({ initialTab }: { initialTab?: "anotacoes" }) {
           )}
         </section>
       ) : tab === "Biblioteca" ? (
-        <CommunityLibrary search={search} clearSearch={() => setSearch("")} />
+        <CommunityLibrary search={search} matchedIds={matchedIds} clearSearch={() => setSearch("")} />
       ) : (
         <section className="assistant-directory">
           <div className="assistant-intro panel">

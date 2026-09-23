@@ -7,7 +7,7 @@ import type { AcademyState, Cartorio } from "@/lib/model";
 import { AccessScreen } from "./access-screen";
 import { EngagementTracker } from "./engagement-tracker";
 type Me={id:string;name:string;email:string;department?:string;role:"admin"|"manager"|"student";audience?:"internal"|"client";cartorioId?:string|null;avatar?:string|null};
-type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command,options?:{silent?:boolean})=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(base64:string|null)=>Promise<boolean>;};
+type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command,options?:{silent?:boolean})=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(url:string|null)=>Promise<boolean>;};
 const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},videoProgress:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[],teamProgress:{},cartorios:[]};
 const AcademyContext=createContext<Context|null>(null);
 export function AcademyProvider({children}:{children:ReactNode}){
@@ -62,13 +62,13 @@ export function AcademyProvider({children}:{children:ReactNode}){
  useEffect(()=>{
   if(!me?.id){setAvatarState(null);return;}
   if(me.avatar!==undefined){
-   setAvatarState(me.avatar);
+   setAvatarState(me.avatar?.startsWith("https://") ? me.avatar : null);
    try{
-    if(me.avatar)localStorage.setItem(`doc-academy.avatar.${me.id}`,me.avatar);
+    if(me.avatar?.startsWith("https://"))localStorage.setItem(`doc-academy.avatar.${me.id}`,me.avatar);
     else localStorage.removeItem(`doc-academy.avatar.${me.id}`);
    }catch{}
   }else{
-   try{const saved=localStorage.getItem(`doc-academy.avatar.${me.id}`);setAvatarState(saved||null);}catch{}
+   try{const saved=localStorage.getItem(`doc-academy.avatar.${me.id}`);setAvatarState(saved?.startsWith("https://")?saved:null);}catch{}
   }
  },[me?.id,me?.avatar]);
   const mutate=useCallback(async(command:Command,options?:{silent?:boolean})=>{
@@ -76,18 +76,21 @@ export function AcademyProvider({children}:{children:ReactNode}){
    busyRef.current=true;if(!options?.silent)setBusy(true);
    try{await request(command);return true;}catch(err){if(!options?.silent)setToast(err instanceof Error?err.message:"Não foi possível salvar. Tente novamente.");return false;}finally{busyRef.current=false;if(!options?.silent)setBusy(false);}
   },[request]);
-  const setAvatar=useCallback(async(base64:string|null)=>{
+  const setAvatar=useCallback(async(url:string|null)=>{
    if(!me?.id)return false;
-   setAvatarState(base64);
+   const previous=avatar;
+   setAvatarState(url);
    try{
-    if(base64)localStorage.setItem(`doc-academy.avatar.${me.id}`,base64);
+    if(url)localStorage.setItem(`doc-academy.avatar.${me.id}`,url);
     else localStorage.removeItem(`doc-academy.avatar.${me.id}`);
    }catch(e){console.error("Erro ao salvar avatar",e);}
-   setMe(prev=>prev?{...prev,avatar:base64}:prev);
-   setState(prev=>({...prev,people:prev.people.map(p=>p.id===me.id?{...p,avatar:base64}:p)}));
-   current.current={...current.current,people:current.current.people.map(p=>p.id===me.id?{...p,avatar:base64}:p)};
-   return await mutate({type:"avatar",avatar:base64});
-  },[me?.id,mutate]);
+   setMe(prev=>prev?{...prev,avatar:url}:prev);
+   setState(prev=>({...prev,people:prev.people.map(p=>p.id===me.id?{...p,avatar:url}:p)}));
+   current.current={...current.current,people:current.current.people.map(p=>p.id===me.id?{...p,avatar:url}:p)};
+   const ok=await mutate({type:"avatar",avatar:url});
+   if(!ok){setAvatarState(previous);void refresh();}
+   return ok;
+  },[me?.id,mutate,avatar,refresh]);
  const update=useCallback(async(change:(current:AcademyState)=>AcademyState)=>{try{const command=stateCommand(current.current,change(current.current));return command?await mutate(command):true;}catch(err){setToast(err instanceof Error?err.message:"Ação inválida.");return false;}},[mutate]);
  const signOut=()=>{identity.current="";current.current=empty;setState(empty);setMe(null);setReady(false);setAuthenticated(false);setAvatarState(null);void auth?.auth.signOut();};
  const toggleTheme=()=>setTheme(value=>{const next=value==="light"?"dark":"light";try{localStorage.setItem("doc-academy.theme",next);}catch{}return next;});

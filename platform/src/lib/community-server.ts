@@ -24,7 +24,7 @@ export async function executeCommunity(db: Database, me: Profile, command: Comma
   if (command.type === "community-save") {
     const problem = communityValidationError(command.data, command.publish);
     if (problem) throw new ApiError(problem);
-    const content = command.data.blocks ? articlePlainText(command.data.blocks) : command.data.content.trim();
+    const content = command.data.richContent ? command.data.content.trim() : command.data.blocks ? articlePlainText(command.data.blocks) : command.data.content.trim();
     command = { ...command, data: { ...command.data, content, summary: content.replace(/\s+/g, " ").slice(0, 240) } };
   }
   const { error } = await db.rpc("academy_community_mutate", { actor: me.id, command });

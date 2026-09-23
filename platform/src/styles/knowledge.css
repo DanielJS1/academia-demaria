@@ -1557,6 +1557,22 @@
   margin: 0 0 14px;
 }
 
+.rich-article-editor { margin-top: 18px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.rich-article-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; border-bottom: 1px solid var(--line); background: var(--surface2); }
+.rich-article-toolbar button { min-height: 44px; }
+.rich-article-canvas { margin: 0; min-height: 420px; }
+.rich-article-canvas .tiptap { min-height: 420px; padding: 20px 24px; outline: none; }
+.rich-article-canvas .tiptap:focus-visible { box-shadow: inset 0 0 0 2px var(--primary); }
+.community-prose h1 { font-size: 28px; line-height: 1.25; margin: 30px 0 14px; }
+.community-prose h3 { font-size: 17px; margin: 24px 0 10px; }
+.community-prose pre { overflow-x: auto; padding: 16px; background: var(--surface2); border: 1px solid var(--line); border-radius: 8px; }
+.community-prose pre code { border: 0; padding: 0; background: transparent; color: var(--ink); white-space: pre; }
+.community-prose table { width: 100%; border-collapse: collapse; margin: 20px 0; display: block; overflow-x: auto; }
+.community-prose th, .community-prose td { border: 1px solid var(--line); padding: 8px 12px; min-width: 90px; text-align: left; }
+.community-prose th { background: var(--surface2); }
+.community-attachment { margin: 14px 0; border: 1px solid var(--line); background: var(--surface2); border-radius: 10px; padding: 14px 18px; font-weight: 650; }
+.community-attachment a { text-decoration: none; }
+
 .article-block-editor {
   display: grid;
   gap: 16px;

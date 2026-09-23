@@ -10,7 +10,7 @@ import { normalize } from "@/lib/utils";
 import { articleDate } from "./article-client";
 import { CommunityXpRules } from "./article-content";
 
-export function CommunityLibrary({ search, clearSearch }: { search: string; clearSearch: () => void }) {
+export function CommunityLibrary({ search, matchedIds, clearSearch }: { search: string; matchedIds: string[] | null; clearSearch: () => void }) {
   const { state, me } = useAcademy();
   const [scope, setScope] = useState("all");
   const [sort, setSort] = useState("recent");
@@ -19,7 +19,7 @@ export function CommunityLibrary({ search, clearSearch }: { search: string; clea
   const mine = published.filter(article => article.authorId === me.id && !drafts.some(draft => draft.id === article.id));
   const source = scope === "mine" ? [...drafts, ...mine] : published;
   const q = normalize(search);
-  const articles = source.filter(article => normalize(`${article.title} ${article.summary || article.content} ${article.product} ${article.category} ${article.author}`).includes(q)).sort((a, b) => sort === "popular" ? ((b.likeCount || 0) + (b.hypeCount || 0) * 2) - ((a.likeCount || 0) + (a.hypeCount || 0) * 2) : b.updatedAt.localeCompare(a.updatedAt));
+  const articles = source.filter(article => !q || (matchedIds ? matchedIds.includes(article.id) : normalize(`${article.title} ${article.summary || article.content} ${article.product} ${article.category} ${article.author} ${(article.tags || []).join(" ")}`).includes(q))).sort((a, b) => sort === "popular" ? ((b.likeCount || 0) + (b.hypeCount || 0) * 2) - ((a.likeCount || 0) + (a.hypeCount || 0) * 2) : b.updatedAt.localeCompare(a.updatedAt));
   const awaiting = published.filter(article => article.authorId === me.id && article.updateRequest).length;
 
   return <section className="community-library" aria-label="Biblioteca colaborativa">

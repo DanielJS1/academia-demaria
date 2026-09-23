@@ -94,7 +94,7 @@ export const initialState: AcademyState = {
     { id: "julia", name: "Júlia Lima", email: "julia@example.com", department: "Comercial", managerId: "daniel", role: "student", status: "active", xp: 1680, progress: 54, audience: "internal" },
     { id: "maria-cartorio", name: "Maria Helena Souza", email: "maria@cartoriosantos.com.br", department: "Cartório Cliente", managerId: "", role: "student", status: "active", xp: 540, progress: 60, audience: "client", cartorioId: "cart-santos-1" },
   ],
-  completed: { "doc-windows": ["win-1", "win-2"], "multiscan": ["scan-1"] }, bookmarks: ["atendimento"],
+  completed: { "doc-windows": ["win-1", "win-2"], "multiscan": ["scan-1"] }, videoProgress: {}, bookmarks: ["atendimento"],
   attempts: [
     {
       id: "att-ana-1",

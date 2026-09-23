@@ -7,6 +7,7 @@ import { videoIsComplete } from "./video-completion";
 import { commandSchema, mergeWatched } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
 import { courseSchema, articleSchema, vimeoEmbed, safeImage, type AcademyState, type Course, type Article, type Cartorio } from "./model";
+import { isStoredMediaUrl } from "./storage-service";
 export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
 export function database(){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -84,7 +85,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   const eligibleCourses=courses.filter(c=>c.status==="published"&&c.audience!==(p.audience==="client"?"internal":"client"));
   const total=eligibleCourses.reduce((n: number,c: Course)=>n+c.lessons.filter(l=>l.type!=="quiz").length,0);
   const done=(progress.data??[]).filter((r: any)=>r.user_id===p.id&&r.done&&eligibleCourses.some(c=>c.id===r.course_id&&c.version===r.version&&c.lessons.some(l=>l.id===r.lesson_id&&l.type!=="quiz"))).length;
-  return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter((x: any)=>x.user_id===p.id&&x.season===season).reduce((n: number,x: any)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0,performance:total?Math.round(done/total*100):0,streak:streak(p.id),audience:(p.audience??"internal") as "internal"|"client",cartorioId:p.cartorio_id??undefined,avatar:p.avatar??null};
+  return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter((x: any)=>x.user_id===p.id&&x.season===season).reduce((n: number,x: any)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0,performance:total?Math.round(done/total*100):0,streak:streak(p.id),audience:(p.audience??"internal") as "internal"|"client",cartorioId:p.cartorio_id??undefined,avatar:typeof p.avatar==="string"&&p.avatar.startsWith("https://")?p.avatar:null};
  });
  const cartorios:Cartorio[]=(cartoriosResult.data??[]).map((c: any)=>({
   id:c.id,name:c.name,city:c.city??"",uf:c.uf??"",cns:c.cns??undefined,modules:c.modules??[],
@@ -96,12 +97,13 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
   teamProgress,cartorios};
- return {state,me:{id:me.id,name:me.name,email:me.email,department:me.department,role:me.role,audience:me.audience??"internal",cartorioId:me.cartorio_id??null,avatar:me.avatar??null}};
+ return {state,me:{id:me.id,name:me.name,email:me.email,department:me.department,role:me.role,audience:me.audience??"internal",cartorioId:me.cartorio_id??null,avatar:me.avatar?.startsWith("https://")?me.avatar:null}};
 }
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");
  const command=parsed.data;
  if(command.type==="avatar"){
+  if(command.avatar && (!isStoredMediaUrl(command.avatar,"academy-avatars") || !new URL(command.avatar).pathname.includes(`/${me.id}/`)))throw new ApiError("URL de avatar inválida.");
   const {error}=await db.from("academy_profiles").update({avatar:command.avatar}).eq("id",me.id);
   if(error)throw new ApiError("Não foi possível salvar a foto de perfil: "+error.message,500);
   await db.from("academy_audit").insert({actor:me.id,action:"avatar",resource:me.id});

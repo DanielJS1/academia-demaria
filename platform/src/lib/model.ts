@@ -35,6 +35,8 @@ export const articleBlockSchema = z.object({
 });
 export const articleSchema = z.object({
   id: z.string().min(1).max(100), title: z.string().min(3).max(120), product: z.string().max(100), category: z.string().max(100), content: z.string().max(100000),
+  richContent: z.object({ type: z.literal("doc"), content: z.array(z.any()).optional() }).optional(),
+  tags: z.array(z.string().min(1).max(40)).max(12).optional(),
   status: z.enum(["draft", "published"]), revision: z.number().int().positive(), updatedAt: z.string(), author: z.string(),
   authorId: z.string().uuid().optional(), community: z.boolean().optional(), blocks: z.array(articleBlockSchema).max(80).optional(),
   summary: z.string().max(300).optional(), bodyLoaded: z.boolean().optional(),
@@ -58,7 +60,7 @@ export const personSchema = z.object({
   performance: z.number().min(0).max(100).optional(),
   audience: z.enum(["internal", "client"]).optional().default("internal"),
   cartorioId: z.string().nullable().optional(),
-  avatar: z.string().nullable().optional(),
+  avatar: z.string().url().nullable().optional(),
 });
 export const cartorioSchema = z.object({
   id: z.string(),
