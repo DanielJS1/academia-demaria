@@ -35,12 +35,12 @@ const windowsAssistants = [
   { title: "Preferências", href: "https://chatgpt.com/g/g-68b85c218248819192b205d84bf879bc-preferencias" },
 ];
 
-export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "anotacoes" | "biblioteca"; initialSearch?: string }) {
+export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "anotacoes" | "biblioteca" | "consulta"; initialSearch?: string }) {
   const { state, me, notify } = useAcademy();
   const [search, setSearch] = useState(initialSearch);
-  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">(initialTab === "anotacoes" ? "Anotações" : initialTab === "biblioteca" ? "Biblioteca" : "Consulta assistida");
+  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : "Biblioteca");
   const [matchedIds, setMatchedIds] = useState<string[] | null>(null);
-  useEffect(() => { setSearch(initialSearch); if (initialTab === "biblioteca") setTab("Biblioteca"); }, [initialSearch, initialTab]);
+  useEffect(() => { setSearch(initialSearch); setTab(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : "Biblioteca"); }, [initialSearch, initialTab]);
   useEffect(() => {
     if (tab !== "Biblioteca" || search.trim().length < 2) { setMatchedIds(null); return; }
     setMatchedIds(null);
@@ -93,6 +93,14 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
       <div className="tabs">
         <button
           type="button"
+          className={tab === "Biblioteca" ? "selected" : ""}
+          aria-pressed={tab === "Biblioteca"}
+          onClick={() => setTab("Biblioteca")}
+        >
+          <BookOpen size={16}/> Biblioteca ({published.length})
+        </button>
+        <button
+          type="button"
           className={tab === "Consulta assistida" ? "selected" : ""}
           aria-pressed={tab === "Consulta assistida"}
           onClick={() => setTab("Consulta assistida")}
@@ -106,14 +114,6 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
           onClick={() => setTab("Anotações")}
         >
           <FileText size={16}/> Minhas Anotações ({coursesWithNotes.length})
-        </button>
-        <button
-          type="button"
-          className={tab === "Biblioteca" ? "selected" : ""}
-          aria-pressed={tab === "Biblioteca"}
-          onClick={() => setTab("Biblioteca")}
-        >
-          <BookOpen size={16}/> Biblioteca ({published.length})
         </button>
       </div>
 

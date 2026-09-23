@@ -107,7 +107,7 @@ function ArticleEditorForm({ initial, firstProduct }: { initial?: Article; first
   };
 
   return <div className="page-enter community-editor">
-    <Link href="/conhecimento" className="back-link" onClick={event => { if (dirty && !window.confirm("Sair sem salvar as alterações deste artigo?")) event.preventDefault(); }}><ArrowLeft size={15} /> Voltar à biblioteca</Link>
+    <Link href="/conhecimento?aba=biblioteca" className="back-link" onClick={event => { if (dirty && !window.confirm("Sair sem salvar as alterações deste artigo?")) event.preventDefault(); }}><ArrowLeft size={15} /> Voltar à biblioteca</Link>
     <PageHeading title={initial ? "Aprimore seu conhecimento." : "Compartilhe o que você sabe."} description="Registre um procedimento que ajude alguém da equipe a resolver um problema." />
     {article.updateRequest && <div className="notice-bar community-update-request"><strong>Atualização solicitada</strong><p>{article.updateRequest.message}</p><small>A solicitação será concluída quando você publicar a revisão.</small></div>}
     <div className="editor-grid">

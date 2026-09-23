@@ -1,5 +1,6 @@
 import { Fragment, createElement, type ReactNode } from "react";
 import type { Article, ArticleBlock } from "@/lib/model";
+import { ArticleCodeBlock } from "./article-code-block";
 
 // Render a small formatting vocabulary as React elements. User HTML is always text.
 export function InlineArticleText({ text }: { text: string }) {
@@ -24,10 +25,12 @@ export function blocksPlainText(blocks: ArticleBlock[]) {
 }
 
 type RichNode = { type?: string; text?: string; attrs?: Record<string, unknown>; marks?: { type: string; attrs?: Record<string, unknown> }[]; content?: RichNode[] };
+function plainCode(node: RichNode): string { return node.type === "text" ? node.text || "" : node.type === "hardBreak" ? "\n" : (node.content || []).map(plainCode).join(""); }
 function secureUrl(value: unknown) { return typeof value === "string" && /^https:\/\//i.test(value) ? value : ""; }
 function renderRich(node: RichNode, key: number): ReactNode {
   if (node.type === "hardBreak") return <br key={key} />;
   if (node.type === "horizontalRule") return <hr key={key} />;
+  if (node.type === "codeBlock") return <ArticleCodeBlock key={key} code={plainCode(node)} language={typeof node.attrs?.language === "string" ? node.attrs.language : undefined} />;
   const children = node.content?.map(renderRich) || [];
   if (node.type === "text") {
     return (node.marks || []).reduce<ReactNode>((child, mark) => {
@@ -38,9 +41,9 @@ function renderRich(node: RichNode, key: number): ReactNode {
   }
   if (node.type === "image") { const src = secureUrl(node.attrs?.src); return src ? <figure key={key}><img src={src} alt={String(node.attrs?.alt || "")} loading="lazy" decoding="async" /></figure> : null; }
   if (node.type === "attachment") { const href = secureUrl(node.attrs?.href); return href ? <div className="community-attachment" key={key}><a href={href} download target="_blank" rel="noopener noreferrer">↓ {String(node.attrs?.name || "Baixar arquivo")}</a></div> : null; }
-  const tag = ({ doc: "div", paragraph: "p", heading: `h${[1,2,3].includes(Number(node.attrs?.level)) ? node.attrs?.level : 2}`, bulletList: "ul", orderedList: "ol", listItem: "li", blockquote: "aside", codeBlock: "pre", table: "table", tableRow: "tr", tableHeader: "th", tableCell: "td" } as Record<string, string>)[node.type || ""];
+  const tag = ({ doc: "div", paragraph: "p", heading: `h${[1,2,3].includes(Number(node.attrs?.level)) ? node.attrs?.level : 2}`, bulletList: "ul", orderedList: "ol", listItem: "li", blockquote: "aside", table: "table", tableRow: "tr", tableHeader: "th", tableCell: "td" } as Record<string, string>)[node.type || ""];
   if (!tag) return null;
-  return createElement(tag, { key, ...(node.type === "blockquote" ? { className: "community-callout" } : {}) }, node.type === "codeBlock" ? <code>{children}</code> : children);
+  return createElement(tag, { key, ...(node.type === "blockquote" ? { className: "community-callout" } : {}) }, children);
 }
 
 export function ArticleContent({ article }: { article: Pick<Article, "content" | "blocks" | "richContent"> }) {

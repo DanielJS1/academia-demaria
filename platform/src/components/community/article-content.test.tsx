@@ -15,6 +15,8 @@ describe("leitura de artigos ricos", () => {
     }} />);
     expect(html).toContain("<br/>");
     expect(html).toContain("SELECT 1;");
+    expect(html).toContain("Copiar");
+    expect(html).toContain("Baixar");
     expect(html).toContain("<hr/>");
     expect(html).toContain("alt=\"Diagrama\"");
   });
