@@ -387,7 +387,7 @@
 .avatar-3 { background: #d9e0f6; color: #5a70a2; }
 .avatar-4 { background: #e4e0d3; color: #7e715b; }
 
-.mobile-menu {
+.topbar .mobile-menu {
   display: none;
 }
 
@@ -491,8 +491,8 @@
   transition: opacity .18s ease, transform .18s ease, background-color .18s ease;
 }
 
-.sidebar-brand-control:hover .brand,
-.sidebar-brand-control:has(.sidebar-brand-toggle:focus-visible) .brand {
+.sidebar.is-collapsed .sidebar-brand-control:hover .brand,
+.sidebar.is-collapsed .sidebar-brand-control:has(.sidebar-brand-toggle:focus-visible) .brand {
   opacity: 0;
   transform: translateX(5px);
 }
@@ -507,9 +507,35 @@
 .sidebar-brand-toggle:hover { background: var(--accent-subtle); }
 .sidebar-brand-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
+.sidebar-collapse-btn {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface2);
+  color: var(--primary);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, background-color .2s ease;
+}
+
+.sidebar:hover .sidebar-collapse-btn,
+.sidebar-collapse-btn:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar-collapse-btn:hover { background: var(--accent-subtle); }
+.sidebar-collapse-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 @media (hover: none) and (min-width: 761px) {
-  .sidebar-brand-control .brand { opacity: 0; }
-  .sidebar-brand-toggle { opacity: 1; pointer-events: auto; transform: none; }
+  .sidebar.is-collapsed .sidebar-brand-control .brand { opacity: 0; }
+  .sidebar.is-collapsed .sidebar-brand-toggle { opacity: 1; pointer-events: auto; transform: none; }
+  .sidebar-collapse-btn { opacity: 1; pointer-events: auto; }
 }
 
 .sidebar.is-collapsed {
@@ -649,7 +675,7 @@
 .sidebar.is-collapsed .sidebar-brand-toggle { place-items: center; padding-left: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sidebar, .sidebar-brand-control .brand, .sidebar-brand-toggle,
+  .sidebar, .sidebar-brand-control .brand, .sidebar-brand-toggle, .sidebar-collapse-btn,
   .global-search-field, .sidebar-dock-item-wrap { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 

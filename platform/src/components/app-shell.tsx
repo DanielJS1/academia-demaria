@@ -116,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
       )}
       <aside
-        className={`sidebar ${mobileOpen ? "is-open" : ""} ${isDocked ? "is-collapsed" : ""}`}
+        className={`sidebar group ${mobileOpen ? "is-open" : ""} ${isDocked ? "is-collapsed" : ""}`}
         aria-label="Navegação principal"
         onMouseLeave={() => setHoveredNavIndex(null)}
       >
@@ -131,14 +131,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </span>
               )}
             </Link>
-            {!isMobile && (
+            {isDocked && (
               <button type="button" className="sidebar-brand-toggle" onClick={toggleCollapsed}
-                aria-label={isDocked ? "Expandir barra lateral" : "Recolher barra lateral"}
-                title={isDocked ? "Expandir barra lateral" : "Recolher barra lateral"}>
-                {isDocked ? <ChevronRight size={22} /> : <ChevronLeft size={22} />}
+                aria-label="Expandir barra lateral" title="Expandir barra lateral">
+                <ChevronRight size={22} />
               </button>
             )}
           </div>
+          {!isMobile && !isDocked && (
+            <button type="button" className="sidebar-collapse-btn" onClick={toggleCollapsed}
+              aria-label="Recolher barra lateral" title="Recolher barra lateral">
+              <ChevronLeft size={22} />
+            </button>
+          )}
           {isMobile ? (
             <Button
               variant="ghost"

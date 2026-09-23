@@ -154,8 +154,8 @@
   .sidebar.is-open { visibility: visible !important; transform: translateX(0) !important; }
   .app-content { margin-left: 0; }
   .nav-scrim { display: block; position: fixed; inset: 0; background: #17102466; border: 0; z-index: 49; }
-  .mobile-menu { display: inline-flex; }
-  .sidebar-brand-toggle { display: none; }
+  .topbar .mobile-menu { display: inline-flex; }
+  .sidebar-brand-toggle, .sidebar-collapse-btn { display: none; }
   .brand strong { font-size: 20px; }
   .brand small { font-size: 6.5px; }
   .brand-official { width: 46px; height: 38px; }
