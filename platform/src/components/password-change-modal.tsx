@@ -5,6 +5,7 @@ import { KeyRound, Eye, EyeOff, Lock, X, AlertCircle, CheckCircle2 } from "lucid
 import { browserAuth } from "@/lib/supabase-browser";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
+import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
 
 interface PasswordChangeModalProps {
   isOpen: boolean;
@@ -58,8 +59,9 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
       return;
     }
 
-    if (password.length < 12) {
-      setErrorMessage("A senha deve ter pelo menos 12 caracteres.");
+    const validPassword = newPasswordSchema.safeParse(password);
+    if (!validPassword.success) {
+      setErrorMessage(validPassword.error.issues[0]?.message || "Senha inválida.");
       return;
     }
 
@@ -122,7 +124,7 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
 
         <form onSubmit={handleSubmit} className="password-change-form">
           <p className="password-change-description">
-            Defina uma senha segura com no mínimo <strong>12 caracteres</strong>. Ela será necessária no seu próximo login.
+            Defina uma senha segura com no mínimo <strong>{MIN_PASSWORD_LENGTH} caracteres</strong>. Ela será necessária no seu próximo login.
           </p>
 
           {errorMessage && (
@@ -162,7 +164,9 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo de 12 caracteres"
+                placeholder={`Mínimo de ${MIN_PASSWORD_LENGTH} caracteres`}
+                minLength={MIN_PASSWORD_LENGTH}
+                maxLength={MAX_PASSWORD_LENGTH}
                 autoComplete="new-password"
                 disabled={loading}
               />
@@ -170,8 +174,8 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
                 type="button"
                 className="password-toggle-btn"
                 onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
                 aria-label={showPassword ? "Ocultar senha" : "Ver senha"}
+                aria-pressed={showPassword}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -188,14 +192,16 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
                 onChange={(e) => setConfirmation(e.target.value)}
                 placeholder="Repita a senha digitada"
                 autoComplete="new-password"
+                minLength={MIN_PASSWORD_LENGTH}
+                maxLength={MAX_PASSWORD_LENGTH}
                 disabled={loading}
               />
               <button
                 type="button"
                 className="password-toggle-btn"
                 onClick={() => setShowConfirmation(!showConfirmation)}
-                tabIndex={-1}
                 aria-label={showConfirmation ? "Ocultar confirmação" : "Ver confirmação"}
+                aria-pressed={showConfirmation}
               >
                 {showConfirmation ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { articleSchema, courseSchema, personSchema, cartorioSchema, type AcademyState } from "./model";
+import { newPasswordSchema } from "./auth-policy";
 const id = z.string().min(1).max(100);
 export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("community-save"), data:articleSchema, publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
@@ -16,11 +17,11 @@ export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("reject-user"), id:z.string().uuid() }),
  z.object({ type:z.literal("unlock"), id:z.string().uuid() }),
  z.object({ type:z.literal("profile"), data:personSchema }),
- z.object({ type:z.literal("invite"), temporaryPassword:z.string().min(12).max(128).optional(), name:z.string().trim().min(2).max(120), email:z.string().email(), department:z.string().max(80), managerId:z.string(), role:z.enum(["student","manager","admin"]) }),
+ z.object({ type:z.literal("invite"), temporaryPassword:newPasswordSchema.optional(), name:z.string().trim().min(2).max(120), email:z.string().email(), department:z.string().max(80), managerId:z.string(), role:z.enum(["student","manager","admin"]) }),
  z.object({ type:z.literal("preferences"), bookmarks:z.array(id).max(2000), readNotices:z.array(id).max(2000) }),
  z.object({ type:z.literal("settings"), kind:z.enum(["departments","products"]), oldName:z.string().optional(), name:z.string().trim().min(1).max(80) }),
  z.object({ type:z.literal("delete-setting"), kind:z.enum(["departments","products"]), name:z.string().trim().min(1).max(80) }),
- z.object({ type:z.literal("save-cartorio"), data:cartorioSchema, initialPassword:z.string().min(6).max(128).optional() }),
+ z.object({ type:z.literal("save-cartorio"), data:cartorioSchema, initialPassword:newPasswordSchema.optional() }),
  z.object({ type:z.literal("delete-cartorio"), id:id }),
  z.object({ type:z.literal("avatar"), avatar:z.string().max(350*1024).nullable() }),
 ]);

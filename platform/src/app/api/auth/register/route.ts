@@ -6,6 +6,7 @@ import {
 } from "@/lib/registration-security";
 import { z } from "zod";
 import { DEPARTMENTS } from "@/lib/departments";
+import { newPasswordSchema } from "@/lib/auth-policy";
 
 const registerSchema = z.object({
   department: z.enum(DEPARTMENTS, { error: "Selecione seu setor." }),
@@ -15,7 +16,7 @@ const registerSchema = z.object({
     .trim()
     .email("Informe um e-mail válido.")
     .refine(isAllowedCompanyEmail, "Use um e-mail @demaria.com.br ou @sacdemaria.com.br."),
-  password: z.string().min(12, "A senha deve ter pelo menos 12 caracteres."),
+  password: newPasswordSchema,
 });
 
 export const runtime = "nodejs";

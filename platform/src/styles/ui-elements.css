@@ -711,20 +711,22 @@ textarea.input {
 
 /* Access Screen (Piloto) */
 .access-page {
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  box-sizing: border-box;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 80px;
-  padding: 48px;
+  gap: clamp(28px, 5vw, 80px);
+  padding: clamp(16px, 3vh, 40px) clamp(24px, 4vw, 64px);
   background: radial-gradient(ellipse at 20% 40%, var(--lavender), transparent 60%), var(--background);
 }
 .access-story {
   max-width: 480px;
   position: relative;
-  padding-bottom: 100px;
 }
-.access-story .brand { padding: 0 0 70px; }
+.access-story .brand { padding: 0 0 clamp(24px, 5vh, 58px); }
 .access-story .brand strong { font-size: 28px; }
 .access-story h1 { font-size: 50px; letter-spacing: -2px; margin: 18px 0; }
 .access-story h1 em { font-style: normal; color: var(--primary); }
@@ -736,38 +738,61 @@ textarea.input {
   transform: rotate(-12deg);
   width: 110px;
   height: 120px;
-  margin: 35px 0;
+  margin: 24px 0 0;
   color: var(--primary);
   border: 1px solid var(--line);
   background: var(--surface);
 }
 .access-card {
-  padding: 36px;
+  padding: clamp(20px, 2.5vh, 30px);
   max-width: 430px;
   width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
   box-shadow: var(--shadow);
   border-radius: 18px;
   box-sizing: border-box;
 }
 .access-logo {
   display: block;
-  width: 180px;
+  width: 128px;
   max-width: 100%;
   height: auto;
-  margin: 0 auto 20px;
+  max-height: 76px;
+  margin: 0 auto 10px;
   object-fit: contain;
 }
 .access-card h1,
-.access-card h2 { font-size: 26px; margin: 12px 0; }
-.access-card p { color: var(--muted); margin: 15px 0 24px; font-size: 13px; }
+.access-card h2 { font-size: 25px; margin: 7px 0; }
+.access-card p { color: var(--muted); margin: 8px 0 14px; font-size: 13px; }
 .access-card .button { width: 100%; margin-bottom: 10px; }
-.access-card .info-note { margin-top: 20px; }
+.access-card .info-note { margin-top: 12px !important; }
+.access-card .field { margin-bottom: 10px; }
+.access-password-wrap { position: relative; }
+.access-password-wrap input { width: 100%; padding-right: 48px; }
+.access-password-toggle {
+  position: absolute;
+  inset: 0 4px 0 auto;
+  width: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.access-password-toggle:hover { color: var(--foreground); }
+.access-password-toggle:focus-visible, .portal-tab-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 .access-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 8px;
 }
 .access-actions .button {
   width: auto;

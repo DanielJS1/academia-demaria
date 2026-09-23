@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, LockKeyhole, ShieldAlert, UserPlus } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, ShieldAlert, UserPlus } from "lucide-react";
 import { browserAuth } from "@/lib/supabase-browser";
 import { DEPARTMENTS } from "@/lib/departments";
+import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
 
 export function AccessScreen({ configured, signedIn }: { configured: boolean; signedIn: boolean }) {
   const router = useRouter();
-  const [portal, setPortal] = useState<"colaborador" | "cartorio">("colaborador");
+  const [portal, setPortal] = useState<"colaborador" | "cartorio">("cartorio");
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -28,7 +31,8 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
     try {
       if (signedIn) {
         if (password !== confirmation) throw new Error("As senhas precisam ser iguais.");
-        if (password.length < 12) throw new Error("Use uma senha com pelo menos 12 caracteres.");
+        const validPassword = newPasswordSchema.safeParse(password);
+        if (!validPassword.success) throw new Error(validPassword.error.issues[0]?.message);
         const result = await auth.auth.updateUser({ password });
         if (result.error) throw result.error;
         setPassword("");
@@ -37,7 +41,8 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
       } else if (mode === "signup") {
         if (!name.trim()) throw new Error("Informe seu nome completo.");
         if (password !== confirmation) throw new Error("As senhas digitadas não coincidem.");
-        if (password.length < 12) throw new Error("A senha deve ter pelo menos 12 caracteres.");
+        const validPassword = newPasswordSchema.safeParse(password);
+        if (!validPassword.success) throw new Error(validPassword.error.issues[0]?.message);
 
         const response = await fetch("/api/auth/register", {
           method: "POST",
@@ -136,6 +141,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
 
         {message && (
           <div
+            role={message.type === "error" ? "alert" : "status"}
             className={message.type === "error" ? "form-error" : "info-note"}
             style={{
               marginBottom: "16px",
@@ -160,6 +166,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
           <div className="portal-toggle-tabs">
             <button
               type="button"
+              aria-pressed={portal === "colaborador"}
               className={`portal-tab-btn ${portal === "colaborador" ? "active" : ""}`}
               onClick={() => {
                 setPortal("colaborador");
@@ -170,6 +177,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
             </button>
             <button
               type="button"
+              aria-pressed={portal === "cartorio"}
               className={`portal-tab-btn ${portal === "cartorio" ? "active" : ""}`}
               onClick={() => {
                 setPortal("cartorio");
@@ -177,7 +185,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
                 setMessage(null);
               }}
             >
-              Cliente Cartório · Certificação
+              Cliente do Cartório
             </button>
           </div>
         )}
@@ -222,33 +230,47 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
             )}
 
             {(mode !== "forgot" || signedIn) && (
-              <label className="field">
-                <span>{signedIn || mode === "signup" ? "Senha (mínimo 12 caracteres)" : "Senha"}</span>
+              <div className="field">
+                <label htmlFor="access-password">{signedIn || mode === "signup" ? `Senha (mínimo ${MIN_PASSWORD_LENGTH} caracteres)` : "Senha"}</label>
+                <div className="access-password-wrap">
                 <input
-                  type="password"
+                  id="access-password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete={signedIn || mode === "signup" ? "new-password" : "current-password"}
-                  minLength={signedIn || mode === "signup" ? 12 : undefined}
+                  minLength={signedIn || mode === "signup" ? MIN_PASSWORD_LENGTH : undefined}
+                  maxLength={signedIn || mode === "signup" ? MAX_PASSWORD_LENGTH : undefined}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  placeholder={mode === "signup" ? "Pelo menos 12 caracteres" : undefined}
+                  placeholder={mode === "signup" ? `Pelo menos ${MIN_PASSWORD_LENGTH} caracteres` : undefined}
                 />
-              </label>
+                <button type="button" className="access-password-toggle" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} aria-pressed={showPassword} aria-controls="access-password">
+                  {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+                </button>
+                </div>
+              </div>
             )}
 
             {(signedIn || mode === "signup") && (
-              <label className="field">
-                <span>Confirme a senha</span>
+              <div className="field">
+                <label htmlFor="access-confirmation">Confirme a senha</label>
+                <div className="access-password-wrap">
                 <input
-                  type="password"
+                  id="access-confirmation"
+                  type={showConfirmation ? "text" : "password"}
                   autoComplete="new-password"
-                  minLength={12}
+                  minLength={MIN_PASSWORD_LENGTH}
+                  maxLength={MAX_PASSWORD_LENGTH}
                   value={confirmation}
                   onChange={e => setConfirmation(e.target.value)}
                   required
                   placeholder="Digite a senha novamente"
                 />
-              </label>
+                <button type="button" className="access-password-toggle" onClick={() => setShowConfirmation(value => !value)} aria-label={showConfirmation ? "Ocultar confirmação da senha" : "Mostrar confirmação da senha"} aria-pressed={showConfirmation} aria-controls="access-confirmation">
+                  {showConfirmation ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+                </button>
+                </div>
+              </div>
             )}
 
             <button className="button button-primary" type="submit" disabled={busy} style={{ width: "100%", marginTop: "12px" }}>

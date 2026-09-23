@@ -7,6 +7,7 @@ import { Button } from "../ui/button";
 import { EmptyState } from "../shared";
 import type { Cartorio } from "@/lib/model";
 import { BRAZILIAN_UFS, MODULE_FAMILIES, ALL_MODULES_MAP, formatModuleName } from "@/lib/cartorio-modules";
+import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
 
 export function AdminCartorios() {
   const { state, mutate, notify, busy } = useAcademy();
@@ -102,8 +103,8 @@ export function AdminCartorios() {
       notify("Informe um e-mail válido para o usuário-chave.");
       return;
     }
-    if (initialPassword && initialPassword.length < 6) {
-      notify("A senha temporária deve ter pelo menos 6 caracteres.");
+    if (initialPassword && !newPasswordSchema.safeParse(initialPassword).success) {
+      notify(`A senha temporária deve ter entre ${MIN_PASSWORD_LENGTH} e ${MAX_PASSWORD_LENGTH} caracteres.`);
       return;
     }
 
@@ -245,7 +246,9 @@ export function AdminCartorios() {
                     <span>Senha Inicial / Provisória</span>
                     <input
                       type="password"
-                      placeholder={isCreating ? "Defina uma senha (mín. 6)" : "Deixe em branco p/ manter"}
+                      placeholder={isCreating ? `Defina uma senha (mín. ${MIN_PASSWORD_LENGTH})` : "Deixe em branco p/ manter"}
+                      minLength={MIN_PASSWORD_LENGTH}
+                      maxLength={MAX_PASSWORD_LENGTH}
                       value={initialPassword}
                       onChange={e => setInitialPassword(e.target.value)}
                     />

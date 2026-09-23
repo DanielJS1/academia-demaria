@@ -10,6 +10,7 @@ import { EmptyState, PageHeading } from "../shared";
 import { personSchema, type Person } from "@/lib/model";
 import { normalize } from "@/lib/utils";
 import { DEPARTMENTS } from "@/lib/departments";
+import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
 
 const uuid = () => crypto.randomUUID();
 
@@ -51,6 +52,13 @@ export function PersonEditor({ id }: { id: string }) {
     if (state.people.some(item => item.id !== person.id && normalize(item.email) === normalize(person.email))) {
       setError("Este e-mail já está cadastrado.");
       return;
+    }
+    if (!existing && method === "password") {
+      const result = newPasswordSchema.safeParse(initialPassword);
+      if (!result.success) {
+        setError(result.error.issues[0]?.message || "Senha inválida.");
+        return;
+      }
     }
 
     const success = existing
@@ -191,12 +199,12 @@ export function PersonEditor({ id }: { id: string }) {
             </label>
             {method === "password" && (
               <label className="field">
-                <span>Senha inicial · mínimo 12 caracteres</span>
+                <span>Senha inicial · mínimo {MIN_PASSWORD_LENGTH} caracteres</span>
                 <input
                   type="password"
                   autoComplete="new-password"
-                  minLength={12}
-                  maxLength={128}
+                  minLength={MIN_PASSWORD_LENGTH}
+                  maxLength={MAX_PASSWORD_LENGTH}
                   required
                   value={initialPassword}
                   onChange={e => setInitialPassword(e.target.value)}
