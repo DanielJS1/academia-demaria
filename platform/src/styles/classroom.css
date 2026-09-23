@@ -53,6 +53,34 @@
   gap: 16px;
 }
 
+.player-grid.video-theater.focus-mode {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.player-grid.video-theater.focus-mode > .curriculum-dock {
+  display: none;
+}
+
+.classroom-stage {
+  min-width: 0;
+}
+
+.classroom-stage.notes-open {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.classroom-stage-primary,
+.classroom-notes-pane { min-width: 0; }
+
+.classroom-notes-pane .lesson-notepad { margin-top: 0; }
+.classroom-notes-pane .notepad-header,
+.classroom-notes-pane .notepad-actions { flex-wrap: wrap; }
+.classroom-notes-pane .notepad-textarea { min-height: 40vh; }
+.notepad-toggle { margin-bottom: 12px; min-height: 44px; }
+
 .curriculum-dock {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -196,6 +224,8 @@
 
 .video-frame {
   aspect-ratio: 16 / 9;
+  width: 100%;
+  max-height: min(75vh, calc(100dvh - 170px));
   background: #20172f;
   border-radius: 14px;
   overflow: hidden;
@@ -203,6 +233,11 @@
   align-items: center;
   justify-content: center;
   position: relative;
+}
+
+@media (max-width: 900px) {
+  .classroom-stage.notes-open { grid-template-columns: minmax(0, 1fr); }
+  .classroom-notes-pane .notepad-textarea { min-height: 220px; }
 }
 
 .video-frame iframe {

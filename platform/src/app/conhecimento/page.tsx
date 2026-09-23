@@ -1,2 +1,5 @@
 import { Knowledge } from "@/components/knowledge";
-export default function Page() { return <Knowledge/>; }
+export default async function Page({ searchParams }: { searchParams: Promise<{ aba?: string }> }) {
+  const { aba } = await searchParams;
+  return <Knowledge initialTab={aba === "anotacoes" ? "anotacoes" : undefined} />;
+}

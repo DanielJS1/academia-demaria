@@ -7,8 +7,8 @@ import type { AcademyState, Cartorio } from "@/lib/model";
 import { AccessScreen } from "./access-screen";
 import { EngagementTracker } from "./engagement-tracker";
 type Me={id:string;name:string;email:string;department?:string;role:"admin"|"manager"|"student";audience?:"internal"|"client";cartorioId?:string|null;avatar?:string|null};
-type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command)=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(base64:string|null)=>Promise<boolean>;};
-const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[],teamProgress:{},cartorios:[]};
+type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command,options?:{silent?:boolean})=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(base64:string|null)=>Promise<boolean>;};
+const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},videoProgress:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[],teamProgress:{},cartorios:[]};
 const AcademyContext=createContext<Context|null>(null);
 export function AcademyProvider({children}:{children:ReactNode}){
  const path=usePathname();const [state,setState]=useState(empty);const current=useRef(state);
@@ -28,7 +28,8 @@ export function AcademyProvider({children}:{children:ReactNode}){
    const earned=xpEvents.filter(event=>!current.current.xpEvents.some(old=>old.id===event.id)).reduce((sum,event)=>sum+event.amount,0);
    if(earned>0)setToast(`+${earned} XP! Seu aprendizado está rendendo.`);
    const season=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric"});
-   const next={...current.current,xpEvents,people:current.current.people.map(person=>person.id===data.userId?{...person,xp:xpEvents.filter(e=>e.season===season).reduce((sum,e)=>sum+e.amount,0)}:person),completed:{...current.current.completed,[data.progress.courseId]:data.progress.completed}};
+   const previousCourse=current.current.videoProgress[data.progress.courseId]??{};
+   const next={...current.current,xpEvents,people:current.current.people.map(person=>person.id===data.userId?{...person,xp:xpEvents.filter(e=>e.season===season).reduce((sum,e)=>sum+e.amount,0)}:person),completed:{...current.current.completed,[data.progress.courseId]:data.progress.completed},videoProgress:{...current.current.videoProgress,[data.progress.courseId]:{...previousCourse,[data.progress.lessonId]:{position:data.progress.position,duration:data.progress.duration,updatedAt:new Date().toISOString()}}}};
    current.current=next;setState(next);return;
   }
   if(identity.current!==data.me.id)return;
@@ -70,10 +71,10 @@ export function AcademyProvider({children}:{children:ReactNode}){
    try{const saved=localStorage.getItem(`doc-academy.avatar.${me.id}`);setAvatarState(saved||null);}catch{}
   }
  },[me?.id,me?.avatar]);
-  const mutate=useCallback(async(command:Command)=>{
-   if(busyRef.current){setToast("Aguarde a gravação em andamento.");return false;}
-   busyRef.current=true;setBusy(true);
-   try{await request(command);return true;}catch(err){setToast(err instanceof Error?err.message:"Não foi possível salvar. Tente novamente.");return false;}finally{busyRef.current=false;setBusy(false);}
+  const mutate=useCallback(async(command:Command,options?:{silent?:boolean})=>{
+   if(busyRef.current){if(!options?.silent)setToast("Aguarde a gravação em andamento.");return false;}
+   busyRef.current=true;if(!options?.silent)setBusy(true);
+   try{await request(command);return true;}catch(err){if(!options?.silent)setToast(err instanceof Error?err.message:"Não foi possível salvar. Tente novamente.");return false;}finally{busyRef.current=false;if(!options?.silent)setBusy(false);}
   },[request]);
   const setAvatar=useCallback(async(base64:string|null)=>{
    if(!me?.id)return false;

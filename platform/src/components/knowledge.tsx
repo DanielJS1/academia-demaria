@@ -34,10 +34,10 @@ const windowsAssistants = [
   { title: "Preferências", href: "https://chatgpt.com/g/g-68b85c218248819192b205d84bf879bc-preferencias" },
 ];
 
-export function Knowledge() {
+export function Knowledge({ initialTab }: { initialTab?: "anotacoes" }) {
   const { state, me, notify } = useAcademy();
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">("Consulta assistida");
+  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">(initialTab === "anotacoes" ? "Anotações" : "Consulta assistida");
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
   const userNotes = getAllUserNotes(me.id);

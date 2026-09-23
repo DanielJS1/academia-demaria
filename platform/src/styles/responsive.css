@@ -64,8 +64,6 @@
   .brand small { font-size: 5px; }
   .brand-official { width: 38px; height: 38px; }
   .nav-item { font-size: 11px; padding: 11px; gap: 9px; }
-  .global-search kbd { display: none; }
-  .breadcrumb > span, .breadcrumb > svg { display: none; }
   .welcome-grid { grid-template-columns: minmax(0, 1fr) 220px; }
   .hero-art { opacity: 0.4; width: 48%; }
   .hero-copy { padding: 25px 21px; }
@@ -100,7 +98,7 @@
   .main-footer { padding: 10px 25px 20px; flex-direction: column; font-size: 8px; }
   .topbar-actions { gap: 4px; }
   .topbar { gap: 13px; }
-  .global-search input { font-size: 10px; }
+  .global-search input { font-size: 13px; }
   .access-page { gap: 40px; padding: 36px 20px; }
   .access-story h1 { font-size: 38px; }
 }
@@ -156,14 +154,13 @@
   .sidebar.is-open { visibility: visible !important; transform: translateX(0) !important; }
   .app-content { margin-left: 0; }
   .nav-scrim { display: block; position: fixed; inset: 0; background: #17102466; border: 0; z-index: 49; }
-  .mobile-menu, .sidebar-toggle-btn { display: inline-flex; }
+  .mobile-menu { display: inline-flex; }
+  .sidebar-brand-toggle { display: none; }
   .brand strong { font-size: 20px; }
   .brand small { font-size: 6.5px; }
   .brand-official { width: 46px; height: 38px; }
   .nav-item { font-size: 13px; }
   .topbar { height: 60px; padding: 0 14px; gap: 10px; }
-  .breadcrumb { gap: 6px; }
-  .breadcrumb strong { font-size: 11px; }
   .global-search { display: none; }
   .topbar-actions { margin-left: auto; gap: 6px; }
   .topbar-divider { margin: 0 2px; }

@@ -628,6 +628,13 @@
   flex: 1;
 }
 
+.resume-lesson {
+  margin: 8px 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .course-art {
   height: 160px;
   background: #d6c7ed;
@@ -1027,6 +1034,37 @@
   font-size: 11px;
   font-weight: 500;
   color: var(--muted);
+}
+
+.ranking-details {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 5px;
+}
+
+.ranking-row .ranking-name {
+  min-width: 0;
+}
+
+.ranking-details span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ranking-actions,
+.ranking-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.ranking-pagination {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .bottom-note {

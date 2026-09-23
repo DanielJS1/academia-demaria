@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { isCourseComplete } from "@/lib/rewards";
 import Link from "next/link";
-import { ArrowRight, Award, Camera, Gem, KeyRound, Medal, Shield, Sparkles, Trash2, Trophy } from "lucide-react";
+import { ArrowRight, Award, Camera, ChevronLeft, ChevronRight, Flame, Gem, KeyRound, Medal, Shield, Sparkles, Trash2, Trophy } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, PageHeading, Progress, SectionHeading } from "./shared";
@@ -17,11 +17,16 @@ export function Evolution() {
   const xp = experience(state);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [rankingExpanded, setRankingExpanded] = useState(false);
+  const [rankingPage, setRankingPage] = useState(1);
 
   const people = state.people
-    .filter((person) => person.status === "active")
+    .filter((person) => person.status === "active" && person.audience !== "client")
     .map((person) => (person.id === me.id ? { ...person, xp: xp.annual } : person))
     .sort((a, b) => b.xp - a.xp);
+  const rankingPages = Math.max(1, Math.ceil(people.length / 10));
+  const currentPage = Math.min(rankingPage, rankingPages);
+  const visiblePeople = rankingExpanded ? people.slice((currentPage - 1) * 10, currentPage * 10) : people.slice(0, 5);
 
   const approved = state.attempts.filter(
     (attempt, index, attempts) =>
@@ -274,12 +279,14 @@ export function Evolution() {
             </EmptyState>
           )}
         </section>
-        <section className="panel ranking-card">
+        <section className="panel ranking-card" id="ranking">
           <SectionHeading
             title="Evoluímos melhor juntos"
             description="Ranking anual · XP de aulas, acertos e conclusões"
           />
-          {people.map((person, index) => (
+          {visiblePeople.map((person, index) => {
+            const rank = rankingExpanded ? (currentPage - 1) * 10 + index + 1 : index + 1;
+            return (
             <div
               className="ranking-row"
               key={person.id}
@@ -289,8 +296,8 @@ export function Evolution() {
                   : undefined
               }
             >
-              <span className={`rank-position rank-${index + 1}`}>
-                {index === 0 ? <Trophy size={15} /> : String(index + 1).padStart(2, "0")}
+              <span className={`rank-position rank-${rank}`}>
+                {rank === 1 ? <Trophy size={15} /> : String(rank).padStart(2, "0")}
               </span>
               {(() => {
                 const personAvatar = person.avatar || (person.id === me.id ? avatar : undefined);
@@ -303,12 +310,15 @@ export function Evolution() {
               <span className="ranking-name">
                 <strong>{person.name}{person.id === me.id ? " · você" : ""}</strong>
                 <small>{person.department}</small>
+                <small className="ranking-details"><span><Flame size={12} /> Ofensiva: {person.streak ?? 0} {person.streak === 1 ? "dia" : "dias"}</span><span>Desempenho: {person.performance ?? person.progress}% das aulas</span></small>
               </span>
               <span className="ranking-xp">
                 {number(person.xp)} <small>XP</small>
               </span>
             </div>
-          ))}
+          );})}
+          {people.length > 5 && <div className="ranking-actions"><Button type="button" variant="secondary" onClick={() => { setRankingExpanded(value => !value); setRankingPage(1); }}>{rankingExpanded ? "Mostrar apenas Top 5" : `Ver ranking completo (${people.length})`}</Button></div>}
+          {rankingExpanded && rankingPages > 1 && <nav className="ranking-pagination" aria-label="Páginas do ranking"><Button type="button" variant="secondary" size="sm" disabled={currentPage === 1} onClick={() => setRankingPage(currentPage - 1)} aria-label="Página anterior"><ChevronLeft size={16} /></Button><span aria-live="polite">Página {currentPage} de {rankingPages}</span><Button type="button" variant="secondary" size="sm" disabled={currentPage === rankingPages} onClick={() => setRankingPage(currentPage + 1)} aria-label="Próxima página"><ChevronRight size={16} /></Button></nav>}
         </section>
       </div>
 

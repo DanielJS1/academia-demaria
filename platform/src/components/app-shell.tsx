@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Search, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ArrowUpRight, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
+import { GlobalSearch } from "./global-search";
 import { Button } from "./ui/button";
 import { experience } from "@/lib/gamification";
 
@@ -21,17 +22,15 @@ const defaultNotices = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const router = useRouter();
   const { state, me, update, theme, toggleTheme, storageError, signOut, activeCartorio, simulatedCartorioId, setSimulatedCartorioId, isClientEnvironment, avatar } = useAcademy();
   const exp = experience(state);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [theaterCollapsed, setTheaterCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
   const [noticesOpen, setNoticesOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 760);
@@ -56,10 +55,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-        event.preventDefault();
-        searchRef.current?.focus();
-      }
       if (event.key === "Escape") {
         setMobileOpen(false);
         setNoticesOpen(false);
@@ -70,6 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleCollapsed = () => {
+    if (/^\/aprender\/[^/]+\/aula/.test(path)) { setTheaterCollapsed(value => !value); return; }
     setCollapsed(prev => {
       const next = !prev;
       try {
@@ -79,15 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const handleMenuClick = () => {
-    if (typeof window !== "undefined" && window.innerWidth <= 760) {
-      setMobileOpen(prev => !prev);
-    } else {
-      toggleCollapsed();
-    }
-  };
-
-  const isDocked = !isMobile && collapsed;
+  const isDocked = !isMobile && (/^\/aprender\/[^/]+\/aula/.test(path) ? theaterCollapsed : collapsed);
   const active = (href: string) => href === "/" ? path === "/" : path.startsWith(href);
 
   const currentNav = isClientEnvironment
@@ -96,13 +84,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         { href: "/aprender", label: "Aprender", icon: BookOpen },
       ]
     : navigation;
-
-  const title = [
-    ...currentNav,
-    { href: "/equipe", label: "Minha equipe" },
-    { href: "/admin", label: "Administração" },
-    { href: "/sobre", label: "Sobre esta versão" },
-  ].find(item => item.href !== "/" && active(item.href))?.label || "Visão geral";
 
   const updateNotices = isClientEnvironment ? [] : state.articles
     .filter(article => article.authorId === me.id && article.updateRequest)
@@ -140,15 +121,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onMouseLeave={() => setHoveredNavIndex(null)}
       >
         <div className="sidebar-header">
-          <Link href="/" className="brand" aria-label="DOC-Academy — início" onClick={() => setMobileOpen(false)}>
-            {isDocked ? (
-              <img className="brand-official" src="/doc-academy-logo-oficial.png" alt="DOC-Academy"/>
-            ) : (
-              <span className="brand-title">
-                <strong>DOC·<span>Academy</span></strong>
-              </span>
+          <div className="sidebar-brand-control">
+            <Link href="/" className="brand" aria-label="DOC-Academy — início" onClick={() => setMobileOpen(false)}>
+              {isDocked ? (
+                <img className="brand-official" src="/doc-academy-logo-oficial.png" alt="DOC-Academy"/>
+              ) : (
+                <span className="brand-title">
+                  <strong>DOC·<span>Academy</span></strong>
+                </span>
+              )}
+            </Link>
+            {!isMobile && (
+              <button type="button" className="sidebar-brand-toggle" onClick={toggleCollapsed}
+                aria-label={isDocked ? "Expandir barra lateral" : "Recolher barra lateral"}
+                title={isDocked ? "Expandir barra lateral" : "Recolher barra lateral"}>
+                {isDocked ? <ChevronRight size={22} /> : <ChevronLeft size={22} />}
+              </button>
             )}
-          </Link>
+          </div>
           {isMobile ? (
             <Button
               variant="ghost"
@@ -159,17 +149,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <X size={20} />
             </Button>
-          ) : (
-            <button
-              type="button"
-              className="sidebar-collapse-mini-btn"
-              onClick={toggleCollapsed}
-              title={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
-              aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
-            >
-              {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-            </button>
-          )}
+          ) : null}
         </div>
 
         {isDocked ? (
@@ -314,26 +294,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className={`app-content ${isDocked ? "sidebar-collapsed" : ""}`}>
         <header className="topbar">
-          <div className="breadcrumb">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="sidebar-toggle-btn"
-              onClick={handleMenuClick}
-              aria-label={isDocked ? "Expandir barra lateral" : "Recolher barra lateral"}
-              title={isDocked ? "Expandir barra lateral" : "Recolher barra lateral (modo foco)"}
-              aria-expanded={mobileOpen || !isDocked}
-            >
-              <Menu size={22}/>
-            </Button>
-            <span>Meu espaço</span>
-            <ChevronRight size={14}/>
-            <strong>{title}</strong>
-          </div>
-          <form className="global-search" role="search" onSubmit={event => { event.preventDefault(); router.push(`/aprender?busca=${encodeURIComponent(search)}`); }}>
-            <Search size={17}/>
-            <input ref={searchRef} aria-label="Buscar cursos" placeholder="O que você quer aprender?" value={search} onChange={event => setSearch(event.target.value)}/>
-          </form>
+          <Button variant="ghost" size="icon" className="mobile-menu" onClick={() => setMobileOpen(true)}
+            aria-label="Abrir menu" aria-expanded={mobileOpen}>
+            <Menu size={22}/>
+          </Button>
+          <GlobalSearch courses={state.courses} userId={me.id} />
           <div className="topbar-actions">
             {me.role === "admin" && (
               <div className="sim-switcher-wrap desktop-only">

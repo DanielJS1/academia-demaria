@@ -103,14 +103,15 @@ export function LessonNotepad({
     const currentNotes = getCourseNotes(me.id, courseId);
     setNote(currentNotes[lesson.id] || "");
     setSavedStatus("saved");
+    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
   }, [me.id, courseId, lesson.id]);
 
   const handleChange = (value: string) => {
     setNote(value);
     setSavedStatus("saving");
+    saveUserLessonNote(me.id, courseId, lesson.id, value);
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      saveUserLessonNote(me.id, courseId, lesson.id, value);
       setSavedStatus("saved");
     }, 500);
   };

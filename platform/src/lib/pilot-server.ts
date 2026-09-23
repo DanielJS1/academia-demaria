@@ -43,19 +43,31 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const results=await Promise.all([
   all("academy_resources","*","kind","course"),all("academy_profiles"),
   db.from("academy_settings").select("*").single(),
-  all("academy_progress","user_id,course_id,version,lesson_id,done"),
+  all("academy_progress","user_id,course_id,version,lesson_id,done,position,duration,updated_at"),
   all("academy_attempts","*",me.role==="student"?"user_id":undefined,me.role==="student"?me.id:undefined),
+  all("academy_attempts","user_id,submitted_at"),
   all("academy_xp"),db.from("academy_preferences").select("*").eq("user_id",me.id).maybeSingle(),
   all("academy_cartorios"),
  ]);
  results.forEach(ensure);
- const [resources,profiles,settings,progress,attempts,xp,preferences,cartoriosResult]=results;
+ const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult]=results;
  const community=await readCommunity(db,me);
  const courses:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,xp:courseXp(r.published)}));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))})),proficiencyQuestions:course.proficiencyQuestions?.map(q=>({...q,correct:""}))});
  const completion:Record<string,string[]>={};
  for(const row of progress.data??[])if(row.user_id===me.id&&row.done&&courses.some(c=>c.id===row.course_id&&c.version===row.version))(completion[row.course_id]??=[]).push(row.lesson_id);
+ const videoProgress:AcademyState["videoProgress"]={};
+ for(const row of progress.data??[])if(row.user_id===me.id&&Number(row.position)>0&&courses.some(c=>c.id===row.course_id&&c.version===row.version&&c.lessons.some(l=>l.id===row.lesson_id&&l.type==="video"))){
+  (videoProgress[row.course_id]??={})[row.lesson_id]={position:Number(row.position),duration:Number(row.duration),updatedAt:row.updated_at};
+ }
  const season=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric"});
+ const dayFormatter=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"});
+ const day=(date:string)=>dayFormatter.format(new Date(date));
+ const activityDays=new Map<string,Set<string>>();
+ for(const row of progress.data??[])if(row.updated_at)(activityDays.get(row.user_id)??activityDays.set(row.user_id,new Set()).get(row.user_id)!).add(day(row.updated_at));
+ for(const row of attemptActivity.data??[])if(row.submitted_at)(activityDays.get(row.user_id)??activityDays.set(row.user_id,new Set()).get(row.user_id)!).add(day(row.submitted_at));
+ const today=day(new Date().toISOString());
+ const streak=(userId:string)=>{const days=activityDays.get(userId);if(!days?.size)return 0;let cursor=new Date(`${today}T12:00:00Z`);if(!days.has(today))cursor.setUTCDate(cursor.getUTCDate()-1);let count=0;while(days.has(cursor.toISOString().slice(0,10))){count++;cursor.setUTCDate(cursor.getUTCDate()-1);}return count;};
  const norm = (s?: string) => (s || "").trim().toLowerCase();
  const managedIds=new Set((profiles.data??[]).filter((p: any)=>me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(!p.manager_id&&p.department&&norm(p.department)===norm(me.department))))).map((p: any)=>p.id));
  const teamProgress:Record<string,Record<string,string[]>>={};
@@ -69,9 +81,10 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  }
  const people=(profiles.data??[]).filter((p: any)=>p.status!=="inactive"||me.role==="admin"||p.id===me.id).map((p: any)=>{
   const report=me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(!p.manager_id&&p.department&&norm(p.department)===norm(me.department))));
-  const total=courses.reduce((n: number,c: Course)=>n+c.lessons.filter(l=>l.type!=="quiz").length,0);
-  const done=(progress.data??[]).filter((r: any)=>r.user_id===p.id&&r.done&&courses.some(c=>c.id===r.course_id&&c.version===r.version&&c.lessons.some(l=>l.id===r.lesson_id&&l.type!=="quiz"))).length;
-  return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter((x: any)=>x.user_id===p.id&&x.season===season).reduce((n: number,x: any)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0,audience:(p.audience??"internal") as "internal"|"client",cartorioId:p.cartorio_id??undefined,avatar:p.avatar??null};
+  const eligibleCourses=courses.filter(c=>c.status==="published"&&c.audience!==(p.audience==="client"?"internal":"client"));
+  const total=eligibleCourses.reduce((n: number,c: Course)=>n+c.lessons.filter(l=>l.type!=="quiz").length,0);
+  const done=(progress.data??[]).filter((r: any)=>r.user_id===p.id&&r.done&&eligibleCourses.some(c=>c.id===r.course_id&&c.version===r.version&&c.lessons.some(l=>l.id===r.lesson_id&&l.type!=="quiz"))).length;
+  return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter((x: any)=>x.user_id===p.id&&x.season===season).reduce((n: number,x: any)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0,performance:total?Math.round(done/total*100):0,streak:streak(p.id),audience:(p.audience??"internal") as "internal"|"client",cartorioId:p.cartorio_id??undefined,avatar:p.avatar??null};
  });
  const cartorios:Cartorio[]=(cartoriosResult.data??[]).map((c: any)=>({
   id:c.id,name:c.name,city:c.city??"",uf:c.uf??"",cns:c.cns??undefined,modules:c.modules??[],
@@ -79,7 +92,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   status:c.status??"active",createdAt:c.created_at??new Date().toISOString()
  }));
  const visibleAttempts=(attempts.data??[]).filter((a: any)=>me.role==="admin"||managedIds.has(a.user_id));
- const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:settings.data.departments,products:settings.data.products,completed:completion,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
+ const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:settings.data.departments,products:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
   teamProgress,cartorios};
@@ -209,7 +222,9 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  if(command.type==="video"){
   const previous=await db.from("academy_progress").select("ranges").eq("user_id",me.id).eq("course_id",command.courseId).eq("version",command.version).eq("lesson_id",command.lessonId).maybeSingle();ensure(previous);
   const watched=mergeWatched([...(previous.data?.ranges??[]),...command.ranges],command.duration);
-  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,ranges:watched.ranges,done:videoIsComplete(watched.seconds,command.duration,command.position)}});if(error)throw new ApiError(error.message);return;
+  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,ranges:watched.ranges,done:videoIsComplete(watched.seconds,command.duration,command.position)}});if(error)throw new ApiError(error.message);
+  const saved=await db.from("academy_progress").update({position:Math.min(command.position??0,command.duration)}).eq("user_id",me.id).eq("course_id",command.courseId).eq("version",command.version).eq("lesson_id",command.lessonId);
+  ensure(saved);return;
  }
  const {error}=await db.rpc("academy_mutate",{actor:me.id,command});if(error)throw new ApiError(error.message);
 }

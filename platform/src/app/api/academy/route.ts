@@ -15,7 +15,7 @@ export async function POST(request:Request){try{
   if(progress.error)throw new ApiError("Avanço salvo. Atualize a página para consultar a conclusão.",503);
   const xp=await db.from("academy_xp").select("id,amount,season,label").eq("user_id",me.id);
   if(xp.error)throw new ApiError("Avanço salvo. Atualize a página para consultar seu XP.",503);
-  return Response.json({userId:me.id,xpEvents:xp.data,progress:{courseId:input.courseId,completed:(progress.data as Array<{ lesson_id: string }>).map(row=>row.lesson_id)}},{headers});
+  return Response.json({userId:me.id,xpEvents:xp.data,progress:{courseId:input.courseId,lessonId:input.lessonId,position:input.position??0,duration:input.duration,completed:(progress.data as Array<{ lesson_id: string }>).map(row=>row.lesson_id)}},{headers});
  }
  return Response.json(await readAcademy(db,me),{headers});
  }catch(error){return failure(error);}}
