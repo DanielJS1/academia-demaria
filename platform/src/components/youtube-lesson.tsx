@@ -266,10 +266,7 @@ export function YouTubeLesson({
       )}
 
       {!preview && (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-          <p className="info-note" style={{ margin: 0 }}>
-            Regra temporária do piloto: você pode avançar para os últimos 20 segundos para testar a conclusão.
-          </p>
+        <div className="video-manual-action">
           {!completed && (
             <button
               type="button"
@@ -279,7 +276,7 @@ export function YouTubeLesson({
               onClick={handleManualComplete}
               title="Clique para registrar a conclusão desta aula de YouTube caso o player não sincronize"
             >
-              Concluir aula (Piloto)
+              Registrar conclusão
             </button>
           )}
         </div>

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Award, BookOpen, CheckCircle2, Clock3, FileText, PlayCircle, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Award, BookOpen, CheckCircle2, Clock3, FileText, PlayCircle, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { useAcademy } from "./academy-provider";
-import { CourseArt, EmptyState, StudyButton, CheckLabel } from "./shared";
+import { CourseArt, EmptyState, CheckLabel } from "./shared";
+import { AnimatedButton } from "./ui/animated-button";
 import { minutes, courseProgress } from "@/lib/model";
 import { QuizRunner } from "./quiz-runner";
 import { Button } from "./ui/button";
@@ -20,6 +21,7 @@ export function CourseDetail({ id }: { id: string }) {
   const completed = state.completed[id] || [];
   const progress = courseProgress(course, completed);
   const isComplete = progress === 100;
+  const nextLesson = course.lessons.find(item => !completed.includes(item.id));
 
   // Perguntas para a prova de proficiência
   const proficiencyQuestions = (course.proficiencyQuestions && course.proficiencyQuestions.length > 0)
@@ -49,28 +51,23 @@ export function CourseDetail({ id }: { id: string }) {
         <ArrowLeft size={15} /> Voltar ao catálogo
       </Link>
 
-      {/* 1. Arte/Banner em destaque no topo */}
-      <div style={{ width: "100%", marginBottom: 20 }}>
-        <CourseArt course={course} large />
-      </div>
-
-      {/* 2. Cabeçalho do Curso: Nome, minutagem, XP e botões de ação */}
-      <section className="panel" style={{ padding: "24px 28px", marginBottom: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-          <div style={{ maxWidth: 700 }}>
-            <span className="pill">{course.product}</span>
-            <h1 style={{ fontSize: 28, letterSpacing: -1, margin: "10px 0 8px" }}>{course.title}</h1>
-            <div className="detail-metrics" style={{ margin: "10px 0 4px" }}>
+      <section className="course-detail-hero panel">
+        <div className="course-detail-art"><CourseArt course={course} large /></div>
+        <div className="course-detail-intro">
+          <div>
+            <span className="pill">{course.category}</span>
+            <h1>{course.title}</h1>
+            <div className="detail-metrics">
               <span><Clock3 size={15} />{minutes(course)} min</span>
               <span><BookOpen size={15} />{course.lessons.length} atividades</span>
               <span><Zap size={15} />Até {course.xp} XP</span>
-              <span><Award size={15} />{course.author}</span>
+              <span><Award size={15} />{course.department || course.author}</span>
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, alignSelf: "center", minWidth: 200 }}>
-            <StudyButton course={course}>
-              {completed.length ? "Continuar aprendendo" : "Começar minha jornada"}
-            </StudyButton>
+          <div className="course-detail-actions">
+            <AnimatedButton href={`/aprender/${course.id}/aula${nextLesson ? `?aula=${nextLesson.id}` : ""}`}>
+              {completed.length ? "Continuar aprendendo" : "Começar minha jornada"}<ArrowRight size={17} />
+            </AnimatedButton>
             {course.hasProficiencyTest && !isComplete && (
               <Button
                 variant="secondary"
@@ -81,7 +78,6 @@ export function CourseDetail({ id }: { id: string }) {
               </Button>
             )}
           </div>
-        </div>
 
         {course.hasProficiencyTest && !isComplete && (
           <div className="info-note" style={{ marginTop: 16, background: "var(--lavender)", borderColor: "var(--primary)" }}>
@@ -89,6 +85,7 @@ export function CourseDetail({ id }: { id: string }) {
             <strong>Já domina este conteúdo?</strong> Faça a <strong>Prova de Proficiência</strong> (acerto &ge; {course.proficiencyScore || 85}%). Você dispensa as aulas e recebe todo o XP acumulado e o bônus de conclusão imediatamente.
           </div>
         )}
+        </div>
       </section>
 
       {/* 3. Bloco intermediário: Descrição do curso lado a lado com 'Aprender e evoluir' */}

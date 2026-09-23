@@ -200,6 +200,22 @@
   margin-right: auto;
 }
 
+.topbar-course-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(44vw, 480px);
+  margin-right: auto;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.topbar-course-back span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar-course-back:hover { color: var(--primary); }
+.topbar-course-back:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: 4px; }
+
 .global-search-field {
   display: flex;
   align-items: center;

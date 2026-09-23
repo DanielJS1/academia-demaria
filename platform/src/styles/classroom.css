@@ -1,4 +1,5 @@
 /* Player & Classroom */
+.main-content:has(.classroom-page) { padding-top: 12px; }
 .lesson-pdf { display: grid; gap: 12px; margin-top: 20px; }
 .lesson-pdf iframe { width: 100%; height: min(70vh, 800px); min-height: 320px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .video-next-action {
@@ -19,14 +20,17 @@
 .classroom-top-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .classroom-top-actions .back-link {
   margin-bottom: 0;
+  margin-right: auto;
 }
+.video-manual-action { display: flex; justify-content: flex-end; margin-top: 8px; }
 
 .focus-toggle-btn {
   display: inline-flex;
@@ -79,7 +83,7 @@
 .classroom-notes-pane .notepad-header,
 .classroom-notes-pane .notepad-actions { flex-wrap: wrap; }
 .classroom-notes-pane .notepad-textarea { min-height: 40vh; }
-.notepad-toggle { margin-bottom: 12px; min-height: 44px; }
+.notepad-toggle { min-height: 40px; }
 
 .curriculum-dock {
   background: var(--surface);
@@ -225,8 +229,8 @@
 .video-frame {
   aspect-ratio: 16 / 9;
   width: 100%;
-  max-height: min(75vh, calc(100dvh - 170px));
-  background: #20172f;
+  max-height: min(68vh, calc(100dvh - 180px));
+  background: #18181b;
   border-radius: 14px;
   overflow: hidden;
   display: flex;
@@ -305,8 +309,9 @@
 }
 
 .activity-summary {
-  padding: 24px 0;
+  padding: 12px 0;
 }
+.activity-summary .pill { display: inline-flex; align-items: center; margin-bottom: 8px; }
 
 .activity-summary h1 {
   font-size: 23px;
@@ -326,7 +331,7 @@
   justify-content: space-between;
   gap: 12px;
   border-top: 1px solid var(--line);
-  padding-top: 20px;
+  padding-top: 10px;
 }
 
 /* Curriculum sidebar */
@@ -334,7 +339,28 @@
   padding: 20px;
   align-self: start;
   position: sticky;
-  top: 101px;
+  top: 90px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 106px);
+  min-height: 0;
+}
+
+.curriculum-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  padding-right: 4px;
+}
+.curriculum-list::-webkit-scrollbar { width: 5px; }
+.curriculum-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+.curriculum-list:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+@media (max-width: 1020px) {
+  .curriculum { max-height: none; }
+  .curriculum-list { max-height: min(60dvh, 500px); }
 }
 
 .curriculum h2 {

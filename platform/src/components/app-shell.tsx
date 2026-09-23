@@ -24,6 +24,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const { state, me, update, theme, toggleTheme, storageError, signOut, activeCartorio, simulatedCartorioId, setSimulatedCartorioId, isClientEnvironment, avatar } = useAcademy();
   const exp = experience(state);
+  const classroomCourseId = path.match(/^\/aprender\/([^/]+)\/aula\/?$/)?.[1];
+  const classroomCourse = classroomCourseId ? [...state.courses, ...state.courseDrafts].find(course => course.id === decodeURIComponent(classroomCourseId)) : undefined;
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -303,7 +305,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             aria-label="Abrir menu" aria-expanded={mobileOpen}>
             <Menu size={22}/>
           </Button>
-          <GlobalSearch courses={state.courses} userId={me.id} />
+          {classroomCourseId ? (
+            <Link className="topbar-course-back" href={`/aprender/${classroomCourseId}`} title={classroomCourse?.title || "Voltar ao curso"}>
+              <ChevronLeft size={18} aria-hidden="true" /> <span>{classroomCourse?.title || "Voltar ao curso"}</span>
+            </Link>
+          ) : <GlobalSearch courses={state.courses} userId={me.id} />}
           <div className="topbar-actions">
             {me.role === "admin" && (
               <div className="sim-switcher-wrap desktop-only">
