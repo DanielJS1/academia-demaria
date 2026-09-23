@@ -20,16 +20,24 @@
 .classroom-top-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 8px 16px;
+  margin-bottom: 10px;
 }
 
-.classroom-top-actions .back-link {
-  margin-bottom: 0;
-  margin-right: auto;
+.classroom-lesson-heading { flex: 1 1 300px; min-width: 0; }
+.classroom-lesson-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
+.classroom-lesson-meta .pill { display: inline-flex; align-items: center; gap: 5px; }
+.classroom-lesson-heading h1 {
+  font-size: clamp(18px, 1.6vw, 23px);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
 }
+.classroom-header-controls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.classroom-header-controls .back-link { margin: 0 8px 0 0; }
 .video-manual-action { display: flex; justify-content: flex-end; margin-top: 8px; }
 
 .focus-toggle-btn {
@@ -308,23 +316,6 @@
   color: var(--ink);
 }
 
-.activity-summary {
-  padding: 12px 0;
-}
-.activity-summary .pill { display: inline-flex; align-items: center; margin-bottom: 8px; }
-
-.activity-summary h1 {
-  font-size: 23px;
-  letter-spacing: -0.6px;
-  margin-top: 7px;
-}
-
-.activity-summary p {
-  color: var(--muted);
-  font-size: 11px;
-  margin-top: 10px;
-}
-
 .activity-actions {
   display: flex;
   align-items: center;
@@ -332,6 +323,10 @@
   gap: 12px;
   border-top: 1px solid var(--line);
   padding-top: 10px;
+}
+
+@media (max-width: 760px) {
+  .classroom-header-controls { width: 100%; justify-content: flex-start; }
 }
 
 /* Curriculum sidebar */
