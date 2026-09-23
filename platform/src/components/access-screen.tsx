@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, ShieldAlert, UserPlus } from "lucide-react";
 import { browserAuth } from "@/lib/supabase-browser";
@@ -20,6 +20,20 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("recuperacao") !== "1") return;
+    if (signedIn) {
+      setMessage(null);
+      return;
+    }
+    setMode("forgot");
+    setMessage({
+      type: "error",
+      text: "O link de recuperação expirou ou é inválido. Solicite um novo e-mail abaixo.",
+    });
+  }, [signedIn]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -67,12 +81,17 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
         setConfirmation("");
       } else if (mode === "forgot") {
         const result = await auth.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/acesso`,
+          redirectTo: `${window.location.origin}/acesso?recuperacao=1`,
         });
-        if (result.error) throw result.error;
+        if (result.error) {
+          if (/error sending recovery email/i.test(result.error.message)) {
+            throw new Error("O serviço de e-mail não conseguiu enviar a recuperação. Peça ao administrador para verificar o SMTP e os logs de Auth no Supabase.");
+          }
+          throw result.error;
+        }
         setMessage({
           type: "success",
-          text: "Se este e-mail estiver cadastrado, você receberá as instruções para definir uma nova senha.",
+          text: "Se este e-mail estiver cadastrado, você receberá um link para definir uma nova senha. Verifique também a caixa de spam.",
         });
       } else {
         const result = await auth.auth.signInWithPassword({

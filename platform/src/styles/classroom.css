@@ -247,6 +247,12 @@
   position: relative;
 }
 
+[data-theme="dark"] .curriculum,
+[data-theme="dark"] .curriculum-dock {
+  background: #1b2433;
+  border-color: #334155;
+}
+
 @media (max-width: 900px) {
   .classroom-stage.notes-open { grid-template-columns: minmax(0, 1fr); }
   .classroom-notes-pane .notepad-textarea { min-height: 220px; }
