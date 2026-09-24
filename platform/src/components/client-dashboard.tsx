@@ -174,7 +174,7 @@ export function ClientDashboard({ cartorio }: ClientDashboardProps) {
         <div className="client-modules-grid" style={{ marginTop: 18 }}>
           {cartorio.modules.map(modKey => (
             <div key={modKey} className="client-module-card">
-              <CheckCircle2 size={16} style={{ color: "var(--mint-11)", flexShrink: 0 }} />
+              <CheckCircle2 size={16} style={{ color: "var(--success-foreground)", flexShrink: 0 }} />
               <span>{formatModuleName(modKey)}</span>
             </div>
           ))}

@@ -4,6 +4,8 @@ import { useAcademy } from "./academy-provider";
 import { browserAuth } from "@/lib/supabase-browser";
 import { youtubeEmbed, type Course, type Lesson } from "@/lib/model";
 import { isVideoNearEnd } from "@/lib/video-completion";
+import { videoIsComplete } from "@/lib/video-completion";
+import { mergeWatched } from "@/lib/pilot-contract";
 
 declare global {
   interface Window {
@@ -31,7 +33,6 @@ export function YouTubeLesson({
   const playerRef = useRef<any>(null);
   const { mutate, state } = useAcademy();
   const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
   const [retry, setRetry] = useState(0);
   const [nearEnd, setNearEnd] = useState(false);
 
@@ -76,9 +77,8 @@ export function YouTubeLesson({
       lastRecord = Date.now();
 
       try {
-        setSaving(true);
         const near = isVideoNearEnd(currentTime, duration);
-        if (near) setNearEnd(true);
+        setNearEnd(videoIsComplete(mergeWatched(watched, duration).seconds, duration));
 
         const saved = await mutate(commandFor(currentTime, duration), { silent: true });
 
@@ -91,7 +91,6 @@ export function YouTubeLesson({
       } finally {
         inFlight = false;
         if (active) {
-          setSaving(false);
           if (queued) {
             queued = false;
             if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
@@ -151,7 +150,7 @@ export function YouTubeLesson({
                   const near = isVideoNearEnd(cur, dur);
                   schedule(cur, dur);
                   if (near) {
-                    setNearEnd(true);
+                    setNearEnd(videoIsComplete(mergeWatched(watched, dur).seconds, dur));
                     void record(cur, dur, true);
                   }
                   window.dispatchEvent(new Event("academy:video-activity"));
@@ -162,7 +161,7 @@ export function YouTubeLesson({
                 lastTracked = null;
                 // 0 = ENDED, 2 = PAUSED
                 if (event.data === 0) {
-                  setNearEnd(true);
+                  setNearEnd(videoIsComplete(mergeWatched(watched, duration).seconds, duration));
                   void record(duration, duration, true);
                 } else if (event.data === 2) {
                   void record(currentTime, duration, true);
@@ -215,26 +214,6 @@ export function YouTubeLesson({
     };
   }, [course.id, course.version, lesson.id, lesson.minutes, mutate, preview, retry, iframeId, initialPosition]);
 
-  const handleManualComplete = async () => {
-    if (preview) return;
-    const duration = (lesson.minutes || 1) * 60;
-    setSaving(true);
-    try {
-      await mutate({
-        type: "video",
-        courseId: course.id,
-        version: course.version,
-        lessonId: lesson.id,
-        duration,
-        position: duration,
-        ranges: [[0, duration]],
-      }, { silent: true });
-      setNearEnd(true);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <>
       <div className="video-frame">
@@ -260,23 +239,6 @@ export function YouTubeLesson({
           {onNext && (
             <button className="button button-primary" disabled={!preview && !completed} onClick={onNext}>
               Próxima aula →
-            </button>
-          )}
-        </div>
-      )}
-
-      {!preview && (
-        <div className="video-manual-action">
-          {!completed && (
-            <button
-              type="button"
-              className="button button-secondary"
-              style={{ fontSize: 12, padding: "4px 10px" }}
-              disabled={saving}
-              onClick={handleManualComplete}
-              title="Clique para registrar a conclusão desta aula de YouTube caso o player não sincronize"
-            >
-              Registrar conclusão
             </button>
           )}
         </div>

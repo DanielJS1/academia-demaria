@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { ArrowLeft, Check, Eye, FileText, Pencil, Save } from "lucide-react";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { EmptyState, PageHeading } from "../shared";
 import { articleSchema, type Article } from "@/lib/model";
-import { RichArticleEditor } from "./rich-article-editor";
+const RichArticleEditor = dynamic(() => import("./rich-article-editor").then(module => module.RichArticleEditor), { ssr: false, loading: () => <div className="rich-article-editor" role="status" aria-busy="true">Preparando editor…</div> });
 import { ArticleContent, CommunityXpRules } from "../community/article-content";
 import { fetchArticle } from "../community/article-client";
 import { uploadMedia } from "@/lib/storage-service";

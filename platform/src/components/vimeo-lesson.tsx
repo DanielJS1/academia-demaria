@@ -5,7 +5,8 @@ import { normalizeVimeoRanges, type Command } from "@/lib/pilot-contract";
 import { browserAuth } from "@/lib/supabase-browser";
 import { useAcademy } from "./academy-provider";
 import { vimeoEmbed, type Course, type Lesson } from "@/lib/model";
-import { isVideoNearEnd } from "@/lib/video-completion";
+import { isVideoNearEnd, videoIsComplete } from "@/lib/video-completion";
+import { mergeWatched } from "@/lib/pilot-contract";
 
 export function VimeoLesson({course,lesson,preview,initialPosition=0,nextTitle,onNext}:{course:Course;lesson:Lesson;preview:boolean;initialPosition?:number;nextTitle?:string;onNext?:()=>void}){
  const ref=useRef<HTMLIFrameElement>(null);
@@ -58,7 +59,7 @@ export function VimeoLesson({course,lesson,preview,initialPosition=0,nextTitle,o
    if(!preview&&playing&&advance>0&&advance<=elapsed*2+0.5&&elapsed<5)window.dispatchEvent(new Event("academy:video-activity"));
    activityPosition=event.seconds;activityAt=now;lastPosition=event.seconds;lastDuration=event.duration;
    if(!preview&&event.duration>0)lastCommand={type:"video",courseId:course.id,version:course.version,lessonId:lesson.id,duration:event.duration,position:event.seconds,ranges:watched.slice(-1999).map(range=>[...range] as [number,number])};
-   const near=isVideoNearEnd(event.seconds,event.duration);setNearEnd(near);
+   const near=isVideoNearEnd(event.seconds,event.duration);setNearEnd(videoIsComplete(mergeWatched(watched,event.duration).seconds,event.duration));
    if(near&&!wasNearEnd)void record(true);else schedule();
    wasNearEnd=near;
   };

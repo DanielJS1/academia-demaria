@@ -110,9 +110,11 @@
     align-items: center;
     padding: 32px 20px;
     gap: 0;
+    min-height: 100vh;
     min-height: 100dvh;
-    height: auto;
-    overflow: visible;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
     background: radial-gradient(ellipse at 50% 15%, var(--lavender), transparent 75%), var(--background);
   }
   .access-story {
@@ -161,7 +163,10 @@
   .brand-official { width: 46px; height: 38px; }
   .nav-item { font-size: 13px; }
   .topbar { height: 60px; padding: 0 14px; gap: 10px; }
-  .global-search { display: none; }
+  .topbar > .global-search { display: none; }
+  .sidebar .global-search { display: block; width: 100%; max-width: none; margin: 12px 0 16px; flex: 0 0 auto; }
+  .sidebar .global-search-field { min-height: 44px; }
+  .sidebar .global-search-scope { max-width: 120px; min-width: 90px; }
   .topbar-actions { margin-left: auto; gap: 6px; }
   .topbar-divider { margin: 0 2px; }
   .main-content { padding: 20px 16px; }

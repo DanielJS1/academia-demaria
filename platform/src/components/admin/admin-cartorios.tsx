@@ -103,6 +103,10 @@ export function AdminCartorios() {
       notify("Informe um e-mail válido para o usuário-chave.");
       return;
     }
+    if (!editing.keyUserId && (!editing.keyUserName?.trim() || !editing.keyUserEmail?.trim() || !initialPassword)) {
+      notify("Informe nome, e-mail e senha inicial do usuário-chave.");
+      return;
+    }
     if (initialPassword && !newPasswordSchema.safeParse(initialPassword).success) {
       notify(`A senha temporária deve ter entre ${MIN_PASSWORD_LENGTH} e ${MAX_PASSWORD_LENGTH} caracteres.`);
       return;
@@ -228,6 +232,7 @@ export function AdminCartorios() {
                       type="text"
                       placeholder="Ex: Maria Helena Souza"
                       value={editing.keyUserName || ""}
+                      required={!editing.keyUserId}
                       onChange={e => setEditing({ ...editing, keyUserName: e.target.value })}
                     />
                   </label>
@@ -238,6 +243,7 @@ export function AdminCartorios() {
                       type="email"
                       placeholder="maria@cartoriosp.com.br"
                       value={editing.keyUserEmail || ""}
+                      required={!editing.keyUserId}
                       onChange={e => setEditing({ ...editing, keyUserEmail: e.target.value })}
                     />
                   </label>
@@ -250,6 +256,7 @@ export function AdminCartorios() {
                       minLength={MIN_PASSWORD_LENGTH}
                       maxLength={MAX_PASSWORD_LENGTH}
                       value={initialPassword}
+                      required={!editing.keyUserId}
                       onChange={e => setInitialPassword(e.target.value)}
                     />
                   </label>

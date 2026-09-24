@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { GlobalSearch } from "./global-search";
@@ -28,6 +28,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const classroomCourse = classroomCourseId ? [...state.courses, ...state.courseDrafts].find(course => course.id === decodeURIComponent(classroomCourseId)) : undefined;
 
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileDrawerRef = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [theaterCollapsed, setTheaterCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -51,20 +53,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (mobileOpen) mobileMenuButtonRef.current?.focus();
     setMobileOpen(false);
     setNoticesOpen(false);
   }, [path]);
 
   useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
+    if (!mobileOpen || !isMobile) return;
+    const drawer = mobileDrawerRef.current;
+    if (!drawer) return;
+    const focusable = () => Array.from(drawer.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter(element => element.getClientRects().length > 0);
+    const firstFocusable = focusable()[0];
+    firstFocusable?.focus();
+    const trapFocus = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         setMobileOpen(false);
-        setNoticesOpen(false);
+        mobileMenuButtonRef.current?.focus();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      if (!items.length) { event.preventDefault(); drawer.focus(); return; }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !drawer.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !drawer.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
       }
     };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, []);
+    document.addEventListener("keydown", trapFocus);
+    return () => document.removeEventListener("keydown", trapFocus);
+  }, [mobileOpen, isMobile]);
+
+  const closeMobileMenu = () => {
+    setMobileOpen(false);
+    mobileMenuButtonRef.current?.focus();
+  };
 
   const toggleCollapsed = () => {
     if (/^\/aprender\/[^/]+\/aula/.test(path)) { setTheaterCollapsed(value => !value); return; }
@@ -114,17 +144,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <button
           className="nav-scrim"
           aria-label="Fechar navegação"
-          onClick={() => setMobileOpen(false)}
+          onClick={closeMobileMenu}
         />
       )}
       <aside
+        ref={mobileDrawerRef}
         className={`sidebar group ${mobileOpen ? "is-open" : ""} ${isDocked ? "is-collapsed" : ""}`}
+        role={mobileOpen && isMobile ? "dialog" : undefined}
+        aria-modal={mobileOpen && isMobile ? true : undefined}
+        tabIndex={mobileOpen && isMobile ? -1 : undefined}
         aria-label="Navegação principal"
         onMouseLeave={() => setHoveredNavIndex(null)}
       >
         <div className="sidebar-header">
           <div className="sidebar-brand-control">
-            <Link href="/" className="brand" aria-label="DOC-Academy — início" onClick={() => setMobileOpen(false)}>
+            <Link href="/" className="brand" aria-label="DOC-Academy — início" onClick={closeMobileMenu}>
               {isDocked ? (
                 <img className="brand-official" src="/doc-academy-logo-oficial.png" alt="DOC-Academy"/>
               ) : (
@@ -151,13 +185,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               className="sidebar-close-btn"
-              onClick={() => setMobileOpen(false)}
+              onClick={closeMobileMenu}
               aria-label="Fechar menu"
             >
               <X size={20} />
             </Button>
           ) : null}
         </div>
+
+        {isMobile && <GlobalSearch courses={state.courses} userId={me.id} />}
 
         {isDocked ? (
           <>
@@ -230,11 +266,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="sidebar-nav-scroll">
               {isClientEnvironment && activeCartorio && (
                 <div className="workspace-label">
-                  <span className="workspace-dot" style={{ background: "var(--mint-9)" }}/>
+                  <span className="workspace-dot" style={{ background: "var(--success-foreground)" }}/>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {activeCartorio.name}
                   </span>
-                  <span className="workspace-tag" style={{ background: "var(--mint-4)", color: "var(--mint-11)" }}>
+                  <span className="workspace-tag" style={{ background: "var(--mint-subtle)", color: "var(--success-foreground)" }}>
                     {activeCartorio?.uf || "CLIENTE"}
                   </span>
                 </div>
@@ -247,7 +283,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     href={href}
                     key={href}
                     aria-current={active(href) ? "page" : undefined}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={closeMobileMenu}
                   >
                     <Icon size={19}/>
                     <span>{label}</span>
@@ -263,7 +299,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       href="/equipe"
                       className={`nav-item ${active("/equipe") ? "active" : ""}`}
                       aria-current={active("/equipe") ? "page" : undefined}
-                      onClick={() => setMobileOpen(false)}
+                      onClick={closeMobileMenu}
                     >
                       <Users size={19}/> <span>Minha equipe</span>
                     </Link>
@@ -273,7 +309,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       href="/admin"
                       className={`nav-item ${active("/admin") ? "active" : ""}`}
                       aria-current={active("/admin") ? "page" : undefined}
-                      onClick={() => setMobileOpen(false)}
+                      onClick={closeMobileMenu}
                     >
                       <Settings2 size={19}/> <span>Administração</span>
                     </Link>
@@ -282,12 +318,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <div className="sidebar-bottom">
-              <Link className="help-link" href="/sobre" onClick={() => setMobileOpen(false)}>
+              <Link className="help-link" href="/sobre" onClick={closeMobileMenu}>
                 <CircleHelp size={17}/> <span>Sobre a plataforma</span>
               </Link>
               {isMobile && (
                 <div className="mobile-drawer-account">
-                  <Link href="/conquistas" className="nav-item" onClick={() => setMobileOpen(false)}>
+                  <Link href="/conquistas" className="nav-item" onClick={closeMobileMenu}>
                     <Trophy size={18} /> <span>Minha evolução</span>
                   </Link>
                   <button type="button" className="mobile-signout-btn" onClick={signOut}>
@@ -301,10 +337,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className={`app-content ${isDocked ? "sidebar-collapsed" : ""}`}>
         <header className="topbar">
-          <Button variant="ghost" size="icon" className="mobile-menu" onClick={() => setMobileOpen(true)}
+          <button ref={mobileMenuButtonRef} type="button" className="button button-ghost button-icon mobile-menu" onClick={() => setMobileOpen(true)}
             aria-label="Abrir menu" aria-expanded={mobileOpen}>
             <Menu size={22}/>
-          </Button>
+          </button>
           {classroomCourseId ? (
             <Link className="topbar-course-back" href={`/aprender/${classroomCourseId}`} title={classroomCourse?.title || "Voltar ao curso"}>
               <ChevronLeft size={18} aria-hidden="true" /> <span>{classroomCourse?.title || "Voltar ao curso"}</span>
@@ -379,7 +415,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </span>
                 <span className="profile-details desktop-only">
                   <strong>{me.name.split(" ")[0]}</strong>
-                  <span className="profile-level-badge" style={{ background: "var(--mint-3)", color: "var(--mint-11)" }}>
+                  <span className="profile-level-badge" style={{ background: "var(--mint-subtle)", color: "var(--success-foreground)" }}>
                     <ShieldCheck size={10} /> {activeCartorio?.uf || "Cliente"}
                   </span>
                 </span>

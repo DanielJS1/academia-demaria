@@ -18,11 +18,12 @@ export async function storeMedia(db: SupabaseClient, file: File, kind: StorageKi
   if (!isImage && expected === "pdf" && bytes.toString("ascii", 0, 5) !== "%PDF-") throw new ApiError("O PDF é inválido.");
   if (!isImage && expected === "xlsx" && bytes.toString("ascii", 0, 2) !== "PK") throw new ApiError("A planilha é inválida.");
   if (!isImage && expected === "sql" && bytes.includes(0)) throw new ApiError("O script SQL deve ser um arquivo de texto.");
-  const bucket = kind === "avatar" ? "academy-avatars" : "academy-articles";
+  const bucket = kind === "avatar" ? "academy-avatars" : kind === "article-image" ? "academy-article-images" : "academy-article-files";
   const basename = file.name.replace(/\.[^.]+$/, "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48).toLowerCase() || "arquivo";
   const path = `${userId}/${Date.now()}-${randomUUID()}-${basename}.${expected}`;
   const contentType = file.type === "application/octet-stream" ? ({ sql: "text/plain", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", pdf: "application/pdf" } as Record<string, string>)[expected] : file.type;
   const result = await db.storage.from(bucket).upload(path, bytes, { contentType, upsert: false });
   if (result.error) throw new ApiError("Não foi possível enviar o arquivo ao storage.", 503);
+  // The private bucket URL is an identifier only; the download endpoint signs it after authentication.
   return db.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }

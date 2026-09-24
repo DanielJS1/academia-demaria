@@ -11,11 +11,13 @@ export async function POST(request:Request){try{
  let input;try{input=JSON.parse(raw);}catch{throw new ApiError("Solicitação inválida.");}
  await executeCommand(db,me,input);
  if(input.type==="video"){
+  const saved=await db.from("academy_progress").select("position,duration,updated_at").eq("user_id",me.id).eq("course_id",input.courseId).eq("version",input.version).eq("lesson_id",input.lessonId).maybeSingle();
+  if(saved.error||!saved.data)throw new ApiError("Avanço salvo. Atualize a página para consultar a posição.",503);
   const progress=await db.from("academy_progress").select("lesson_id").eq("user_id",me.id).eq("course_id",input.courseId).eq("version",input.version).eq("done",true);
   if(progress.error)throw new ApiError("Avanço salvo. Atualize a página para consultar a conclusão.",503);
   const xp=await db.from("academy_xp").select("id,amount,season,label").eq("user_id",me.id);
   if(xp.error)throw new ApiError("Avanço salvo. Atualize a página para consultar seu XP.",503);
-  return Response.json({userId:me.id,xpEvents:xp.data,progress:{courseId:input.courseId,lessonId:input.lessonId,position:input.position??0,duration:input.duration,completed:(progress.data as Array<{ lesson_id: string }>).map(row=>row.lesson_id)}},{headers});
+  return Response.json({userId:me.id,xpEvents:xp.data,progress:{courseId:input.courseId,lessonId:input.lessonId,position:Number(saved.data.position),duration:Number(saved.data.duration),updatedAt:saved.data.updated_at,completed:(progress.data as Array<{ lesson_id: string }>).map(row=>row.lesson_id)}},{headers});
  }
  return Response.json(await readAcademy(db,me),{headers});
  }catch(error){return failure(error);}}

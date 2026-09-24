@@ -1,9 +1,26 @@
 import { authenticate, ApiError } from "@/lib/pilot-server";
 import { storeMedia } from "@/lib/storage-provider";
+import { isStoredMediaUrl } from "@/lib/storage-service";
 import type { StorageKind } from "@/lib/storage-service";
 
 export const runtime = "nodejs";
 const kinds = new Set<StorageKind>(["avatar", "article-image", "article-file"]);
+export async function GET(request: Request) {
+  try {
+    const { db, me } = await authenticate(request);
+    if (me.audience !== "internal") throw new ApiError("A biblioteca é exclusiva dos colaboradores.", 403);
+    const value = new URL(request.url).searchParams.get("url") || "";
+    const bucket = isStoredMediaUrl(value, "academy-article-files") ? "academy-article-files" : isStoredMediaUrl(value, "academy-articles") ? "academy-articles" : null;
+    if (!bucket) throw new ApiError("Anexo inválido.", 400);
+    const path = decodeURIComponent(new URL(value).pathname.split(`/${bucket}/`)[1] || "");
+    if (!path || path.includes("..") || path.startsWith("/")) throw new ApiError("Anexo inválido.", 400);
+    const signed = await db.storage.from(bucket).createSignedUrl(path, 600);
+    if (signed.error) throw new ApiError("Anexo não encontrado.", 404);
+    return Response.json({ url: signed.data.signedUrl }, { headers: { "Cache-Control": "no-store, private" } });
+  } catch (error) {
+    return Response.json({ error: error instanceof ApiError ? error.message : "Falha ao abrir anexo." }, { status: error instanceof ApiError ? error.status : 500, headers: { "Cache-Control": "no-store, private" } });
+  }
+}
 export async function POST(request: Request) {
   try {
     const { db, me } = await authenticate(request);

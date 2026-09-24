@@ -1,6 +1,8 @@
 import { Fragment, createElement, type ReactNode } from "react";
 import type { Article, ArticleBlock } from "@/lib/model";
 import { ArticleCodeBlock } from "./article-code-block";
+import { ArticleAttachment } from "./article-attachment";
+import { ArticleImage } from "./article-image";
 
 // Render a small formatting vocabulary as React elements. User HTML is always text.
 export function InlineArticleText({ text }: { text: string }) {
@@ -39,8 +41,8 @@ function renderRich(node: RichNode, key: number): ReactNode {
       return tag ? createElement(tag, {}, child) : child;
     }, node.text || "");
   }
-  if (node.type === "image") { const src = secureUrl(node.attrs?.src); return src ? <figure key={key}><img src={src} alt={String(node.attrs?.alt || "")} loading="lazy" decoding="async" /></figure> : null; }
-  if (node.type === "attachment") { const href = secureUrl(node.attrs?.href); return href ? <div className="community-attachment" key={key}><a href={href} download target="_blank" rel="noopener noreferrer">↓ {String(node.attrs?.name || "Baixar arquivo")}</a></div> : null; }
+  if (node.type === "image") { const src = secureUrl(node.attrs?.src); return src ? <figure key={key}><ArticleImage src={src} alt={String(node.attrs?.alt || "")} /></figure> : null; }
+  if (node.type === "attachment") { const href = secureUrl(node.attrs?.href); return href ? <ArticleAttachment key={key} href={href} name={String(node.attrs?.name || "Baixar arquivo")} /> : null; }
   const tag = ({ doc: "div", paragraph: "p", heading: `h${[1,2,3].includes(Number(node.attrs?.level)) ? node.attrs?.level : 2}`, bulletList: "ul", orderedList: "ol", listItem: "li", blockquote: "aside", table: "table", tableRow: "tr", tableHeader: "th", tableCell: "td" } as Record<string, string>)[node.type || ""];
   if (!tag) return null;
   return createElement(tag, { key, ...(node.type === "blockquote" ? { className: "community-callout" } : {}) }, children);
@@ -54,7 +56,7 @@ export function ArticleContent({ article }: { article: Pick<Article, "content" |
       {article.blocks.map(block => {
         if (block.type === "image") {
           if (!secureUrl(block.src)) return null;
-          return <figure key={block.id}><img src={block.src} alt={block.alt || ""} loading="lazy" decoding="async" />{block.caption && <figcaption>{block.caption}</figcaption>}</figure>;
+          return <figure key={block.id}><ArticleImage src={block.src || ""} alt={block.alt || ""} />{block.caption && <figcaption>{block.caption}</figcaption>}</figure>;
         }
         if (block.type === "steps" || block.type === "bullets") {
           const List = block.type === "steps" ? "ol" : "ul";

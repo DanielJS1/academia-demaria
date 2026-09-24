@@ -14,7 +14,7 @@ export function communityValidationError(article: Article, publish: boolean): st
     const visit = (node: { type?: string; attrs?: Record<string, unknown>; content?: unknown[] }): boolean => {
       if (["image", "attachment"].includes(node.type || "") && (typeof node.attrs?.src === "string" || typeof node.attrs?.href === "string")) {
         const url = String(node.attrs?.src || node.attrs?.href);
-        if (!isStoredMediaUrl(url, "academy-articles")) return false;
+        if (!isStoredMediaUrl(url, node.type === "attachment" ? "academy-article-files" : "academy-article-images") && !isStoredMediaUrl(url, "academy-articles")) return false;
       }
       return !node.content?.some(child => !visit(child as typeof node));
     };
@@ -28,7 +28,7 @@ export function communityValidationError(article: Article, publish: boolean): st
     for (const block of article.blocks) {
       if (block.type === "image") {
         if (!block.alt?.trim()) return "Descreva cada imagem para facilitar a leitura e a acessibilidade.";
-        if (!block.src || !isStoredMediaUrl(block.src, "academy-articles") || block.src.length > 2048) return "Use uma URL HTTPS do storage para cada imagem.";
+        if (!block.src || !(isStoredMediaUrl(block.src, "academy-article-images") || isStoredMediaUrl(block.src, "academy-articles")) || block.src.length > 2048) return "Use uma URL HTTPS do storage para cada imagem.";
       } else if (block.type === "steps" || block.type === "bullets") {
         if (!block.items?.length || block.items.some(item => !item.trim())) return "Preencha todos os itens da lista.";
       } else if (!block.text?.trim()) return "Preencha ou remova os blocos de texto vazios.";

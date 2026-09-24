@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { authenticate, ApiError } from "@/lib/pilot-server";
+import { authenticate, ApiError, requireCourseAccess } from "@/lib/pilot-server";
 import { lessonSchema } from "@/lib/model";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -26,6 +26,7 @@ export async function POST(request:Request){try{
 }catch(error){return failure(error);}}
 export async function GET(request:Request){try{
  const {db,me}=await authenticate(request);const params=new URL(request.url).searchParams;
+ if(!(params.get("preview")==="1"&&me.role==="admin"&&me.audience!=="client"))await requireCourseAccess(db,me,params.get("courseId")||"");
  const {data,error}=await db.from("academy_resources").select("published,draft").eq("id",params.get("courseId")||"").eq("kind","course").single();
  if(error||!data)throw new ApiError("Curso não encontrado.",404);
  const content=params.get("preview")==="1"&&me.role==="admin"?(data.draft||data.published):data.published;

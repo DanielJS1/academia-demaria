@@ -5,6 +5,7 @@ import { Check, Copy, Download, FileText, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAcademy } from "./academy-provider";
 import type { Lesson } from "@/lib/model";
+import { browserAuth } from "@/lib/supabase-browser";
 
 export function getUserNotesStorageKey(userId: string): string {
   return `doc-academy.notes.${userId || "anon"}`;
@@ -95,25 +96,61 @@ export function LessonNotepad({
   const { me, notify } = useAcademy();
   const [note, setNote] = useState("");
   const [copied, setCopied] = useState(false);
-  const [savedStatus, setSavedStatus] = useState<"saved" | "saving">("saved");
+  const [savedStatus, setSavedStatus] = useState<"saved" | "saving" | "error">("saving");
+  const [courseNotes, setCourseNotes] = useState<Record<string, string>>({});
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pending = useRef<{ lessonId: string; value: string; revision: number } | null>(null);
+  const sequence = useRef(0);
+
+  const authHeaders = async () => {
+    const token = (await browserAuth()?.auth.getSession())?.data.session?.access_token;
+    if (!token) throw new Error("Entre na sua conta para salvar anotações.");
+    return { Authorization: `Bearer ${token}` };
+  };
+  const persist = async (lessonId: string, value: string, revision: number) => {
+    try {
+      const auth = await authHeaders();
+      const response = await fetch("/api/notes", { method: "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify({ courseId, lessonId, content: value }), cache: "no-store" });
+      if (!response.ok) throw new Error("Falha ao salvar.");
+      saveUserLessonNote(me.id, courseId, lessonId, value);
+      setCourseNotes(current => ({ ...current, [lessonId]: value }));
+      if (revision === sequence.current) setSavedStatus("saved");
+    } catch {
+      if (revision === sequence.current) setSavedStatus("error");
+    }
+  };
 
   // Load existing note for current lesson
   useEffect(() => {
-    const currentNotes = getCourseNotes(me.id, courseId);
-    setNote(currentNotes[lesson.id] || "");
-    setSavedStatus("saved");
-    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+    let active = true;
+    const initialRevision = sequence.current;
+    const local = getCourseNotes(me.id, courseId);
+    setCourseNotes(local);
+    setNote(local[lesson.id] || "");
+    setSavedStatus("saving");
+    void (async () => {
+      try {
+        const auth = await authHeaders();
+        const response = await fetch(`/api/notes?courseId=${encodeURIComponent(courseId)}`, { headers: auth, cache: "no-store" });
+        if (!response.ok) throw new Error("Falha ao carregar.");
+        const remote = (await response.json()).notes as Record<string, string>;
+        if (!active) return;
+        const merged = { ...local, ...remote };
+        setCourseNotes(merged);
+        if (sequence.current === initialRevision) { setNote(merged[lesson.id] || ""); setSavedStatus(lesson.id in remote || !local[lesson.id] ? "saved" : "saving"); }
+        for (const [id, value] of Object.entries(local)) if (!(id in remote)) void persist(id, value, id === lesson.id ? initialRevision : -1);
+      } catch { if (active) setSavedStatus("error"); }
+    })();
+    return () => { active = false; if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); if (pending.current) { const item = pending.current; pending.current = null; void persist(item.lessonId, item.value, item.revision); } };
   }, [me.id, courseId, lesson.id]);
 
   const handleChange = (value: string) => {
     setNote(value);
     setSavedStatus("saving");
-    saveUserLessonNote(me.id, courseId, lesson.id, value);
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      setSavedStatus("saved");
-    }, 500);
+    const revision = ++sequence.current;
+    pending.current = { lessonId: lesson.id, value, revision };
+    saveTimeoutRef.current = setTimeout(() => { pending.current = null; void persist(lesson.id, value, revision); }, 500);
   };
 
   const copyNote = () => {
@@ -125,7 +162,7 @@ export function LessonNotepad({
   };
 
   const handleExportTxt = () => {
-    const currentNotes = getCourseNotes(me.id, courseId);
+    const currentNotes = courseNotes;
     // Include the current unsaved state if any
     const merged = { ...currentNotes, [lesson.id]: note };
     const hasAny = Object.values(merged).some(text => text && text.trim());
@@ -138,7 +175,7 @@ export function LessonNotepad({
   };
 
   const totalCourseNotesCount = () => {
-    const currentNotes = getCourseNotes(me.id, courseId);
+    const currentNotes = courseNotes;
     const count = Object.values(currentNotes).filter(t => t && t.trim()).length;
     return note.trim() && !currentNotes[lesson.id] ? count + 1 : count;
   };
@@ -164,7 +201,7 @@ export function LessonNotepad({
             onClick={copyNote}
             title="Copiar anotação desta aula"
           >
-            {copied ? <Check size={14} style={{ color: "#48bb78" }} /> : <Copy size={14} />}
+              {copied ? <Check size={14} style={{ color: "var(--success-foreground)" }} /> : <Copy size={14} />}
             <span>{copied ? "Copiado" : "Copiar"}</span>
           </Button>
           <Button
@@ -183,6 +220,7 @@ export function LessonNotepad({
       <div className="notepad-editor-wrap">
         <textarea
           className="notepad-textarea"
+          aria-label="Caderno de anotações da aula"
           value={note}
           placeholder={`Faça suas anotações sobre "${lesson.title}" aqui. Seus apontamentos são salvos automaticamente.`}
           onChange={e => handleChange(e.target.value)}
@@ -191,10 +229,12 @@ export function LessonNotepad({
         />
         <div className="notepad-footer">
           <span className="notepad-status">
-            {savedStatus === "saving" ? (
+            {savedStatus === "error" ? (
+              <span role="alert" style={{ color: "var(--danger)" }}>Não foi possível salvar. Edite novamente para tentar.</span>
+            ) : savedStatus === "saving" ? (
               <span style={{ color: "var(--muted)" }}>Gravando...</span>
             ) : note.trim() ? (
-              <span style={{ color: "#48bb78", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <span style={{ color: "var(--success-foreground)", display: "inline-flex", alignItems: "center", gap: 4 }}>
                 <Check size={12} /> Salvo nesta aula
               </span>
             ) : (
@@ -203,6 +243,9 @@ export function LessonNotepad({
           </span>
           <span className="notepad-count">{note.length} caracteres</span>
         </div>
+        <span className="visually-hidden" aria-live="polite" aria-atomic="true">
+          {savedStatus === "saved" ? "Anotação salva no servidor" : ""}
+        </span>
       </div>
     </section>
   );
