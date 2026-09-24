@@ -1395,6 +1395,25 @@ function CollaboratorModal({
   onSelectAttempt: (attempt: Attempt) => void;
 }) {
   const [tab, setTab] = useState<"courses" | "assessments" | "timeline">("courses");
+  const { state, mutate, busy, notify } = useAcademy();
+  const [recognitionTitle, setRecognitionTitle] = useState("");
+  const [recognitionMessage, setRecognitionMessage] = useState("");
+  const [note, setNote] = useState("");
+  const recognitions = state.recognitions.filter(item => item.userId === person.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const pdiNotes = state.pdiNotes.filter(item => item.userId === person.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const grantRecognition = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (await mutate({ type: "grant-recognition", userId: person.id, title: recognitionTitle.trim(), message: recognitionMessage.trim() })) {
+      setRecognitionTitle(""); setRecognitionMessage(""); notify("Reconhecimento concedido: +100 XP na temporada.");
+    }
+  };
+  const addNote = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (await mutate({ type: "add-pdi-note", userId: person.id, content: note.trim() })) {
+      setNote(""); notify("Anotação de PDI registrada.");
+    }
+  };
 
   // Métricas do Colaborador
   const metrics = useMemo(() => {
@@ -1503,6 +1522,32 @@ function CollaboratorModal({
         {/* Corpo do Modal */}
         <div className="team-modal-body">
           <MemberEngagement member={engagement} days={engagementDays} unavailable={engagementUnavailable} />
+          <section className="manager-recognition" aria-label={`Acompanhamento de ${person.name}`}>
+            <div className="manager-recognition-grid">
+              <form onSubmit={grantRecognition}>
+                <h3><Award size={18} /> Conceder reconhecimento / conquista</h3>
+                <p>Reconheça uma entrega do PDI ou atitude excepcional. A conquista concede 100 XP.</p>
+                <label htmlFor="recognition-title">Título da conquista</label>
+                <input id="recognition-title" value={recognitionTitle} onChange={event => setRecognitionTitle(event.target.value)} minLength={3} maxLength={120} required placeholder="Destaque PDI — Projeto X" />
+                <label htmlFor="recognition-message">Justificativa do gestor</label>
+                <textarea id="recognition-message" value={recognitionMessage} onChange={event => setRecognitionMessage(event.target.value)} minLength={5} maxLength={2000} required rows={3} placeholder="Descreva a entrega e o impacto observado" />
+                <Button type="submit" disabled={busy}>Conceder reconhecimento · +100 XP</Button>
+              </form>
+              <div>
+                <form onSubmit={addNote}>
+                  <h3><FileText size={18} /> Histórico de PDI</h3>
+                  <p>Registre solicitações, evolução e próximas considerações deste colaborador.</p>
+                  <label htmlFor="pdi-note">Nova anotação</label>
+                  <textarea id="pdi-note" value={note} onChange={event => setNote(event.target.value)} minLength={3} maxLength={2000} required rows={3} placeholder="Ex.: 24/09 — alinhar entrega do projeto..." />
+                  <Button type="submit" variant="secondary" disabled={busy}>Registrar anotação</Button>
+                </form>
+                <div className="manager-history" aria-label="Anotações anteriores">
+                  {pdiNotes.length ? pdiNotes.map(item => <article key={item.id}><small>{new Date(item.createdAt).toLocaleDateString("pt-BR")} · {item.managerName}</small><p>{item.content}</p></article>) : <p>Nenhuma anotação registrada.</p>}
+                </div>
+              </div>
+            </div>
+            {recognitions.length > 0 && <div className="manager-history"><h3>Reconhecimentos concedidos</h3>{recognitions.map(item => <article key={item.id}><strong>{item.title} · +100 XP</strong><small>{new Date(item.createdAt).toLocaleDateString("pt-BR")} · {item.managerName}</small><p>{item.message}</p></article>)}</div>}
+          </section>
           {/* Indicadores do Colaborador */}
           <div className="team-modal-kpi-row">
             <div className="team-modal-kpi-item">

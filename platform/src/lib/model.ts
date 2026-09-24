@@ -85,6 +85,8 @@ export const notificationSchema = z.object({
   createdAt: z.string().default(() => new Date().toISOString()),
 });
 export const attemptSchema = z.object({ id: z.string(), userId: z.string().optional(), courseId: z.string(), courseTitle: z.string(), courseVersion: z.number(), quizId: z.string().optional(), questions: z.array(questionSchema), answers: z.record(z.string(), z.string()), status: z.enum(["pending", "approved", "retry"]), feedback: z.string(), score: z.number().nullable(), passingScore: z.number(), xp: z.number(), submittedAt: z.string(), retryPolicy: z.enum(["free", "review", "admin"]).default("free"), retryAllowed: z.boolean().default(false), correctTextIds: z.array(z.string()).optional(), partialTextIds: z.array(z.string()).optional() });
+export const recognitionSchema = z.object({ id: z.string(), userId: z.string(), managerName: z.string(), title: z.string(), message: z.string(), createdAt: z.string() });
+export const pdiNoteSchema = z.object({ id: z.string(), userId: z.string(), managerName: z.string(), content: z.string(), createdAt: z.string() });
 export const stateSchema = z.object({
   schema: z.literal(1), courses: z.array(courseSchema), articles: z.array(articleSchema), people: z.array(personSchema),
   courseDrafts: z.array(courseSchema).default([]), articleDrafts: z.array(articleSchema).default([]),
@@ -93,6 +95,7 @@ export const stateSchema = z.object({
   bookmarks: z.array(z.string()), attempts: z.array(attemptSchema), xpEvents: z.array(z.object({ id: z.string(), amount: z.number(), season: z.string(), label: z.string() })),
   readNotices: z.array(z.string()),
   notifications: z.array(notificationSchema).default([]),
+  recognitions: z.array(recognitionSchema).default([]), pdiNotes: z.array(pdiNoteSchema).default([]),
   teamProgress: z.record(z.string(), z.record(z.string(), z.array(z.string()))).default({}),
   cartorios: z.array(cartorioSchema).default([]),
 });

@@ -3,6 +3,8 @@ import { articleSchema, courseSchema, personSchema, cartorioSchema, type Academy
 import { newPasswordSchema } from "./auth-policy";
 const id = z.string().min(1).max(100);
 export const commandSchema = z.discriminatedUnion("type", [
+ z.object({ type:z.literal("grant-recognition"), userId:z.string().uuid(), title:z.string().trim().min(3).max(120), message:z.string().trim().min(5).max(2000) }),
+ z.object({ type:z.literal("add-pdi-note"), userId:z.string().uuid(), content:z.string().trim().min(3).max(2000) }),
  z.object({ type:z.literal("community-save"), data:articleSchema, publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
  z.object({ type:z.literal("community-react"), articleId:id, reaction:z.enum(["like","hype"]), active:z.boolean() }),
  z.object({ type:z.literal("community-comment"), articleId:id, commentId:z.string().uuid(), content:z.string().trim().min(2).max(2000) }),

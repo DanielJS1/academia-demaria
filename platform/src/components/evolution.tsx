@@ -240,6 +240,17 @@ export function Evolution() {
             title="Aprendizados que viram conquistas"
             description="Seus cursos concluídos, com ou sem avaliação."
           />
+          {state.recognitions.filter(item => item.userId === me.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(item => (
+            <article className="certificate-row leadership-recognition" key={item.id}>
+              <Medal size={30} aria-hidden="true" />
+              <div>
+                <strong>{item.title}</strong>
+                <small>Reconhecimento de liderança · {new Date(item.createdAt).toLocaleDateString("pt-BR")} · Concedido por {item.managerName}</small>
+                <p>{item.message}</p>
+              </div>
+              <span className="recognition-xp">+100 XP</span>
+            </article>
+          ))}
           {withoutQuiz.map((course) => (
             <div className="certificate-row" key={course.id}>
               <Award size={30} />
@@ -265,7 +276,7 @@ export function Evolution() {
                 </div>
               </div>
             ))
-          ) : withoutQuiz.length ? null : (
+          ) : withoutQuiz.length || state.recognitions.some(item => item.userId === me.id) ? null : (
             <EmptyState
               icon={<Award size={30} />}
               title="Sua primeira conquista está por vir."

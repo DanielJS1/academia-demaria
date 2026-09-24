@@ -18,6 +18,7 @@ const base: Omit<Course, "id" | "title" | "description" | "product" | "accent" |
 };
 export const initialState: AcademyState = {
   schema: 1,
+  recognitions: [], pdiNotes: [],
   courseDrafts: [], articleDrafts: [],
   courses: [
     { ...base, id: "doc-windows", title: "Primeiros passos com o DOC-Windows", description: "Uma jornada para conhecer o produto e construir uma base sólida para o dia a dia.", product: "DOC-Windows", department: "Comercial", accent: "violet", required: true, lessons: lessons("win") },

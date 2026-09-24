@@ -48,10 +48,10 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   all("academy_attempts","*",me.role==="student"?"user_id":undefined,me.role==="student"?me.id:undefined),
   all("academy_attempts","user_id,submitted_at"),
   all("academy_xp"),db.from("academy_preferences").select("*").eq("user_id",me.id).maybeSingle(),
-  all("academy_cartorios"),
+  all("academy_cartorios"), all("academy_recognitions"), all("academy_pdi_notes"),
  ]);
  results.forEach(ensure);
- const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult]=results;
+ const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult,recognitionsResult,pdiNotesResult]=results;
  const community=await readCommunity(db,me);
  const courses:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,xp:courseXp(r.published)}));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))})),proficiencyQuestions:course.proficiencyQuestions?.map(q=>({...q,correct:""}))});
@@ -71,6 +71,9 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const streak=(userId:string)=>{const days=activityDays.get(userId);if(!days?.size)return 0;let cursor=new Date(`${today}T12:00:00Z`);if(!days.has(today))cursor.setUTCDate(cursor.getUTCDate()-1);let count=0;while(days.has(cursor.toISOString().slice(0,10))){count++;cursor.setUTCDate(cursor.getUTCDate()-1);}return count;};
  const norm = (s?: string) => (s || "").trim().toLowerCase();
  const managedIds=new Set((profiles.data??[]).filter((p: any)=>me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(!p.manager_id&&p.department&&norm(p.department)===norm(me.department))))).map((p: any)=>p.id));
+ const profileNames=new Map<string,string>((profiles.data??[]).map((p: any):[string,string]=>[p.id,p.name]));
+ const recognitions=(recognitionsResult.data??[]).filter((r: any)=>r.user_id===me.id||(me.role!=="student"&&managedIds.has(r.user_id))).map((r: any)=>({id:r.id,userId:r.user_id,managerName:profileNames.get(r.manager_id)??"Gestor",title:r.title,message:r.message,createdAt:r.created_at}));
+ const pdiNotes=(pdiNotesResult.data??[]).filter((r: any)=>me.role==="admin"||(me.role==="manager"&&managedIds.has(r.user_id))).map((r: any)=>({id:r.id,userId:r.user_id,managerName:profileNames.get(r.manager_id)??"Gestor",content:r.content,createdAt:r.created_at}));
  const teamProgress:Record<string,Record<string,string[]>>={};
  if(me.role==="admin"||me.role==="manager"){
   for(const row of progress.data??[]){
@@ -96,7 +99,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:settings.data.departments,products:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
-  teamProgress,cartorios};
+  teamProgress,cartorios,recognitions,pdiNotes};
  return {state,me:{id:me.id,name:me.name,email:me.email,department:me.department,role:me.role,audience:me.audience??"internal",cartorioId:me.cartorio_id??null,avatar:me.avatar?.startsWith("https://")?me.avatar:null}};
 }
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
@@ -110,6 +113,21 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   return;
  }
  if(command.type.startsWith("community-")){await executeCommunity(db,me,command);return;}
+ if(command.type==="grant-recognition"||command.type==="add-pdi-note"){
+  if(me.role!=="admin"&&me.role!=="manager")throw new ApiError("Somente gestores podem registrar reconhecimentos e anotações.",403);
+  const target=await db.from("academy_profiles").select("id,manager_id,department,status,audience").eq("id",command.userId).maybeSingle();
+  if(target.error||!target.data||target.data.status!=="active"||target.data.audience==="client"||target.data.id===me.id||
+    (me.role!=="admin"&&target.data.manager_id!==me.id&&!(target.data.manager_id===null&&target.data.department?.trim().toLowerCase()===me.department.trim().toLowerCase())))
+    throw new ApiError("Colaborador fora da sua equipe ou inativo.",403);
+  if(command.type==="grant-recognition"){
+   const {error}=await db.rpc("academy_grant_recognition",{actor:me.id,target:command.userId,recognition_title:command.title,recognition_message:command.message});
+   if(error)throw new ApiError("Não foi possível conceder o reconhecimento: "+error.message,500);
+  }else{
+   const {error}=await db.from("academy_pdi_notes").insert({user_id:command.userId,manager_id:me.id,content:command.content});
+   if(error)throw new ApiError("Não foi possível registrar a anotação: "+error.message,500);
+  }
+  return;
+ }
  if(command.type==="save-resource"&&command.kind==="article"){
   await executeCommunity(db,me,{type:"community-save",data:articleSchema.parse(command.data),publish:command.publish,expectedVersion:command.expectedVersion});return;
  }

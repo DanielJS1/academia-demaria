@@ -15,7 +15,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   const { state, isClientEnvironment, activeCartorio, me } = useAcademy();
   const [search, setSearch] = useState(initialSearch);
   const [product, setProduct] = useState("Todos");
-  const [tab, setTab] = useState<CatalogTab>("all");
+  const [selectedTab, setTab] = useState<CatalogTab | null>(null);
   const [level, setLevel] = useState("Todos");
 
   const published = state.courses.filter(course => {
@@ -28,11 +28,11 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   });
 
   const inProgressCount = published.filter(
-    c => (state.completed[c.id] || []).length > 0 && !isCourseComplete(c, state, me.id)
+    c => ((state.completed[c.id] || []).length > 0 || Object.values(state.videoProgress[c.id] || {}).some(progress => progress.position > 0)) && !isCourseComplete(c, state, me.id)
   ).length;
 
   const availableCount = published.filter(
-    c => (state.completed[c.id] || []).length === 0
+    c => (state.completed[c.id] || []).length === 0 && !Object.values(state.videoProgress[c.id] || {}).some(progress => progress.position > 0)
   ).length;
 
   const completedCount = published.filter(
@@ -42,13 +42,14 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   const savedCount = published.filter(
     c => state.bookmarks.includes(c.id)
   ).length;
+  const tab = selectedTab ?? (inProgressCount > 0 ? "in_progress" : "all");
 
   const tabs: { id: CatalogTab; label: string; icon: typeof BookOpen; count: number }[] = [
-    { id: "all", label: "Todos os cursos", icon: BookOpen, count: published.length },
     { id: "in_progress", label: "Em andamento", icon: Clock3, count: inProgressCount },
     { id: "available", label: "Disponíveis", icon: Sparkles, count: availableCount },
     { id: "completed", label: "Concluídos", icon: CheckCircle2, count: completedCount },
     { id: "saved", label: "Salvos", icon: Bookmark, count: savedCount },
+    { id: "all", label: "Todos os cursos", icon: BookOpen, count: published.length },
   ];
 
   const courses = published.filter(course => {
@@ -62,7 +63,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
     }
 
     const isCompleted = isCourseComplete(course, state, me.id);
-    const hasStarted = (state.completed[course.id] || []).length > 0;
+    const hasStarted = (state.completed[course.id] || []).length > 0 || Object.values(state.videoProgress[course.id] || {}).some(progress => progress.position > 0);
 
     if (tab === "in_progress") return hasStarted && !isCompleted;
     if (tab === "available") return !hasStarted;

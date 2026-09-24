@@ -1694,3 +1694,7 @@
   }
 }
 
+.leadership-recognition { border: 1px solid var(--primary); border-radius: 12px; padding: 16px; background: var(--lavender); }
+.leadership-recognition > svg { color: var(--primary); }
+.leadership-recognition p { margin: 8px 0 0; white-space: pre-wrap; line-height: 1.5; }
+.recognition-xp { margin-left: auto; white-space: nowrap; font-weight: 800; color: var(--primary); }
