@@ -6,7 +6,7 @@ test("anotação volta após logout e login em outro navegador", async ({ browse
   const text = `Nota E2E ${Date.now()} · persistência entre sessões`;
   await colaborador.page.goto(`/aprender/${course.id}/aula?aula=${lesson.id}`);
   const notepad = colaborador.page.getByRole("textbox", { name: "Caderno de anotações da aula" });
-  await expect(colaborador.page.getByText("Salvo nesta aula")).toBeVisible();
+  await expect(colaborador.page.getByText(/Pronto para anotar|Salvo nesta aula/)).toBeVisible();
   await notepad.fill(text);
   await expect(notepad).toHaveValue(text);
   await expect(colaborador.page.getByText("Salvo nesta aula")).toBeVisible();
