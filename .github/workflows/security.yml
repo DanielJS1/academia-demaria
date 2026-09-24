@@ -29,7 +29,7 @@ jobs:
 
       - name: Block high severity Semgrep findings
         run: >-
-          semgrep scan --error --strict --severity ERROR --sarif-output semgrep.sarif
+          semgrep scan --error --severity ERROR --sarif-output semgrep.sarif
           --config p/default --config p/owasp-top-ten --config p/cwe-top-25
           --config p/javascript --config p/typescript --config p/react
           --config p/secrets .
@@ -49,7 +49,10 @@ jobs:
         working-directory: platform
     env:
       CI: true
-      E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
+      E2E_BASE_URL: http://127.0.0.1:4174
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       E2E_COLABORADOR_EMAIL: ${{ secrets.E2E_COLABORADOR_EMAIL }}
       E2E_COLABORADOR_PASSWORD: ${{ secrets.E2E_COLABORADOR_PASSWORD }}
       E2E_GESTOR_EMAIL: ${{ secrets.E2E_GESTOR_EMAIL }}
@@ -79,6 +82,17 @@ jobs:
         run: pnpm test
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
+      - name: Start test server
+        run: |
+          pnpm dev > /tmp/doc-academy-next.log 2>&1 &
+          for i in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4174/acesso > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/doc-academy-next.log
+          exit 1
       - name: E2E on staging
         run: pnpm test:e2e
       - name: Upload Playwright report

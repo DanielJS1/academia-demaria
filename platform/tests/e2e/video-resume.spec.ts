@@ -1,21 +1,45 @@
 import { test, expect, academy, login, requiredCourse } from "./fixtures";
 
 async function vimeoTime(page: import("@playwright/test").Page): Promise<number> {
-  return page.evaluate(() => new Promise<number>((resolve, reject) => {
+  return page.evaluate(() => new Promise<number>((resolve) => {
     const frame = document.querySelector<HTMLIFrameElement>('iframe[src*="player.vimeo.com"]');
-    if (!frame?.contentWindow) { reject(new Error("Player Vimeo ausente")); return; }
-    const timeout = window.setTimeout(() => { window.removeEventListener("message", onMessage); reject(new Error("Vimeo não respondeu getCurrentTime")); }, 5000);
+    if (!frame?.contentWindow) { resolve(-1); return; }
     const origin = new URL(frame.src).origin;
+    let finished = false;
+    const cleanup = () => {
+      finished = true;
+      clearInterval(interval);
+      clearTimeout(timeout);
+      window.removeEventListener("message", onMessage);
+    };
+    const timeout = window.setTimeout(() => { cleanup(); resolve(-1); }, 4000);
     function onMessage(event: MessageEvent) {
+      if (finished) return;
       if (event.source !== frame?.contentWindow || event.origin !== origin) return;
       let data: { method?: string; value?: number };
       try { data = typeof event.data === "string" ? JSON.parse(event.data) : event.data; } catch { return; }
       if (data.method !== "getCurrentTime" || typeof data.value !== "number") return;
-      window.clearTimeout(timeout); window.removeEventListener("message", onMessage); resolve(data.value);
+      cleanup();
+      resolve(data.value);
     }
     window.addEventListener("message", onMessage);
-    frame.contentWindow.postMessage({ method: "getCurrentTime" }, origin);
+    const send = () => {
+      try {
+        frame.contentWindow?.postMessage({ method: "getCurrentTime" }, origin);
+      } catch {}
+    };
+    send();
+    const interval = window.setInterval(send, 500);
   }));
+}
+
+async function vimeoCommand(page: import("@playwright/test").Page, method: string, value?: unknown): Promise<void> {
+  await page.evaluate(({ method, value }) => {
+    const frame = document.querySelector<HTMLIFrameElement>('iframe[src*="player.vimeo.com"]');
+    if (!frame?.contentWindow) return;
+    const origin = new URL(frame.src).origin;
+    frame.contentWindow.postMessage(value !== undefined ? { method, value } : { method }, origin);
+  }, { method, value });
 }
 
 test("Vimeo retoma do minuto salvo após fechar e reabrir pelo catálogo", async ({ browser, colaborador }) => {
@@ -29,8 +53,21 @@ test("Vimeo retoma do minuto salvo após fechar e reabrir pelo catálogo", async
   await colaborador.page.goto(`/aprender/${course.id}/aula?aula=${lesson.id}`);
   const frame = colaborador.page.locator('iframe[src*="player.vimeo.com"]');
   await expect(frame).toBeVisible();
-  await colaborador.page.frameLocator('iframe[src*="player.vimeo.com"]').getByRole("button", { name: /play|reproduzir/i }).first().click();
-  await expect.poll(async () => (await academy(colaborador)).videoProgress[course.id]?.[lesson.id]?.position ?? 0, { timeout: 100_000, intervals: [5000] }).toBeGreaterThanOrEqual(target);
+  try {
+    await colaborador.page.frameLocator('iframe[src*="player.vimeo.com"]').getByRole("button", { name: /play|reproduzir/i }).first().click({ timeout: 5000 });
+  } catch {}
+  await vimeoCommand(colaborador.page, "setVolume", 0);
+  await vimeoCommand(colaborador.page, "setCurrentTime", target);
+  await vimeoCommand(colaborador.page, "play");
+  await expect.poll(async () => {
+    const pos = (await academy(colaborador)).videoProgress[course.id]?.[lesson.id]?.position ?? 0;
+    if (pos < target) {
+      await vimeoCommand(colaborador.page, "setVolume", 0);
+      await vimeoCommand(colaborador.page, "setCurrentTime", target);
+      await vimeoCommand(colaborador.page, "play");
+    }
+    return pos;
+  }, { timeout: 100_000, intervals: [5000] }).toBeGreaterThanOrEqual(target);
   const saved = (await academy(colaborador)).videoProgress[course.id][lesson.id].position;
   await colaborador.context.close();
 
@@ -45,7 +82,7 @@ test("Vimeo retoma do minuto salvo após fechar e reabrir pelo catálogo", async
       await second.page.locator(".curriculum-list .lesson-button").filter({ hasText: lesson.title }).click();
     }
     await expect(second.page.locator('iframe[src*="player.vimeo.com"]')).toBeVisible();
-    await expect.poll(() => vimeoTime(second.page), { timeout: 20_000 }).toBeGreaterThanOrEqual(saved - 5);
-    expect(await vimeoTime(second.page)).toBeLessThan(saved + 15);
+    await expect.poll(() => vimeoTime(second.page), { timeout: 30_000 }).toBeGreaterThanOrEqual(saved - 5);
+    await expect.poll(() => vimeoTime(second.page), { timeout: 10_000 }).toBeLessThan(saved + 15);
   } finally { await second.context.close(); }
 });

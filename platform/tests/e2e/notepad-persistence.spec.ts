@@ -6,8 +6,13 @@ test("anotação volta após logout e login em outro navegador", async ({ browse
   const text = `Nota E2E ${Date.now()} · persistência entre sessões`;
   await colaborador.page.goto(`/aprender/${course.id}/aula?aula=${lesson.id}`);
   const notepad = colaborador.page.getByRole("textbox", { name: "Caderno de anotações da aula" });
-  await notepad.fill(text);
   await expect(colaborador.page.getByText("Salvo nesta aula")).toBeVisible();
+  await notepad.fill(text);
+  await expect(notepad).toHaveValue(text);
+  await expect(colaborador.page.getByText("Salvo nesta aula")).toBeVisible();
+  const saved = await colaborador.page.request.get(`/api/notes?courseId=${encodeURIComponent(course.id)}`, { headers: { Authorization: `Bearer ${colaborador.token}` } });
+  expect(saved.status()).toBe(200);
+  expect((await saved.json()).notes[lesson.id]).toBe(text);
   await colaborador.page.getByRole("button", { name: "Sair", exact: true }).last().click();
   await expect(colaborador.page.getByRole("button", { name: "Entrar na minha jornada" })).toBeVisible();
 

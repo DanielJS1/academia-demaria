@@ -1,4 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
+
+const envLocal = path.resolve(__dirname, ".env.local");
+if (fs.existsSync(envLocal)) process.loadEnvFile?.(envLocal);
+
+const envE2e = path.resolve(__dirname, "tests/e2e/.env");
+if (fs.existsSync(envE2e)) process.loadEnvFile?.(envE2e);
 
 const baseURL = process.env.E2E_BASE_URL;
 if (!baseURL) throw new Error("Defina E2E_BASE_URL para a implantação de staging antes de executar os testes E2E.");
@@ -22,5 +30,10 @@ export default defineConfig({
     headless: true,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    launchOptions: {
+      args: [
+        "--autoplay-policy=no-user-gesture-required",
+      ],
+    },
   },
 });

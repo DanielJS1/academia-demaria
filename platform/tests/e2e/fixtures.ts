@@ -18,9 +18,18 @@ export async function login(browser: Browser, role: Role): Promise<AuthSession> 
   const context = await browser.newContext();
   const page = await context.newPage();
   const { email, password } = credentials(role);
-  await page.goto("/acesso");
-  if (role === "cartorio") await page.getByRole("button", { name: /cartório/i }).first().click();
-  await page.locator('input[type="email"]').fill(email);
+  await page.goto("/acesso", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Bom ter você por aqui." })).toBeVisible({ timeout: 30_000 });
+  if (role === "cartorio") {
+    await page.getByRole("button", { name: "Cliente do Cartório" }).click();
+  } else {
+    const colabBtn = page.getByRole("button", { name: "Colaborador DeMaria" });
+    await colabBtn.click();
+    await expect(colabBtn).toHaveAttribute("aria-pressed", "true");
+  }
+  const emailInput = page.getByRole("textbox", { name: role === "cartorio" ? "E-mail credenciado da serventia" : "E-mail corporativo" });
+  await expect(emailInput).toBeVisible({ timeout: 30_000 });
+  await emailInput.fill(email);
   await page.locator('#access-password').fill(password);
   const academy = page.waitForResponse(response => response.url().endsWith("/api/academy") && response.request().method() === "GET");
   await page.getByRole("button", { name: "Entrar na minha jornada" }).click();
