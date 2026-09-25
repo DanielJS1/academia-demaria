@@ -1,0 +1,29 @@
+.question-studio { overscroll-behavior: contain; }
+.question-studio .panel { min-width: 0; }
+.question-studio button:focus-visible, .question-studio input:focus-visible, .question-studio textarea:focus-visible {
+  outline: 2px solid var(--primary); outline-offset: 3px;
+}
+.question-studio-option input[type="text"] { min-width: 0; }
+.question-studio-feedback { display: grid; gap: 16px; margin-top: 24px; }
+.question-studio-feedback .field { margin-top: 12px; }
+.question-studio-feedback summary { cursor: pointer; padding: 10px 0; font-weight: 650; }
+.question-studio-feedback p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.question-studio-error { padding: 12px 24px; color: var(--foreground); background: var(--surface2); border-top: 2px solid var(--primary); }
+.admin-quiz-studio { display: grid; gap: 14px; }
+.admin-quiz-studio > p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.admin-quiz-studio h4 { display: flex; align-items: center; gap: 8px; }
+.admin-quiz-studio-preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.admin-quiz-studio-preview button { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; padding: 10px 12px; text-align: left; color: var(--ink); background: var(--surface2); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.admin-quiz-studio-preview span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-quiz-studio-preview button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (max-width: 600px) {
+  .question-studio { padding: 8px !important; }
+  .question-studio > .panel { max-height: 96dvh !important; }
+  .question-studio-header, .question-studio-body, .question-studio-footer { padding: 14px !important; }
+  .question-studio-header h2 { overflow-wrap: anywhere; }
+  .question-studio-footer { flex-wrap: wrap; gap: 12px; }
+  .question-studio-footer > div { flex-wrap: wrap; }
+  .question-studio-modes { grid-template-columns: 1fr !important; }
+  .question-studio-option { flex-wrap: wrap; gap: 8px !important; padding: 8px !important; }
+  .question-studio-option input[type="text"] { flex-basis: 60% !important; }
+}

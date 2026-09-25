@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertCircle,
   ArrowLeft,
@@ -21,18 +22,34 @@ import { Button } from "../ui/button";
 import type { Question } from "@/lib/model";
 import { isCorrectAnswerValid } from "@/lib/course-activities";
 
+export type StudioQuestion = Question & { explanation?: string; imageUrl?: string; imageAlt?: string };
+
 export function QuestionStudioModal({
   title = "Avaliação",
   questions,
   onChange,
   onClose,
+  variant = "course",
+  initialIndex = 0,
 }: {
   title?: string;
-  questions: Question[];
-  onChange: (questions: Question[]) => void;
+  questions: StudioQuestion[];
+  onChange: (questions: StudioQuestion[]) => void;
   onClose: () => void;
+  variant?: "course" | "challenge";
+  initialIndex?: number;
 }) {
-  const [items, setItems] = useState<Question[]>(() =>
+  const challenge = variant === "challenge";
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog?.showModal();
+    return () => { dialog?.close(); document.body.style.overflow = previousOverflow; };
+  }, []);
+  const [items, setItems] = useState<StudioQuestion[]>(() =>
     questions.length > 0
       ? structuredClone(questions)
       : [
@@ -46,10 +63,10 @@ export function QuestionStudioModal({
           },
         ]
   );
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   const activeIndex = Math.min(currentIndex, Math.max(0, items.length - 1));
-  const activeQ = items[activeIndex] || {
+  const activeQ: StudioQuestion = items[activeIndex] || {
     id: crypto.randomUUID(),
     prompt: "",
     type: "choice",
@@ -58,13 +75,15 @@ export function QuestionStudioModal({
     correct: "",
   };
 
-  const updateActive = (patch: Partial<Question>) => {
+  const updateActive = (patch: Partial<StudioQuestion>) => {
+    setError("");
     setItems(current =>
       current.map((item, idx) => (idx === activeIndex ? { ...item, ...patch } : item))
     );
   };
 
   const addQuestion = () => {
+    if (challenge && items.length >= 30) return;
     const newQ: Question = {
       id: crypto.randomUUID(),
       prompt: "",
@@ -119,6 +138,7 @@ export function QuestionStudioModal({
   };
 
   const addOption = () => {
+    if (challenge && activeQ.options.length >= 6) return;
     updateActive({ options: [...activeQ.options, ""] });
   };
 
@@ -132,7 +152,7 @@ export function QuestionStudioModal({
       const currentArray = getMultipleCorrectArray(activeQ.correct);
       const updatedArray = currentArray.map(ans => (ans === oldText ? newText : ans));
       nextCorrect = JSON.stringify(updatedArray.sort());
-    } else if (activeQ.correct === oldText) {
+    } else if (oldText.trim() && activeQ.correct === oldText) {
       nextCorrect = newText;
     }
 
@@ -164,13 +184,27 @@ export function QuestionStudioModal({
       return {
         ...q,
         options: cleanOptions.length >= 2 ? cleanOptions : q.options,
+        correct: q.multiple ? JSON.stringify(getMultipleCorrectArray(q.correct).map(answer => answer.trim()).sort()) : q.correct.trim(),
       };
     });
+    if (challenge) {
+      const invalid = cleaned.findIndex(q => q.prompt.trim().length < 5 || q.prompt.length > 3000 ||
+        q.type !== "choice" || q.multiple || !isCorrectAnswerValid(q) || q.options.length < 2 || q.options.length > 6 ||
+        q.options.some(option => !option.trim() || option.length > 500) || new Set(q.options).size !== q.options.length ||
+        (q.explanation?.trim().length ?? 0) < 5 || (q.explanation?.length ?? 0) > 3000 ||
+        (!!q.imageUrl && (!/^https:\/\//.test(q.imageUrl) || !URL.canParse(q.imageUrl) || !q.imageAlt?.trim())));
+      if (items.length < 2 || invalid >= 0) {
+        if (invalid >= 0) setCurrentIndex(invalid);
+        setError(items.length < 2 ? "Adicione pelo menos duas perguntas." : `Revise a questão ${invalid + 1}: preencha enunciado, alternativas únicas, gabarito e explicação. Imagens precisam de URL HTTPS e descrição.`);
+        return;
+      }
+    }
     onChange(cleaned);
     onClose();
   };
 
-  const isQuestionComplete = (q: Question) => {
+  const isQuestionComplete = (q: StudioQuestion) => {
+    if (challenge && (q.explanation?.trim().length ?? 0) < 5) return false;
     if (!q.prompt.trim()) return false;
     if (q.type === "text") return true;
     return isCorrectAnswerValid(q) && q.options.length >= 2 &&
@@ -179,14 +213,24 @@ export function QuestionStudioModal({
 
   const multipleSelected = getMultipleCorrectArray(activeQ.correct);
 
-  return (
-    <div
+  return createPortal(
+    <dialog
+      ref={dialogRef}
+      className="question-studio"
+      onCancel={event => { event.preventDefault(); onClose(); }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="question-studio-title"
       style={{
         position: "fixed",
         inset: 0,
+        margin: 0,
+        width: "100vw",
+        height: "100dvh",
+        maxWidth: "none",
+        maxHeight: "none",
+        border: 0,
+        color: "var(--foreground)",
         zIndex: 9999,
         backgroundColor: "rgba(0, 0, 0, 0.72)",
         backdropFilter: "blur(6px)",
@@ -212,7 +256,7 @@ export function QuestionStudioModal({
         }}
       >
         {/* Header */}
-        <div
+        <div className="question-studio-header"
           style={{
             padding: "18px 24px",
             borderBottom: "1px solid var(--border)",
@@ -236,7 +280,7 @@ export function QuestionStudioModal({
             </h2>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={handleSaveAndClose} title="Fechar e salvar">
+          <Button type="button" variant="ghost" size="icon" onClick={handleSaveAndClose} aria-label={challenge ? "Aplicar perguntas e fechar" : "Fechar e salvar"}>
             <X size={18} />
           </Button>
         </div>
@@ -262,6 +306,8 @@ export function QuestionStudioModal({
                   key={item.id}
                   type="button"
                   onClick={() => setCurrentIndex(idx)}
+                  aria-label={`Questão ${idx + 1}: ${complete ? "preenchida" : "pendente"}`}
+                  aria-current={active ? "step" : undefined}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -303,6 +349,7 @@ export function QuestionStudioModal({
             variant="secondary"
             size="sm"
             onClick={addQuestion}
+            disabled={challenge && items.length >= 30}
             style={{ fontSize: 12, gap: 4, whiteSpace: "nowrap" }}
           >
             <Plus size={14} /> Nova pergunta
@@ -310,7 +357,7 @@ export function QuestionStudioModal({
         </div>
 
         {/* Main Content Area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+        <div className="question-studio-body" style={{ flex: 1, overflowY: "auto", padding: 24 }}>
           {/* Question Top Controls */}
           <div
             style={{
@@ -340,7 +387,7 @@ export function QuestionStudioModal({
               <strong style={{ fontSize: 16 }}>Configuração da Pergunta</strong>
             </div>
 
-            {items.length > 1 && (
+            {items.length > (challenge ? 2 : 1) && (
               <Button
                 type="button"
                 variant="ghost"
@@ -367,11 +414,11 @@ export function QuestionStudioModal({
           </label>
 
           {/* Type Selector Tabs */}
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 20 }} hidden={challenge}>
             <span style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 8 }}>
               Modalidade de Resposta
             </span>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <div className="question-studio-modes" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
               <button
                 type="button"
                 onClick={() =>
@@ -498,6 +545,7 @@ export function QuestionStudioModal({
                   variant="ghost"
                   size="sm"
                   onClick={addOption}
+                  disabled={challenge && activeQ.options.length >= 6}
                   style={{ fontSize: 12, gap: 4 }}
                 >
                   <Plus size={14} /> Adicionar alternativa
@@ -515,6 +563,7 @@ export function QuestionStudioModal({
                   return (
                     <div
                       key={optIdx}
+                      className="question-studio-option"
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -546,6 +595,7 @@ export function QuestionStudioModal({
                           type={activeQ.multiple ? "checkbox" : "radio"}
                           name={`studio-gabarito-${activeQ.id}`}
                           checked={isChecked}
+                          aria-label={`Marcar alternativa ${String.fromCharCode(65 + optIdx)} como correta`}
                           disabled={isDuplicate}
                           onChange={() => {
                             if (!option.trim()) return;
@@ -568,6 +618,7 @@ export function QuestionStudioModal({
                       <input
                         type="text"
                         aria-invalid={isDuplicate}
+                        aria-label={`Alternativa ${String.fromCharCode(65 + optIdx)}`}
                         value={option}
                         placeholder={`Alternativa ${String.fromCharCode(65 + optIdx)}`}
                         onChange={e => updateOptionText(optIdx, e.target.value)}
@@ -625,7 +676,7 @@ export function QuestionStudioModal({
 
               {new Set(activeQ.options.filter(o => o.trim())).size !== activeQ.options.filter(o => o.trim()).length && (
                 <div role="alert" style={{ marginTop: 12, color: "#b45309", fontSize: 12 }}>
-                  Há alternativas com o mesmo texto. Altere ou remova as repetidas para salvar o curso.
+                  Há alternativas com o mesmo texto. Altere ou remova as repetidas para salvar.
                 </div>
               )}
 
@@ -671,10 +722,25 @@ export function QuestionStudioModal({
               </p>
             </div>
           )}
+          {challenge && <div className="question-studio-feedback">
+            <label className="field"><span>Explicação após a resposta</span>
+              <textarea rows={3} minLength={5} maxLength={3000} value={activeQ.explanation ?? ""}
+                placeholder="Explique por que a alternativa está correta."
+                onChange={event => updateActive({ explanation: event.target.value })}/>
+            </label>
+            <details><summary>Imagem de apoio (opcional)</summary>
+              <label className="field"><span>URL HTTPS da imagem</span><input type="url" value={activeQ.imageUrl ?? ""}
+                onChange={event => updateActive({ imageUrl: event.target.value })}/></label>
+              <label className="field"><span>Descrição da imagem</span><input maxLength={300} value={activeQ.imageAlt ?? ""}
+                onChange={event => updateActive({ imageAlt: event.target.value })}/></label>
+            </details>
+            <p>Desafios usam escolha única e correção automática. Após aplicar as perguntas, salve o desafio para publicar as alterações.</p>
+          </div>}
         </div>
 
+        {error && <p role="alert" className="question-studio-error">{error}</p>}
         {/* Footer Navigation Bar */}
-        <div
+        <div className="question-studio-footer"
           style={{
             padding: "16px 24px",
             borderTop: "1px solid var(--border)",
@@ -712,11 +778,11 @@ export function QuestionStudioModal({
             </Button>
 
             <Button type="button" variant="default" size="sm" onClick={handleSaveAndClose}>
-              <Check size={16} /> Salvar e Voltar ao Curso
+              <Check size={16} /> {challenge ? "Aplicar perguntas" : "Salvar e Voltar ao Curso"}
             </Button>
           </div>
         </div>
       </div>
-    </div>
+    </dialog>, document.body
   );
 }
