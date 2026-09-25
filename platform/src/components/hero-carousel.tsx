@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState, type TouchEvent } from "react";
-import Link from "next/link";
 import { ArrowRight, BookOpen, ChevronLeft, ChevronRight, Clock3, Pause, Play, Sparkles, Trophy, Zap } from "lucide-react";
 import { browserAuth } from "@/lib/supabase-browser";
-import { Button } from "./ui/button";
+import { AnimatedButton } from "./ui/animated-button";
 import { SonarGrid } from "./ui/sonar-grid";
 
 type Resume = { title: string; lesson: string; minutes: number; position: number; href: string };
 type Featured = { title: string; description: string; href: string };
 type Ranking = { season: string; rank: number; gap: number; xp: number };
-type Quiz = { id: string; title: string; xp_reward: number; expires_at: string | null; period_type: string };
+type Quiz = { id: string; title: string; xp_reward: number; expires_at: string | null; period_type: string; is_featured: boolean };
 type Slide = { id: string; tone: string; eyebrow: string; title: string; description: string; href: string; action: string; meta: string; icon: typeof BookOpen; badge?: string };
 
 const ROTATION_MS = 6500;
@@ -38,7 +37,7 @@ export function HeroCarousel({ resume, newCourse, ranking, article }: {
         const response = await fetch("/api/quizzes/active", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal });
         if (!response.ok) return;
         const data = await response.json() as { quizzes?: Quiz[] };
-        setQuiz(data.quizzes?.find(item => item.period_type === "weekly") ?? data.quizzes?.[0] ?? null);
+        setQuiz(data.quizzes?.find(item => item.is_featured) ?? data.quizzes?.find(item => item.period_type === "weekly") ?? data.quizzes?.[0] ?? null);
       } catch { /* O carrossel permanece útil quando os desafios estão indisponíveis. */ }
     }
     void loadQuiz();
@@ -65,9 +64,10 @@ export function HeroCarousel({ resume, newCourse, ranking, article }: {
     if (quiz) {
       const remaining = quiz.expires_at ? new Date(quiz.expires_at).getTime() - Date.now() : null;
       const deadline = remaining === null ? "Disponível agora" : remaining <= 0 ? "Encerra em breve" : remaining < 86400000 ? `Restam ${Math.max(1, Math.ceil(remaining / 3600000))} h` : `Restam ${Math.ceil(remaining / 86400000)} dias`;
-      items.push({ id: "quiz", tone: "violet", eyebrow: quiz.period_type === "weekly" ? "DESAFIO DA SEMANA" : "DESAFIO EM DESTAQUE", title: quiz.title,
+      const quizSlide: Slide = { id: "quiz", tone: "violet", eyebrow: quiz.period_type === "weekly" ? "DESAFIO DA SEMANA" : "DESAFIO EM DESTAQUE", title: quiz.title,
         description: "Teste seus conhecimentos e avance na temporada.", href: `/desafios/${quiz.id}`, action: "Encarar desafio", icon: Zap,
-        meta: deadline, badge: `+${quiz.xp_reward} XP` });
+        meta: deadline, badge: `+${quiz.xp_reward} XP` };
+      if (quiz.is_featured) items.unshift(quizSlide); else items.push(quizSlide);
     }
     if (newCourse) items.push({ id: "course", tone: "blue", eyebrow: "NOVO CURSO", title: newCourse.title,
       description: newCourse.description, href: newCourse.href, action: "Conhecer curso", icon: Sparkles, meta: "Disponível no catálogo", badge: "Novo" });
@@ -104,7 +104,7 @@ export function HeroCarousel({ resume, newCourse, ranking, article }: {
     setTouchStart(null);
   }
 
-  return <SonarGrid className={`hero hero-carousel hero-carousel--${selected.tone}`} color="#818cf8" baseOpacity={0.16} spacing={28} dotRadius={1.2} pingEvery={0} interactive={false}
+  return <SonarGrid className={`hero hero-carousel hero-carousel--${selected.tone}`} color="#818cf8" baseOpacity={0.22} spacing={26} dotRadius={1.4} speed={240} ringWidth={85} amplitude={2.2} pingEvery={3.5} interactive={true}
     role="region" aria-roledescription="carrossel" aria-label="Destaques da página inicial"
     onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
@@ -114,7 +114,7 @@ export function HeroCarousel({ resume, newCourse, ranking, article }: {
         <div className="hero-slide-eyebrow"><span className="hero-slide-spark" aria-hidden="true"/> {selected.eyebrow}</div>
         <h2>{selected.title}</h2>
         <p>{selected.description}</p>
-        <div className="hero-slide-actions"><Button asChild><Link href={selected.href}>{selected.action} <ArrowRight size={17} aria-hidden="true"/></Link></Button><span className="hero-slide-meta"><Clock3 size={15} aria-hidden="true"/>{selected.meta}</span></div>
+        <div className="hero-slide-actions"><AnimatedButton href={selected.href}>{selected.action} <ArrowRight size={17} aria-hidden="true"/></AnimatedButton><span className="hero-slide-meta"><Clock3 size={15} aria-hidden="true"/>{selected.meta}</span></div>
       </div>
       <div className="hero-slide-art" aria-hidden="true"><div className="hero-slide-orbit"><selected.icon size={62} strokeWidth={1.5}/></div>{selected.badge && <span className="hero-slide-badge">{selected.badge}</span>}</div>
     </div>
