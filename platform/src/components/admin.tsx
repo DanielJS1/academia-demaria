@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Building2, BookOpen, ClipboardCheck, FileText, Plus, Search, Settings2, Users } from "lucide-react";
+import { Building2, BookOpen, ClipboardCheck, FileText, ListChecks, Plus, Search, Settings2, Users } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { PageHeading } from "./shared";
@@ -12,6 +12,7 @@ import { AdminArticles } from "./admin/admin-articles";
 import { AdminReviews } from "./admin/admin-reviews";
 import { AdminConfig, ConfigList } from "./admin/admin-config";
 import { AdminCartorios } from "./admin/admin-cartorios";
+import { AdminQuizzes } from "./admin/admin-quizzes";
 
 export { AdminCourses } from "./admin/admin-courses";
 export { AdminPeople } from "./admin/admin-people";
@@ -22,6 +23,7 @@ export { AdminCartorios } from "./admin/admin-cartorios";
 
 const tabs = [
   { id: "cursos", label: "Cursos", icon: BookOpen },
+  { id: "desafios", label: "Desafios", icon: ListChecks },
   { id: "cartorios", label: "Cartórios & Clientes", icon: Building2 },
   { id: "pessoas", label: "Pessoas", icon: Users },
   { id: "conhecimento", label: "Conhecimento", icon: FileText },
@@ -132,6 +134,7 @@ export function Admin({ initialTab = "cursos" }: { initialTab?: string }) {
       )}
 
       {tab === "cursos" && <AdminCourses search={search} />}
+      {tab === "desafios" && <AdminQuizzes />}
       {tab === "cartorios" && <AdminCartorios />}
       {tab === "pessoas" && <AdminPeople search={search} />}
       {tab === "conhecimento" && <AdminArticles search={search} />}
