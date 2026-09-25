@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Check, ChevronDown, Clock3, Pencil, Plus, Sparkles, X } from "lucide-react";
+import { Check, Clock3, Pencil, Plus, Sparkles, X } from "lucide-react";
 import { browserAuth } from "@/lib/supabase-browser";
 import { Button } from "@/components/ui/button";
+import { PeriodicQuizQuestions } from "./periodic-quiz-questions";
+import type { PeriodicQuizQuestion as Question } from "@/lib/periodic-quiz-studio";
 
 type Option = { id: string; text: string };
-type Question = { prompt: string; options: Option[]; correctOptionId: string; explanation: string; imageUrl: string; imageAlt: string };
 type Draft = { id?: string; title: string; slug: string; description: string; category: string; xpReward: number; passingScore: number;
   periodType: string; targetAudience: string; isActive: boolean; isFeatured: boolean; availableFrom: string; expiresAt: string; questions: Question[] };
 type QuizRow = { id: string; title: string; slug: string; description: string; category: string; xp_reward: number; passing_score: number;
@@ -76,13 +77,6 @@ export function AdminQuizzes() {
   }, [api]);
   useEffect(() => { void load(); }, [load]);
 
-  function editQuestion(index: number, change: Partial<Question>) {
-    setDraft(previous => previous && ({ ...previous, questions: previous.questions.map((question, at) => at === index ? { ...question, ...change } : question) }));
-  }
-  function editOption(questionIndex: number, optionIndex: number, text: string) {
-    setDraft(previous => previous && ({ ...previous, questions: previous.questions.map((question, at) => at === questionIndex
-      ? { ...question, options: question.options.map((option, position) => position === optionIndex ? { ...option, text } : option) } : question) }));
-  }
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft || busy) return;
@@ -135,16 +129,8 @@ export function AdminQuizzes() {
       </div>
       <div className="admin-quiz-flags"><label><input type="checkbox" checked={draft.isActive} onChange={event => setDraft(previous => previous && ({ ...previous, isActive: event.target.checked }))}/><span><strong>Ativar desafio</strong><small>Aparece quando chegar a data de liberação.</small></span></label>
         <label><input type="checkbox" checked={draft.isFeatured} onChange={event => setDraft(previous => previous && ({ ...previous, isFeatured: event.target.checked }))}/><span><strong>Mostrar primeiro no banner</strong><small>Prioriza este desafio na Visão geral quando estiver disponível.</small></span></label></div>
-      <div className="admin-quiz-questions-head"><div><h4>Perguntas e gabarito</h4><p>Cadastre pelo menos duas perguntas. O gabarito só aparece para o aluno depois de enviar.</p></div><Button type="button" variant="secondary" size="sm" disabled={draft.questions.length >= 30} onClick={() => setDraft(previous => previous && ({ ...previous, questions: [...previous.questions, newQuestion()] }))}><Plus size={15} aria-hidden="true"/> Adicionar pergunta</Button></div>
-      <div className="admin-quiz-questions">{draft.questions.map((question, questionIndex) => <section className="admin-quiz-question" key={questionIndex} aria-labelledby={`admin-question-${questionIndex}`}>
-        <div className="admin-quiz-question-head"><h5 id={`admin-question-${questionIndex}`}>Questão {questionIndex + 1}</h5><Button type="button" variant="ghost" size="sm" disabled={draft.questions.length <= 2} onClick={() => setDraft(previous => previous && ({ ...previous, questions: previous.questions.filter((_, at) => at !== questionIndex) }))}>Remover</Button></div>
-        <label className="admin-quiz-field">Enunciado <textarea required minLength={5} rows={3} maxLength={3000} value={question.prompt} onChange={event => editQuestion(questionIndex, { prompt: event.target.value })}/></label>
-        <div className="admin-quiz-options">{question.options.map((option, optionIndex) => <label className="admin-quiz-field" key={option.id}>Alternativa {option.id.toUpperCase()} <input required maxLength={500} value={option.text} onChange={event => editOption(questionIndex, optionIndex, event.target.value)}/></label>)}</div>
-        <div className="admin-quiz-question-meta"><label className="admin-quiz-field">Resposta correta <select value={question.correctOptionId} onChange={event => editQuestion(questionIndex, { correctOptionId: event.target.value })}>{question.options.map(option => <option key={option.id} value={option.id}>Alternativa {option.id.toUpperCase()}</option>)}</select></label>
-          <label className="admin-quiz-field">Explicação após a resposta <textarea required minLength={5} rows={2} maxLength={3000} value={question.explanation} onChange={event => editQuestion(questionIndex, { explanation: event.target.value })}/></label></div>
-        <details className="admin-quiz-media"><summary><ChevronDown size={15} aria-hidden="true"/> Imagem de apoio (opcional)</summary><div className="admin-quiz-fields"><label className="admin-quiz-field">URL HTTPS <input type="url" value={question.imageUrl} onChange={event => editQuestion(questionIndex, { imageUrl: event.target.value })}/></label>
-          <label className="admin-quiz-field">Descrição da imagem <input required={!!question.imageUrl} maxLength={300} value={question.imageAlt} onChange={event => editQuestion(questionIndex, { imageAlt: event.target.value })}/></label></div></details>
-      </section>)}</div>
+      <PeriodicQuizQuestions title={draft.title} questions={draft.questions}
+        onChange={questions => setDraft(previous => previous && ({ ...previous, questions }))}/>
       {error && <p className="admin-quizzes-error" role="alert">{error}</p>}
       <div className="admin-quiz-form-actions"><span><Clock3 size={15} aria-hidden="true"/> O prazo segue o horário do seu navegador.</span><Button type="submit" disabled={busy}>{busy ? "Salvando…" : "Salvar desafio"}</Button></div>
     </form>}
