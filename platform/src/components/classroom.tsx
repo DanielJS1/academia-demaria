@@ -5,7 +5,7 @@ import Link from "next/link";
 import { lessonXp } from "@/lib/rewards";
 import { VimeoLesson } from "./vimeo-lesson";
 import { YouTubeLesson } from "./youtube-lesson";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Award, Check, CheckCircle2, ChevronLeft, Clock3, Eye, FileText, LockKeyhole, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, NotebookPen, PlayCircle, Send } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
@@ -22,7 +22,40 @@ export function Classroom({ id, initialLesson, initialPosition, preview = false 
     lessons: rawCourse.lessons.filter(l => !l.ufFilter || l.ufFilter.length === 0 || !cartorioUf || l.ufFilter.includes(cartorioUf))
   } : undefined;
   const [selected, setSelected] = useState(initialLesson || ""); const [answers, setAnswers] = useState<Record<string, string>>({}); const [retrying, setRetrying] = useState(false); const [focusMode, setFocusMode] = useState(false); const [notesOpen, setNotesOpen] = useState(false); const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
   const initialPositions = useRef(new Map<string, number>());
+  useEffect(() => {
+    const page = pageRef.current;
+    const frame = page?.querySelector<HTMLElement>(".video-frame");
+    const actions = page?.querySelector<HTMLElement>(".activity-actions");
+    const heading = page?.querySelector<HTMLElement>(".classroom-top-actions");
+    const stage = page?.querySelector<HTMLElement>(".classroom-stage-primary");
+    if (!page || !frame || !actions || !heading || !stage) return;
+
+    let frameId = 0;
+    const measure = () => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        const frameTop = frame.getBoundingClientRect().top + window.scrollY;
+        const actionGap = Math.max(0, actions.getBoundingClientRect().top - frame.getBoundingClientRect().bottom);
+        const available = Math.max(160, window.innerHeight - frameTop - actionGap - actions.getBoundingClientRect().height - 24);
+        page.style.setProperty("--classroom-video-max-height", `${Math.floor(available)}px`);
+      });
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(heading);
+    observer.observe(actions);
+    const contentObserver = new MutationObserver(measure);
+    contentObserver.observe(stage, { childList: true });
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      cancelAnimationFrame(frameId);
+      observer.disconnect();
+      contentObserver.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [ready, selected, focusMode, notesOpen]);
   if (!ready) return <div className="empty-state">Abrindo sua sala de aula…</div>;
   if (!course || !course.lessons.length) return <EmptyState title="Uma jornada em preparação" description="Este curso ainda não possui atividades publicadas para sua região ou módulos."><Button asChild variant="secondary"><Link href="/aprender">Voltar ao catálogo</Link></Button></EmptyState>;
   const lesson = course.lessons.find(item => item.id === selected) || course.lessons[0]; const index = course.lessons.findIndex(item => item.id === lesson.id);
@@ -45,18 +78,16 @@ export function Classroom({ id, initialLesson, initialPosition, preview = false 
     const success=await mutate({type:"submit",courseId:id,version:course.version,quizId:lesson.id,answers:{...answers}});
     if(!success)return;setRetrying(false);notify("Avaliação enviada. A correção aparecerá nesta atividade.");
   };
-  return <div className="page-enter classroom-page">
+  return <div ref={pageRef} className="page-enter classroom-page">
     <div className="classroom-top-actions">
       <div className="classroom-lesson-heading">
-        <div className="classroom-heading-content">
-          <div className="classroom-lesson-meta">
-            <span className={`pill ${activityDone(lesson) ? "green" : ""}`}>
-              {activityDone(lesson) ? <><CheckCircle2 size={13} aria-hidden="true" />Atividade concluída · XP registrado</> : lesson.type === "quiz" ? "Acertos: +5 / +8 XP · aprovação: +30 XP ou +10 XP na recuperação" : `+${lessonXp(lesson.minutes)} XP nesta aula`}
-            </span>
-            {lesson.module && <span className="eyebrow">{lesson.module}</span>}
-          </div>
-          <h1>{lesson.title}</h1>
+        <div className="classroom-lesson-meta">
+          <span className={`pill ${activityDone(lesson) ? "green" : ""}`}>
+            {activityDone(lesson) ? <><CheckCircle2 size={13} aria-hidden="true" />Atividade concluída · XP registrado</> : lesson.type === "quiz" ? "Acertos: +5 / +8 XP · aprovação: +30 XP ou +10 XP na recuperação" : `+${lessonXp(lesson.minutes)} XP nesta aula`}
+          </span>
+          {lesson.module && <span className="eyebrow">{lesson.module}</span>}
         </div>
+        <h1>{lesson.title}</h1>
       </div>
       <div className="classroom-header-controls">
         {preview && <Link className="back-link" href={`/admin/cursos/${id}`}><ArrowLeft size={15}/>Voltar ao editor</Link>}

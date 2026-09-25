@@ -27,8 +27,7 @@
 }
 
 .classroom-lesson-heading { flex: 1 1 300px; min-width: 0; }
-.classroom-heading-content { width: max-content; max-width: 100%; }
-.classroom-lesson-meta { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 12px; }
+.classroom-lesson-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
 .classroom-lesson-meta .pill { display: inline-flex; align-items: center; gap: 5px; }
 .classroom-lesson-heading h1 {
   font-size: clamp(18px, 1.6vw, 23px);
@@ -36,7 +35,6 @@
   letter-spacing: -0.02em;
   margin: 4px 0 0;
   overflow-wrap: anywhere;
-  text-align: center;
 }
 .classroom-header-controls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 .classroom-header-controls .back-link { margin: 0 8px 0 0; }
@@ -73,13 +71,13 @@
 
 .player-grid.video-theater:not(.focus-mode) { container-type: inline-size; }
 .player-grid.video-theater:not(.focus-mode) > .curriculum {
-  height: min(62dvh, calc(100dvh - 220px), calc((100cqw - 308px) * 0.5625));
+  height: min(var(--classroom-video-max-height, calc(100dvh - 220px)), calc((100cqw - 308px) * 0.5625));
   max-height: none;
 }
 
 @media (max-width: 1250px) and (min-width: 1021px) {
   .player-grid.video-theater:not(.focus-mode) > .curriculum {
-    height: min(62dvh, calc(100dvh - 220px), calc((100cqw - 268px) * 0.5625));
+    height: min(var(--classroom-video-max-height, calc(100dvh - 220px)), calc((100cqw - 268px) * 0.5625));
   }
 }
 
@@ -260,7 +258,7 @@
 .video-frame {
   aspect-ratio: 16 / 9;
   width: 100%;
-  max-height: min(62vh, calc(100dvh - 220px));
+  max-height: var(--classroom-video-max-height, calc(100dvh - 220px));
   background: #18181b;
   border-radius: 14px;
   overflow: hidden;
@@ -356,8 +354,6 @@
 
 @media (max-width: 760px) {
   .classroom-header-controls { width: 100%; justify-content: flex-start; }
-  .classroom-lesson-meta { justify-content: flex-start; }
-  .classroom-lesson-heading h1 { text-align: left; }
 }
 
 /* Curriculum sidebar */
