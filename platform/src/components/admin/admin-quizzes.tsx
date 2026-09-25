@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Check, Clock3, Pencil, Plus, Sparkles, X } from "lucide-react";
+import { Check, Clock3, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { browserAuth } from "@/lib/supabase-browser";
 import { Button } from "@/components/ui/button";
 import { PeriodicQuizQuestions } from "./periodic-quiz-questions";
@@ -60,7 +60,7 @@ export function AdminQuizzes() {
     return () => cancelAnimationFrame(frame);
   }, [draft?.id, !!draft]);
 
-  const api = useCallback(async (method: "GET" | "POST" | "PATCH", payload?: unknown) => {
+  const api = useCallback(async (method: "GET" | "POST" | "PATCH" | "DELETE", payload?: unknown) => {
     const session = await browserAuth()?.auth.getSession();
     const token = session?.data.session?.access_token;
     if (!token) throw new Error("Entre na sua conta para continuar.");
@@ -95,6 +95,17 @@ export function AdminQuizzes() {
     catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível alterar o desafio."); }
     finally { setBusy(false); }
   }
+  async function remove(quiz: QuizRow) {
+    if (busy || !window.confirm(`Excluir “${quiz.title}”? O desafio sairá do painel e da Visão geral. Tentativas e XP já registrados serão preservados.`)) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      await api("DELETE", { id: quiz.id });
+      if (draft?.id === quiz.id) setDraft(null);
+      await load();
+      setNotice("Desafio excluído.");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível excluir o desafio."); }
+    finally { setBusy(false); }
+  }
 
   return <section className="admin-quizzes" aria-labelledby="admin-quizzes-title">
     <div className="admin-quizzes-intro"><div><span className="eyebrow">DESAFIOS PERIÓDICOS</span><h2 id="admin-quizzes-title">Perguntas que movimentam a jornada</h2>
@@ -109,7 +120,8 @@ export function AdminQuizzes() {
       return <article className="panel admin-quiz-row" key={quiz.id}><div><div className="admin-quiz-row-top"><span className={`admin-quiz-status${status === "No ar" ? " is-live" : ""}`}>{status}</span>{quiz.is_featured && <span className="admin-quiz-featured"><Sparkles size={14} aria-hidden="true"/> Primeiro no banner</span>}</div>
         <h3>{quiz.title}</h3><p>{quiz.questions.length} questões · {quiz.xp_reward} XP · {categories.find(([value]) => value === quiz.category)?.[1] || quiz.category}</p></div>
         <div className="admin-quiz-row-actions"><Button variant="secondary" size="sm" type="button" onClick={() => { setDraft(toDraft(quiz)); setError(""); setNotice(""); }}><Pencil size={15} aria-hidden="true"/> Editar</Button>
-          <Button variant="ghost" size="sm" type="button" disabled={busy || (!quiz.is_active && expired)} onClick={() => void toggle(quiz)}>{quiz.is_active ? "Pausar" : "Ativar"}</Button></div></article>;
+          <Button variant="ghost" size="sm" type="button" disabled={busy || (!quiz.is_active && expired)} onClick={() => void toggle(quiz)}>{quiz.is_active ? "Pausar" : "Ativar"}</Button>
+          <Button className="admin-quiz-delete" variant="ghost" size="sm" type="button" disabled={busy} onClick={() => void remove(quiz)} aria-label={`Excluir desafio ${quiz.title}`}><Trash2 size={15} aria-hidden="true"/> Excluir</Button></div></article>;
     })}{!quizzes.length && <div className="panel admin-quiz-empty">Nenhum desafio cadastrado. Crie o primeiro para começar.</div>}</div>}
 
     {draft && <form ref={formRef} className="panel admin-quiz-form" onSubmit={event => void save(event)}>

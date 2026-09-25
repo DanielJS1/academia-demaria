@@ -38,6 +38,7 @@ const quizSchema = z.object({
   message: "O prazo final precisa ser posterior à liberação.", path: ["expiresAt"],
 });
 const statusSchema = z.object({ id: z.uuid(), active: z.boolean() }).strict();
+const deleteSchema = z.object({ id: z.uuid() }).strict();
 
 function requireAdmin(me: { role: string; audience?: string }) {
   if (me.role !== "admin" || me.audience === "client") throw new ApiError("Apenas administradores internos podem editar desafios.", 403);
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
   try {
     const { db, me } = await authenticate(request);
     requireAdmin(me);
-    const quizzes = await db.from("academy_quizzes").select("id,title,slug,description,category,xp_reward,passing_score,period_type,is_active,is_featured,available_from,expires_at,target_audience,updated_at").order("updated_at", { ascending: false });
+    const quizzes = await db.from("academy_quizzes").select("id,title,slug,description,category,xp_reward,passing_score,period_type,is_active,is_featured,available_from,expires_at,target_audience,updated_at").is("deleted_at", null).order("updated_at", { ascending: false });
     if (quizzes.error) throw new ApiError("Cadastro de desafios indisponível. Confira as migrations 009, 010 e 011.", 503);
     const ids = (quizzes.data ?? []).map(quiz => quiz.id);
     if (!ids.length) return Response.json({ quizzes: [] }, { headers });
@@ -96,5 +97,20 @@ export async function PATCH(request: Request) {
     });
     if (result.error) throw new ApiError("Não foi possível alterar a disponibilidade do desafio.", 503);
     return Response.json({ saved: true }, { headers });
+  } catch (error) { return failure(error); }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { db, me } = await authenticate(request);
+    requireAdmin(me);
+    const parsed = deleteSchema.safeParse(await body(request));
+    if (!parsed.success) throw new ApiError("Dados inválidos.");
+    const result = await db.rpc("academy_delete_periodic_quiz", { actor: me.id, quiz: parsed.data.id });
+    if (result.error) {
+      if (result.error.message.includes("não encontrado")) throw new ApiError("Desafio não encontrado.", 404);
+      throw new ApiError("Não foi possível excluir o desafio. Confira a migration de exclusão.", 503);
+    }
+    return Response.json({ deleted: true }, { headers });
   } catch (error) { return failure(error); }
 }

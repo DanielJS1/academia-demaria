@@ -29,7 +29,7 @@ export function ActivityQuestions({
         border: "1px solid var(--border)",
         borderRadius: 12,
         padding: "16px 18px",
-        backgroundColor: "var(--card-bg, #fbfbfd)",
+        backgroundColor: "var(--surface2)",
         margin: "12px 0",
       }}
     >

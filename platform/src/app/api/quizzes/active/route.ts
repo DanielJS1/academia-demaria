@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const audience = me.audience ?? "internal";
     const quizzes = await db.from("academy_quizzes")
       .select("id,title,slug,description,category,xp_reward,passing_score,period_type,available_from,expires_at,target_audience,is_featured")
-      .eq("is_active", true).eq("target_audience", audience)
+      .eq("is_active", true).is("deleted_at", null).eq("target_audience", audience)
       .lte("available_from", now).or(`expires_at.is.null,expires_at.gt.${now}`)
       .order("available_from", { ascending: false });
     if (quizzes.error) throw new ApiError("Não foi possível carregar os desafios.", 503);

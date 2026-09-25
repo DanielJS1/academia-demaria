@@ -22,6 +22,7 @@ beforeAll(async () => {
   await db.exec(readFileSync(new URL("../../supabase/migrations/202609240009_periodic_quizzes.sql", import.meta.url), "utf8"));
   await db.exec(readFileSync(new URL("../../supabase/migrations/202609240010_quiz_question_media.sql", import.meta.url), "utf8"));
   await db.exec(readFileSync(new URL("../../supabase/migrations/202609250001_periodic_quiz_admin.sql", import.meta.url), "utf8"));
+  await db.exec(readFileSync(new URL("../../supabase/migrations/202609250002_periodic_quiz_delete.sql", import.meta.url), "utf8"));
   await db.query("insert into auth.users(id) values($1),($2),($3)", [learner, secondLearner, admin]);
   await db.query("insert into academy_profiles(id,status,audience) values($1,'active','internal'),($2,'active','internal')", [learner, secondLearner]);
   await db.query("insert into academy_profiles(id,status,audience,role) values($1,'active','internal','admin')", [admin]);
@@ -91,5 +92,22 @@ describe("desafios periódicos", () => {
     await db.query("select academy_set_periodic_quiz_active($1,$2,false)", [admin, id]);
     const disabled = await db.query<{ is_active: boolean }>("select is_active from academy_quizzes where id=$1", [id]);
     expect(disabled.rows[0].is_active).toBe(false);
+  });
+
+  it("exclui rascunhos e desafios ativos sem apagar tentativas ou XP", async () => {
+    const draft = await db.query<{ id: string }>("select id from academy_quizzes where slug='desafio-alagoas'");
+    await expect(db.query("select academy_delete_periodic_quiz($1,$2)", [learner, draft.rows[0].id])).rejects.toThrow("Apenas administradores");
+    await db.query("select academy_delete_periodic_quiz($1,$2)", [admin, draft.rows[0].id]);
+    await db.query("select academy_delete_periodic_quiz($1,$2)", [admin, quizId]);
+    const archived = await db.query<{ deleted_at: string; is_active: boolean; is_featured: boolean }>(
+      "select deleted_at,is_active,is_featured from academy_quizzes where id=$1", [quizId]);
+    expect(archived.rows[0]).toMatchObject({ is_active: false, is_featured: false });
+    expect(archived.rows[0].deleted_at).toBeTruthy();
+    const attempts = await db.query<{ count: number }>("select count(*)::integer as count from academy_quiz_attempts where quiz_id=$1", [quizId]);
+    expect(attempts.rows[0].count).toBe(2);
+    const xp = await db.query<{ count: number }>("select count(*)::integer as count from academy_xp where event_key=$1", [`quiz:${quizId}`]);
+    expect(xp.rows[0].count).toBe(1);
+    await expect(db.query("select academy_set_periodic_quiz_active($1,$2,true)", [admin, quizId])).rejects.toThrow("Desafio excluído");
+    await expect(db.query("select academy_delete_periodic_quiz($1,$2)", [admin, quizId])).rejects.toThrow("Desafio não encontrado");
   });
 });

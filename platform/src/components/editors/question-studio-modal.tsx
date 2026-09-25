@@ -294,7 +294,7 @@ export function QuestionStudioModal({
         <div className="question-studio-stepper"
           style={{
             padding: "12px 24px",
-            background: "var(--card-bg, #fbfbfd)",
+            background: "var(--surface2)",
             borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
