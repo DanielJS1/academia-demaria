@@ -48,13 +48,15 @@ export function Classroom({ id, initialLesson, initialPosition, preview = false 
   return <div className="page-enter classroom-page">
     <div className="classroom-top-actions">
       <div className="classroom-lesson-heading">
-        <div className="classroom-lesson-meta">
-          <span className={`pill ${activityDone(lesson) ? "green" : ""}`}>
-            {activityDone(lesson) ? <><CheckCircle2 size={13} aria-hidden="true" />Atividade concluída · XP registrado</> : lesson.type === "quiz" ? "Acertos: +5 / +8 XP · aprovação: +30 XP ou +10 XP na recuperação" : `+${lessonXp(lesson.minutes)} XP nesta aula`}
-          </span>
-          {lesson.module && <span className="eyebrow">{lesson.module}</span>}
+        <div className="classroom-heading-content">
+          <div className="classroom-lesson-meta">
+            <span className={`pill ${activityDone(lesson) ? "green" : ""}`}>
+              {activityDone(lesson) ? <><CheckCircle2 size={13} aria-hidden="true" />Atividade concluída · XP registrado</> : lesson.type === "quiz" ? "Acertos: +5 / +8 XP · aprovação: +30 XP ou +10 XP na recuperação" : `+${lessonXp(lesson.minutes)} XP nesta aula`}
+            </span>
+            {lesson.module && <span className="eyebrow">{lesson.module}</span>}
+          </div>
+          <h1>{lesson.title}</h1>
         </div>
-        <h1>{lesson.title}</h1>
       </div>
       <div className="classroom-header-controls">
         {preview && <Link className="back-link" href={`/admin/cursos/${id}`}><ArrowLeft size={15}/>Voltar ao editor</Link>}
