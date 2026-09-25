@@ -1,10 +1,10 @@
 export type StorageKind = "avatar" | "article-image" | "article-file";
 
-export function isStoredMediaUrl(value: string, bucket: "academy-avatars" | "academy-articles"): boolean {
+export function isStoredMediaUrl(value: string, bucket: "academy-avatars" | "academy-articles" | "academy-article-images" | "academy-article-files"): boolean {
   try {
     const url = new URL(value);
     const base = process.env.NEXT_PUBLIC_MEDIA_PUBLIC_BASE_URL || `${process.env.NEXT_PUBLIC_SUPABASE_URL || "https://storage.invalid"}/storage/v1/object/public`;
-    return url.protocol === "https:" && value.startsWith(`${base.replace(/\/$/, "")}/${bucket}/`);
+    return url.protocol === "https:" && url.origin === new URL(base).origin && value.startsWith(`${base.replace(/\/$/, "")}/${bucket}/`);
   } catch { return false; }
 }
 

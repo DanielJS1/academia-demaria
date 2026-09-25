@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -1398,13 +1398,16 @@ function CollaboratorModal({
   const { state, mutate, busy, notify } = useAcademy();
   const [recognitionTitle, setRecognitionTitle] = useState("");
   const [recognitionMessage, setRecognitionMessage] = useState("");
+  const recognitionRequestId = useRef<string | null>(null);
   const [note, setNote] = useState("");
   const recognitions = state.recognitions.filter(item => item.userId === person.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const pdiNotes = state.pdiNotes.filter(item => item.userId === person.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const grantRecognition = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (await mutate({ type: "grant-recognition", userId: person.id, title: recognitionTitle.trim(), message: recognitionMessage.trim() })) {
+    recognitionRequestId.current ||= crypto.randomUUID();
+    if (await mutate({ type: "grant-recognition", requestId: recognitionRequestId.current, userId: person.id, title: recognitionTitle.trim(), message: recognitionMessage.trim() })) {
+      recognitionRequestId.current = null;
       setRecognitionTitle(""); setRecognitionMessage(""); notify("Reconhecimento concedido: +100 XP na temporada.");
     }
   };
@@ -1528,9 +1531,9 @@ function CollaboratorModal({
                 <h3><Award size={18} /> Conceder reconhecimento / conquista</h3>
                 <p>Reconheça uma entrega do PDI ou atitude excepcional. A conquista concede 100 XP.</p>
                 <label htmlFor="recognition-title">Título da conquista</label>
-                <input id="recognition-title" value={recognitionTitle} onChange={event => setRecognitionTitle(event.target.value)} minLength={3} maxLength={120} required placeholder="Destaque PDI — Projeto X" />
+                <input id="recognition-title" value={recognitionTitle} onChange={event => { recognitionRequestId.current = null; setRecognitionTitle(event.target.value); }} minLength={3} maxLength={120} required placeholder="Destaque PDI — Projeto X" />
                 <label htmlFor="recognition-message">Justificativa do gestor</label>
-                <textarea id="recognition-message" value={recognitionMessage} onChange={event => setRecognitionMessage(event.target.value)} minLength={5} maxLength={2000} required rows={3} placeholder="Descreva a entrega e o impacto observado" />
+                <textarea id="recognition-message" value={recognitionMessage} onChange={event => { recognitionRequestId.current = null; setRecognitionMessage(event.target.value); }} minLength={5} maxLength={2000} required rows={3} placeholder="Descreva a entrega e o impacto observado" />
                 <Button type="submit" disabled={busy}>Conceder reconhecimento · +100 XP</Button>
               </form>
               <div>

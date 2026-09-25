@@ -13,11 +13,11 @@ const AcademyContext=createContext<Context|null>(null);
 export function AcademyProvider({children}:{children:ReactNode}){
  const path=usePathname();const [state,setState]=useState(empty);const current=useRef(state);
  const [me,setMe]=useState<Me|null>(null);const [authenticated,setAuthenticated]=useState(false);const [ready,setReady]=useState(false);const [sessionChecked,setSessionChecked]=useState(false);
- const [error,setError]=useState("");const [busy,setBusy]=useState(false);const busyRef=useRef(false);const [toast,setToast]=useState("");const [theme,setTheme]=useState("light");const identity=useRef("");
+ const [error,setError]=useState("");const [busy,setBusy]=useState(false);const busyRef=useRef(false);const videoQueue=useRef<Promise<void>>(Promise.resolve());const [toast,setToast]=useState("");const [theme,setTheme]=useState("light");const identity=useRef("");
  const [simulatedCartorioId, setSimulatedCartorioId] = useState<string | null>(null);
  const [avatar, setAvatarState] = useState<string | null>(null);
  const auth=browserAuth();
- const request=useCallback(async(command?:Command)=>{
+ const request=useCallback(async(command?:Command, silentVideo=false)=>{
   const client=browserAuth();const session=await client?.auth.getSession();const token=session?.data.session?.access_token;
   if(!token)throw new Error("Entre na sua conta para continuar.");
   const response=await fetch("/api/academy",{method:command?"POST":"GET",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},...(command?{body:JSON.stringify(command)}:{}),cache:"no-store"});
@@ -29,8 +29,9 @@ export function AcademyProvider({children}:{children:ReactNode}){
    if(earned>0)setToast(`+${earned} XP! Seu aprendizado está rendendo.`);
    const season=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric"});
    const previousCourse=current.current.videoProgress[data.progress.courseId]??{};
-   const next={...current.current,xpEvents,people:current.current.people.map(person=>person.id===data.userId?{...person,xp:xpEvents.filter(e=>e.season===season).reduce((sum,e)=>sum+e.amount,0)}:person),completed:{...current.current.completed,[data.progress.courseId]:data.progress.completed},videoProgress:{...current.current.videoProgress,[data.progress.courseId]:{...previousCourse,[data.progress.lessonId]:{position:data.progress.position,duration:data.progress.duration,updatedAt:new Date().toISOString()}}}};
-   current.current=next;setState(next);return;
+   const next={...current.current,xpEvents,people:current.current.people.map(person=>person.id===data.userId?{...person,xp:xpEvents.filter(e=>e.season===season).reduce((sum,e)=>sum+e.amount,0)}:person),completed:{...current.current.completed,[data.progress.courseId]:data.progress.completed},videoProgress:{...current.current.videoProgress,[data.progress.courseId]:{...previousCourse,[data.progress.lessonId]:{position:Math.max(previousCourse[data.progress.lessonId]?.position??0,data.progress.position),duration:data.progress.duration,updatedAt:data.progress.updatedAt}}}};
+   const completedChanged=JSON.stringify(current.current.completed[data.progress.courseId]??[])!==JSON.stringify(data.progress.completed);
+   current.current=next;if(!silentVideo||completedChanged||earned>0)setState(next);return;
   }
   if(identity.current!==data.me.id)return;
   if(command){const earned=(data.state.xpEvents as AcademyState["xpEvents"]).filter(event=>!current.current.xpEvents.some(old=>old.id===event.id)).reduce((sum,event)=>sum+event.amount,0);if(earned>0)setToast(`+${earned} XP! Seu aprendizado está rendendo.`);}
@@ -72,6 +73,11 @@ export function AcademyProvider({children}:{children:ReactNode}){
   }
  },[me?.id,me?.avatar]);
   const mutate=useCallback(async(command:Command,options?:{silent?:boolean})=>{
+   if(command.type==="video"&&options?.silent){
+    const save=videoQueue.current.catch(()=>{}).then(async()=>{try{await request(command,true);return true;}catch{return false;}});
+    videoQueue.current=save.then(()=>{});
+    return save;
+   }
    if(busyRef.current){if(!options?.silent)setToast("Aguarde a gravação em andamento.");return false;}
    busyRef.current=true;if(!options?.silent)setBusy(true);
    try{await request(command);return true;}catch(err){if(!options?.silent)setToast(err instanceof Error?err.message:"Não foi possível salvar. Tente novamente.");return false;}finally{busyRef.current=false;if(!options?.silent)setBusy(false);}

@@ -23,9 +23,24 @@ No Supabase, abra **SQL Editor → New query**. Copie o conteúdo completo de `s
 
 O banco começa vazio: os dados fictícios da apresentação não serão importados.
 
-Depois da migração inicial, execute também `supabase/migrations/202609160001_learning_rewards.sql`, uma vez, para ativar XP por aula, conclusão sem avaliação e gestão de cadastros. Em um banco já existente, siga [ATUALIZAR-APRENDIZADO.md](ATUALIZAR-APRENDIZADO.md).
+Em um banco novo, execute cada arquivo de `supabase/migrations/` uma vez, nesta ordem exata. Em um banco existente, execute somente as migrações ainda não aplicadas. Para as primeiras atualizações, consulte também [ATUALIZAR-APRENDIZADO.md](ATUALIZAR-APRENDIZADO.md) e [ATUALIZAR-ATIVIDADES.md](ATUALIZAR-ATIVIDADES.md).
 
-Em seguida, execute `supabase/migrations/202609170001_activity_assessments.sql` para avaliações dentro das atividades. Consulte [ATUALIZAR-ATIVIDADES.md](ATUALIZAR-ATIVIDADES.md) para os detalhes desta atualização.
+1. `202609150001_pilot.sql`
+2. `202609160001_learning_rewards.sql`
+3. `202609170001_activity_assessments.sql`
+4. `202609170002_fix_settings_where_clause.sql`
+5. `202609170003_cartorios_and_clients.sql`
+6. `202609170004_partial_reviews_and_proficiency.sql`
+7. `202609210001_community.sql`
+8. `202609210002_engagement.sql`
+9. `202609210003_profile_avatar.sql`
+10. `202609230001_media_rich_articles.sql`
+11. `202609230002_video_resume.sql`
+12. `202609240001_manager_recognition.sql`
+13. `202609240005_private_article_files.sql`
+14. `202609240006_video_progress.sql`
+15. `202609240007_recognition_idempotency.sql`
+16. `202609240008_lesson_notes.sql`
 
 ## 3. Criar o primeiro administrador
 

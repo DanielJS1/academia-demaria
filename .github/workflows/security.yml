@@ -20,22 +20,85 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Semgrep Auto Rules
-        uses: semgrep/semgrep-action@v1
-        continue-on-error: true
+      - uses: actions/setup-python@v5
         with:
-          config: >-
-            p/default
-            p/owasp-top-ten
-            p/cwe-top-25
-            p/javascript
-            p/typescript
-            p/react
-            p/secrets
-          generateSarif: "1"
+          python-version: "3.12"
+
+      - name: Install Semgrep
+        run: python -m pip install semgrep
+
+      - name: Block high severity Semgrep findings
+        run: >-
+          semgrep scan --error --severity ERROR --sarif-output semgrep.sarif
+          --config p/default --config p/owasp-top-ten --config p/cwe-top-25
+          --config p/javascript --config p/typescript --config p/react
+          --config p/secrets .
 
       - name: Upload SARIF to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('semgrep.sarif') != ''
         with:
           sarif_file: semgrep.sarif
+
+  quality:
+    name: "Types, Vitest and Playwright"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: platform
+    env:
+      CI: true
+      E2E_BASE_URL: http://127.0.0.1:4174
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_COLABORADOR_EMAIL: ${{ secrets.E2E_COLABORADOR_EMAIL }}
+      E2E_COLABORADOR_PASSWORD: ${{ secrets.E2E_COLABORADOR_PASSWORD }}
+      E2E_GESTOR_EMAIL: ${{ secrets.E2E_GESTOR_EMAIL }}
+      E2E_GESTOR_PASSWORD: ${{ secrets.E2E_GESTOR_PASSWORD }}
+      E2E_CARTORIO_EMAIL: ${{ secrets.E2E_CARTORIO_EMAIL }}
+      E2E_CARTORIO_PASSWORD: ${{ secrets.E2E_CARTORIO_PASSWORD }}
+      E2E_INTERNAL_COURSE_ID: ${{ vars.E2E_INTERNAL_COURSE_ID }}
+      E2E_VIDEO_COURSE_ID: ${{ vars.E2E_VIDEO_COURSE_ID }}
+      E2E_XP_COURSE_ID: ${{ vars.E2E_XP_COURSE_ID }}
+      E2E_ATTACHMENT_COURSE_ID: ${{ vars.E2E_ATTACHMENT_COURSE_ID }}
+      E2E_NOTES_COURSE_ID: ${{ vars.E2E_NOTES_COURSE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: platform/pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Vitest
+        run: pnpm test
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Start test server
+        run: |
+          pnpm dev > /tmp/doc-academy-next.log 2>&1 &
+          for i in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4174/acesso > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/doc-academy-next.log
+          exit 1
+      - name: E2E on staging
+        run: pnpm test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: platform/playwright-report
+          retention-days: 7

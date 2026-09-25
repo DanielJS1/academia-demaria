@@ -13,3 +13,5 @@ playwright-report/
 .legacy/
 __pycache__/
 *.pyc
+platform/tests/e2e/.env
+platform/data/lesson-notes.json

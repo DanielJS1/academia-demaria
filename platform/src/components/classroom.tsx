@@ -5,7 +5,7 @@ import Link from "next/link";
 import { lessonXp } from "@/lib/rewards";
 import { VimeoLesson } from "./vimeo-lesson";
 import { YouTubeLesson } from "./youtube-lesson";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Award, Check, CheckCircle2, ChevronLeft, Clock3, Eye, FileText, LockKeyhole, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, NotebookPen, PlayCircle, Send } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
@@ -13,7 +13,7 @@ import { EmptyState, Progress } from "./shared";
 import { completeActivity, courseProgress, vimeoEmbed, youtubeEmbed, type Attempt } from "@/lib/model";
 import { LessonNotepad } from "./lesson-notepad";
 import { QuizRunner } from "./quiz-runner";
-export function Classroom({ id, initialLesson, initialPosition = 0, preview = false }: { id: string; initialLesson?: string; initialPosition?: number; preview?: boolean }) {
+export function Classroom({ id, initialLesson, initialPosition, preview = false }: { id: string; initialLesson?: string; initialPosition?: number; preview?: boolean }) {
   const { state, me, ready, update, mutate, notify, busy, activeCartorio } = useAcademy();
   const rawCourse = (preview ? state.courseDrafts.find(item => item.id === id) : undefined) || state.courses.find(item => item.id === id && (item.status === "published" || preview));
   const cartorioUf = activeCartorio?.uf;
@@ -22,9 +22,12 @@ export function Classroom({ id, initialLesson, initialPosition = 0, preview = fa
     lessons: rawCourse.lessons.filter(l => !l.ufFilter || l.ufFilter.length === 0 || !cartorioUf || l.ufFilter.includes(cartorioUf))
   } : undefined;
   const [selected, setSelected] = useState(initialLesson || ""); const [answers, setAnswers] = useState<Record<string, string>>({}); const [retrying, setRetrying] = useState(false); const [focusMode, setFocusMode] = useState(false); const [notesOpen, setNotesOpen] = useState(false); const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const initialPositions = useRef(new Map<string, number>());
   if (!ready) return <div className="empty-state">Abrindo sua sala de aula…</div>;
   if (!course || !course.lessons.length) return <EmptyState title="Uma jornada em preparação" description="Este curso ainda não possui atividades publicadas para sua região ou módulos."><Button asChild variant="secondary"><Link href="/aprender">Voltar ao catálogo</Link></Button></EmptyState>;
   const lesson = course.lessons.find(item => item.id === selected) || course.lessons[0]; const index = course.lessons.findIndex(item => item.id === lesson.id);
+  if (!initialPositions.current.has(lesson.id)) initialPositions.current.set(lesson.id, preview ? 0 : lesson.id === (initialLesson || course.lessons[0].id) && initialPosition !== undefined ? initialPosition : state.videoProgress[id]?.[lesson.id]?.position ?? 0);
+  const resumePosition = initialPositions.current.get(lesson.id) ?? 0;
   const done = state.completed[id] || []; const progress = courseProgress(course, done, cartorioUf);
   const questions = activityQuestions(course,lesson);
   const matchesQuiz = (attempt: Attempt) => attempt.quizId===lesson.id || (!attempt.quizId && course.lessons.find(l=>l.type==="quiz")?.id===lesson.id);
@@ -34,7 +37,7 @@ export function Classroom({ id, initialLesson, initialPosition = 0, preview = fa
   const activityDone = (item: typeof lesson) => item.type!=="quiz" ? done.includes(item.id) : state.attempts.some(a=>a.courseId===id&&a.courseVersion===course.version&&a.userId===me.id&&a.status==="approved"&&(a.quizId===item.id||(!a.quizId&&course.lessons.find(l=>l.type==="quiz")?.id===item.id)));
   const embed = vimeoEmbed(lesson.videoUrl);
   const ytEmbed = youtubeEmbed(lesson.videoUrl);
-  const select = (lessonId: string) => { setSelected(lessonId); setAnswers({}); setRetrying(false); const url = new URL(window.location.href); url.searchParams.set("aula", lessonId); window.history.replaceState({}, "", url); };
+  const select = (lessonId: string) => { setSelected(lessonId); setAnswers({}); setRetrying(false); const url = new URL(window.location.href); url.searchParams.set("aula", lessonId); url.searchParams.delete("t"); window.history.replaceState({}, "", url); };
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (preview) { notify("Prévia: nenhuma resposta, nota ou experiência foi registrada."); return; }
@@ -65,7 +68,7 @@ export function Classroom({ id, initialLesson, initialPosition = 0, preview = fa
     {preview && <div className="notice-bar"><Eye size={17}/><span>Pré-visualização. Sua participação, XP e avaliações não serão alterados.</span></div>}
     <div className={`player-grid ${focusMode ? "focus-mode" : ""} ${lesson.type === "video" ? "video-theater" : ""}`}><div className={`classroom-stage ${lesson.type === "video" && notesOpen ? "notes-open" : ""}`}><div className="classroom-stage-primary">
     {lesson.type === "quiz" ? latest && !retrying && !preview ? <section className="result-card"><span className="pill">AVALIAÇÃO</span><div style={{ marginTop: 20 }}>{latest.status === "pending" ? <Clock3 size={31}/> : <Award size={31}/>}</div><h2 style={{ marginTop: 16 }}>{latest.status === "pending" ? "Mais um passo concluído." : latest.status === "approved" ? "Seu aprendizado merece uma conquista." : "Toda evolução tem uma nova tentativa."}</h2><p>{latest.status === "pending" ? "Suas respostas estão aguardando correção. Assim que o resultado for publicado, você poderá consultar o feedback aqui." : latest.status === "approved" ? "Você foi aprovado nesta avaliação. Seu XP já foi registrado." : "Confira o feedback e siga as orientações para continuar."}</p>{latest.score !== null && <div className="result-score">{latest.score}<small style={{ fontSize: 15, color: "var(--muted)", letterSpacing: 0 }}> / 100</small></div>}{latest.feedback && <div className="feedback">{latest.feedback}</div>}{latest.status === "pending" && me.role === "admin" && <Button asChild variant="secondary"><Link href="/admin?aba=correcoes">Abrir correções <ArrowRight size={15}/></Link></Button>}{latest.status === "approved" && (index < course.lessons.length-1 ? <Button onClick={()=>select(course.lessons[index+1].id)}>Próxima atividade <ArrowRight size={16}/></Button> : <Button asChild><Link href="/conquistas">Ver minha evolução <Award size={16}/></Link></Button>)}{latest.status === "retry" && <><div className="info-note">{latest.retryPolicy === "admin" && !latest.retryAllowed ? "Uma nova tentativa depende de liberação pelo administrador." : latest.retryPolicy === "review" && !prerequisitesDone ? "Revise e conclua novamente as aulas deste curso antes da próxima tentativa." : "Conclua as atividades anteriores para realizar uma nova tentativa."}</div><Button style={{ marginTop: 18 }} disabled={!canRetry} onClick={() => { setRetrying(true); setAnswers({}); }}>Iniciar nova tentativa</Button></>}</section> : !prerequisitesDone && !preview ? <div className="panel reading-card"><div className="info-note"><LockKeyhole size={15}/> Conclua as aulas anteriores e obtenha aprovação nas avaliações anteriores para enviar esta etapa.</div></div> : <QuizRunner course={course} questions={questions} quizId={lesson.id} preview={preview} onComplete={() => setRetrying(false)}/>
-    : lesson.type === "video" ? <>{embed ? <VimeoLesson key={lesson.id} course={course} lesson={lesson} preview={preview} initialPosition={lesson.id===initialLesson?initialPosition:0} nextTitle={course.lessons[index + 1]?.title} onNext={index < course.lessons.length - 1 ? () => select(course.lessons[index + 1].id) : undefined}/> : ytEmbed ? <YouTubeLesson key={lesson.id} course={course} lesson={lesson} preview={preview} initialPosition={lesson.id===initialLesson?initialPosition:0} nextTitle={course.lessons[index + 1]?.title} onNext={index < course.lessons.length - 1 ? () => select(course.lessons[index + 1].id) : undefined}/> : <div className="video-placeholder"><PlayCircle size={55} strokeWidth={1}/><h2>Um novo aprendizado vem aí.</h2><p>Este espaço está pronto para receber o vídeo da aula. Adicione um link do Vimeo ou YouTube no editor do curso.</p><Link href={`/admin/cursos/${id}`}>Cadastrar vídeo <ArrowRight size={14}/></Link></div>}</> : <article className="reading-card"><span className="eyebrow">PAUSA PARA APRENDER</span><h2>{lesson.title}</h2><div className="prose">{lesson.content}</div>{lesson.attachmentPath&&<LessonPdf key={lesson.id} courseId={id} lessonId={lesson.id} preview={preview} name={lesson.attachmentName||"Material da aula"}/>}</article>}
+    : lesson.type === "video" ? <>{embed ? <VimeoLesson key={lesson.id} course={course} lesson={lesson} preview={preview} initialPosition={resumePosition} nextTitle={course.lessons[index + 1]?.title} onNext={index < course.lessons.length - 1 ? () => select(course.lessons[index + 1].id) : undefined}/> : ytEmbed ? <YouTubeLesson key={lesson.id} course={course} lesson={lesson} preview={preview} initialPosition={resumePosition} nextTitle={course.lessons[index + 1]?.title} onNext={index < course.lessons.length - 1 ? () => select(course.lessons[index + 1].id) : undefined}/> : <div className="video-placeholder"><PlayCircle size={55} strokeWidth={1}/><h2>Um novo aprendizado vem aí.</h2><p>Este espaço está pronto para receber o vídeo da aula. Adicione um link do Vimeo ou YouTube no editor do curso.</p><Link href={`/admin/cursos/${id}`}>Cadastrar vídeo <ArrowRight size={14}/></Link></div>}</> : <article className="reading-card"><span className="eyebrow">PAUSA PARA APRENDER</span><h2>{lesson.title}</h2><div className="prose">{lesson.content}</div>{lesson.attachmentPath&&<LessonPdf key={lesson.id} courseId={id} lessonId={lesson.id} preview={preview} name={lesson.attachmentName||"Material da aula"}/>}</article>}
     <div className="activity-actions"><Button variant="secondary" disabled={index === 0} onClick={() => select(course.lessons[index - 1].id)}><ArrowLeft size={15}/> Anterior</Button>{lesson.type !== "quiz" && <Button disabled={busy || (!preview && lesson.type === "video" && !done.includes(lesson.id))} onClick={async () => { if (!preview && lesson.type === "reading") { const saved = await update(current => completeActivity(current, id, lesson.id)); if (!saved) return; } if (index < course.lessons.length - 1) select(course.lessons[index + 1].id); }}><Check size={16}/>{done.includes(lesson.id) && !preview ? "Continuar" : "Concluir e continuar"}</Button>}</div>{lesson.type !== "video" && <LessonNotepad courseId={id} courseTitle={course.title} lesson={lesson} allLessons={course.lessons} />}</div>{lesson.type === "video" && notesOpen && <div className="classroom-notes-pane"><LessonNotepad courseId={id} courseTitle={course.title} lesson={lesson} allLessons={course.lessons} /></div>}</div>
     {focusMode ? (
       <aside
@@ -141,7 +144,7 @@ export function Classroom({ id, initialLesson, initialPosition = 0, preview = fa
                     <span className="dock-tooltip-title">{item.title}</span>
                     <span className="dock-tooltip-meta">
                       {isDone ? (
-                        <span style={{ color: "#5bcea9" }}>✓ Concluída</span>
+                        <span style={{ color: "var(--success-foreground)" }}>✓ Concluída</span>
                       ) : (
                         `${item.minutes} min · ${item.type === "video" ? "Vídeo" : item.type === "quiz" ? "Avaliação" : "Leitura"}`
                       )}

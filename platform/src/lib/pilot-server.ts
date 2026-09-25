@@ -3,10 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./registration-security";
 import { DEPARTMENTS } from "./departments";
 import { courseXp } from "./rewards";
-import { videoIsComplete } from "./video-completion";
-import { commandSchema, mergeWatched } from "./pilot-contract";
+import { commandSchema } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
-import { courseSchema, articleSchema, vimeoEmbed, safeImage, type AcademyState, type Course, type Article, type Cartorio } from "./model";
+import { courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
 import { isStoredMediaUrl } from "./storage-service";
 export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
 export function database(){
@@ -35,6 +34,20 @@ export async function authenticate(request:Request){
  return {db,me:currentProfile};
 }
 function ensure(result:{error:unknown}){if(result.error)throw new ApiError("Não foi possível consultar o banco. Confira a configuração ou tente novamente.",503);}
+export async function canAccessCourse(db:ReturnType<typeof database>,me:Profile,course:Course):Promise<boolean>{
+ if(course.status!=="published")return false;
+ if(me.audience!=="client")return course.audience!=="client";
+ if(!me.cartorio_id||course.audience==="internal")return false;
+ const result=await db.from("academy_cartorios").select("id,modules,status,uf").eq("id",me.cartorio_id).maybeSingle();ensure(result);
+ const cartorio=result.data;
+ return !!cartorio&&cartorio.status==="active"&&isCourseAvailableForCartorio(course,cartorio as Cartorio);
+}
+export async function requireCourseAccess(db:ReturnType<typeof database>,me:Profile,courseId:string):Promise<Course>{
+ const result=await db.from("academy_resources").select("published").eq("id",courseId).eq("kind","course").maybeSingle();ensure(result);
+ const parsed=courseSchema.safeParse(result.data?.published);
+ if(!parsed.success||!await canAccessCourse(db,me,parsed.data))throw new ApiError("Curso não autorizado.",403);
+ return parsed.data;
+}
 export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  async function all(table:string,columns="*",field?:string,value?:string){
   const rows:Record<string,any>[]=[];
@@ -42,18 +55,22 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   return {data:rows,error:null};
  }
  const results=await Promise.all([
-  all("academy_resources","*","kind","course"),all("academy_profiles"),
+  all("academy_resources","*","kind","course"),all("academy_profiles","*",me.audience==="client"?"id":undefined,me.id),
   db.from("academy_settings").select("*").single(),
-  all("academy_progress","user_id,course_id,version,lesson_id,done,position,duration,updated_at"),
-  all("academy_attempts","*",me.role==="student"?"user_id":undefined,me.role==="student"?me.id:undefined),
-  all("academy_attempts","user_id,submitted_at"),
-  all("academy_xp"),db.from("academy_preferences").select("*").eq("user_id",me.id).maybeSingle(),
-  all("academy_cartorios"), all("academy_recognitions"), all("academy_pdi_notes"),
+  all("academy_progress","user_id,course_id,version,lesson_id,done,position,duration,updated_at",me.audience==="client"?"user_id":undefined,me.id),
+  all("academy_attempts","*",me.audience==="client"||me.role==="student"?"user_id":undefined,me.id),
+  all("academy_attempts","user_id,submitted_at",me.audience==="client"?"user_id":undefined,me.id),
+  all("academy_xp","*",me.audience==="client"?"user_id":undefined,me.id),db.from("academy_preferences").select("*").eq("user_id",me.id).maybeSingle(),
+  all("academy_cartorios","*",me.audience==="client"?"id":undefined,me.cartorio_id??"__none__"), all("academy_recognitions","*",me.audience==="client"?"user_id":undefined,me.id), all("academy_pdi_notes","*",me.audience==="client"?"user_id":undefined,me.id),
  ]);
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult,recognitionsResult,pdiNotesResult]=results;
  const community=await readCommunity(db,me);
- const courses:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,xp:courseXp(r.published)}));
+ const published:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,xp:courseXp(r.published)}));
+ const ownCartorio=(cartoriosResult.data??[]).find((row:any)=>row.id===me.cartorio_id);
+ const courses=published.filter(course=>course.status==="published"&&(me.audience==="client"
+  ? ownCartorio?.status==="active"&&isCourseAvailableForCartorio(course,ownCartorio as Cartorio)
+  : course.audience!=="client"));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))})),proficiencyQuestions:course.proficiencyQuestions?.map(q=>({...q,correct:""}))});
  const completion:Record<string,string[]>={};
  for(const row of progress.data??[])if(row.user_id===me.id&&row.done&&courses.some(c=>c.id===row.course_id&&c.version===row.version))(completion[row.course_id]??=[]).push(row.lesson_id);
@@ -70,7 +87,8 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const today=day(new Date().toISOString());
  const streak=(userId:string)=>{const days=activityDays.get(userId);if(!days?.size)return 0;let cursor=new Date(`${today}T12:00:00Z`);if(!days.has(today))cursor.setUTCDate(cursor.getUTCDate()-1);let count=0;while(days.has(cursor.toISOString().slice(0,10))){count++;cursor.setUTCDate(cursor.getUTCDate()-1);}return count;};
  const norm = (s?: string) => (s || "").trim().toLowerCase();
- const managedIds=new Set((profiles.data??[]).filter((p: any)=>me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(!p.manager_id&&p.department&&norm(p.department)===norm(me.department))))).map((p: any)=>p.id));
+ const audienceProfiles=(profiles.data??[]).filter((p:any)=>me.audience==="client"?p.id===me.id:(p.audience??"internal")==="internal");
+ const managedIds=new Set(audienceProfiles.filter((p: any)=>me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(!p.manager_id&&p.department&&norm(p.department)===norm(me.department))))).map((p: any)=>p.id));
  const profileNames=new Map<string,string>((profiles.data??[]).map((p: any):[string,string]=>[p.id,p.name]));
  const recognitions=(recognitionsResult.data??[]).filter((r: any)=>r.user_id===me.id||(me.role!=="student"&&managedIds.has(r.user_id))).map((r: any)=>({id:r.id,userId:r.user_id,managerName:profileNames.get(r.manager_id)??"Gestor",title:r.title,message:r.message,createdAt:r.created_at}));
  const pdiNotes=(pdiNotesResult.data??[]).filter((r: any)=>me.role==="admin"||(me.role==="manager"&&managedIds.has(r.user_id))).map((r: any)=>({id:r.id,userId:r.user_id,managerName:profileNames.get(r.manager_id)??"Gestor",content:r.content,createdAt:r.created_at}));
@@ -83,20 +101,20 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
    }
   }
  }
- const people=(profiles.data??[]).filter((p: any)=>p.status!=="inactive"||me.role==="admin"||p.id===me.id).map((p: any)=>{
+ const people=audienceProfiles.filter((p: any)=>p.status!=="inactive"||me.role==="admin"||p.id===me.id).map((p: any)=>{
   const report=me.role==="admin"||p.id===me.id||(me.role==="manager"&&(p.manager_id===me.id||(!p.manager_id&&p.department&&norm(p.department)===norm(me.department))));
   const eligibleCourses=courses.filter(c=>c.status==="published"&&c.audience!==(p.audience==="client"?"internal":"client"));
   const total=eligibleCourses.reduce((n: number,c: Course)=>n+c.lessons.filter(l=>l.type!=="quiz").length,0);
   const done=(progress.data??[]).filter((r: any)=>r.user_id===p.id&&r.done&&eligibleCourses.some(c=>c.id===r.course_id&&c.version===r.version&&c.lessons.some(l=>l.id===r.lesson_id&&l.type!=="quiz"))).length;
   return {id:p.id,name:p.name,email:report?p.email:"",department:p.department,managerId:report?(p.manager_id??""):"",role:p.role,status:p.status,xp:(xp.data??[]).filter((x: any)=>x.user_id===p.id&&x.season===season).reduce((n: number,x: any)=>n+x.amount,0),progress:report&&total?Math.round(done/total*100):0,performance:total?Math.round(done/total*100):0,streak:streak(p.id),audience:(p.audience??"internal") as "internal"|"client",cartorioId:p.cartorio_id??undefined,avatar:typeof p.avatar==="string"&&p.avatar.startsWith("https://")?p.avatar:null};
  });
- const cartorios:Cartorio[]=(cartoriosResult.data??[]).map((c: any)=>({
+ const cartorios:Cartorio[]=(cartoriosResult.data??[]).filter((c:any)=>me.audience!=="client"||c.id===me.cartorio_id).map((c: any)=>({
   id:c.id,name:c.name,city:c.city??"",uf:c.uf??"",cns:c.cns??undefined,modules:c.modules??[],
   keyUserId:c.key_user_id??undefined,keyUserName:c.key_user_name??undefined,keyUserEmail:c.key_user_email??undefined,
   status:c.status??"active",createdAt:c.created_at??new Date().toISOString()
  }));
- const visibleAttempts=(attempts.data??[]).filter((a: any)=>me.role==="admin"||managedIds.has(a.user_id));
- const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:settings.data.departments,products:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
+ const visibleAttempts=(attempts.data??[]).filter((a: any)=>managedIds.has(a.user_id)&&courses.some(c=>c.id===a.course_id));
+ const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"&&me.audience!=="client"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:me.audience==="client"?[]:settings.data.departments,products:me.audience==="client"?[...new Set(courses.map(c=>c.product))]:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
   teamProgress,cartorios,recognitions,pdiNotes};
@@ -105,6 +123,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");
  const command=parsed.data;
+ if(command.type==="video"||command.type==="complete"||command.type==="submit")await requireCourseAccess(db,me,command.courseId);
  if(command.type==="avatar"){
   if(command.avatar && (!isStoredMediaUrl(command.avatar,"academy-avatars") || !new URL(command.avatar).pathname.includes(`/${me.id}/`)))throw new ApiError("URL de avatar inválida.");
   const {error}=await db.from("academy_profiles").update({avatar:command.avatar}).eq("id",me.id);
@@ -114,13 +133,13 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  }
  if(command.type.startsWith("community-")){await executeCommunity(db,me,command);return;}
  if(command.type==="grant-recognition"||command.type==="add-pdi-note"){
-  if(me.role!=="admin"&&me.role!=="manager")throw new ApiError("Somente gestores podem registrar reconhecimentos e anotações.",403);
+  if(me.audience==="client"||(me.role!=="admin"&&me.role!=="manager"))throw new ApiError("Somente gestores podem registrar reconhecimentos e anotações.",403);
   const target=await db.from("academy_profiles").select("id,manager_id,department,status,audience").eq("id",command.userId).maybeSingle();
   if(target.error||!target.data||target.data.status!=="active"||target.data.audience==="client"||target.data.id===me.id||
     (me.role!=="admin"&&target.data.manager_id!==me.id&&!(target.data.manager_id===null&&target.data.department?.trim().toLowerCase()===me.department.trim().toLowerCase())))
     throw new ApiError("Colaborador fora da sua equipe ou inativo.",403);
   if(command.type==="grant-recognition"){
-   const {error}=await db.rpc("academy_grant_recognition",{actor:me.id,target:command.userId,recognition_title:command.title,recognition_message:command.message});
+   const {error}=await db.rpc("academy_grant_recognition",{actor:me.id,target:command.userId,recognition_title:command.title,recognition_message:command.message,request_id:command.requestId});
    if(error)throw new ApiError("Não foi possível conceder o reconhecimento: "+error.message,500);
   }else{
    const {error}=await db.from("academy_pdi_notes").insert({user_id:command.userId,manager_id:me.id,content:command.content});
@@ -218,19 +237,57 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  }
  if(command.type==="save-cartorio"){
   if(me.role!=="admin")throw new ApiError("Somente administradores podem gerenciar cartórios.",403);
-  const {error}=await db.from("academy_cartorios").upsert({
+  const existing=await db.from("academy_cartorios").select("id,key_user_id").eq("id",command.data.id).maybeSingle();
+  ensure(existing);
+  const keyUserId=existing.data?.key_user_id??null;
+  const cartorio={
    id:command.data.id,
    name:command.data.name,
    city:command.data.city,
    uf:command.data.uf,
    cns:command.data.cns,
    modules:command.data.modules,
-   key_user_id:command.data.keyUserId,
+   key_user_id:keyUserId,
    key_user_name:command.data.keyUserName,
    key_user_email:command.data.keyUserEmail,
    status:command.data.status,
-  });
-  if(error)throw new ApiError(error.message);
+  };
+  if(keyUserId){
+   const {error}=await db.from("academy_cartorios").upsert(cartorio);
+   if(error)throw new ApiError(error.message);
+   if(command.initialPassword){
+    const changed=await db.auth.admin.updateUserById(keyUserId,{password:command.initialPassword});
+    if(changed.error)throw new ApiError("Cartório salvo, mas não foi possível atualizar a senha do usuário-chave.",503);
+   }
+   return;
+  }
+  const name=command.data.keyUserName?.trim();
+  const email=command.data.keyUserEmail?.trim();
+  if(!name||!email||!command.initialPassword)throw new ApiError("Informe nome, e-mail e senha inicial do usuário-chave.");
+  const normalizedEmail=normalizeEmail(email);
+  const created=await db.auth.admin.createUser({email:normalizedEmail,password:command.initialPassword,email_confirm:true,user_metadata:{name}});
+  if(created.error||!created.data.user)throw new ApiError("Não foi possível criar o acesso do usuário-chave. Confira se o e-mail já existe.");
+  const userId=created.data.user.id;
+  let insertedCartorio=false;
+  try{
+   if(!existing.data){
+    const inserted=await db.from("academy_cartorios").insert({...cartorio,key_user_id:null,key_user_email:normalizedEmail});
+    if(inserted.error)throw inserted.error;
+    insertedCartorio=true;
+   }
+   const profile=await db.from("academy_profiles").insert({id:userId,name,email:normalizedEmail,department:command.data.name,manager_id:null,role:"student",status:"active",audience:"client",cartorio_id:command.data.id});
+   if(profile.error)throw profile.error;
+   const linked=await db.from("academy_cartorios").upsert({...cartorio,key_user_id:userId,key_user_email:normalizedEmail});
+   if(linked.error)throw linked.error;
+  }catch(error){
+   const removed=await db.auth.admin.deleteUser(userId);
+   if(removed.error)console.error("Cartorio Auth rollback failed",removed.error.message);
+   if(insertedCartorio){
+    const deleted=await db.from("academy_cartorios").delete().eq("id",command.data.id);
+    if(deleted.error)console.error("Cartorio rollback failed",deleted.error.message);
+   }
+   throw new ApiError("Não foi possível concluir o cadastro do cartório. Tente novamente.",503);
+  }
   return;
  }
  if(command.type==="delete-cartorio"){
@@ -240,11 +297,8 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   return;
  }
  if(command.type==="video"){
-  const previous=await db.from("academy_progress").select("ranges").eq("user_id",me.id).eq("course_id",command.courseId).eq("version",command.version).eq("lesson_id",command.lessonId).maybeSingle();ensure(previous);
-  const watched=mergeWatched([...(previous.data?.ranges??[]),...command.ranges],command.duration);
-  const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,ranges:watched.ranges,done:videoIsComplete(watched.seconds,command.duration,command.position)}});if(error)throw new ApiError(error.message);
-  const saved=await db.from("academy_progress").update({position:Math.min(command.position??0,command.duration)}).eq("user_id",me.id).eq("course_id",command.courseId).eq("version",command.version).eq("lesson_id",command.lessonId);
-  ensure(saved);return;
+  const {error}=await db.rpc("academy_save_video_progress",{actor:me.id,command});
+  if(error)throw new ApiError(error.message);return;
  }
  const {error}=await db.rpc("academy_mutate",{actor:me.id,command});if(error)throw new ApiError(error.message);
 }

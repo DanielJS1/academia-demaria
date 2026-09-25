@@ -54,6 +54,15 @@
   color: var(--ink);
 }
 
+.focus-toggle-btn:focus-visible,
+.notepad-toggle:focus-visible,
+.dock-expand-btn:focus-visible,
+.dock-item-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
 .player-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 285px;
@@ -190,7 +199,7 @@
 }
 
 .dock-item-btn.is-done {
-  color: #5bcea9;
+  color: var(--success-foreground);
 }
 
 .dock-floating-tooltip {
@@ -237,7 +246,7 @@
 .video-frame {
   aspect-ratio: 16 / 9;
   width: 100%;
-  max-height: min(68vh, calc(100dvh - 180px));
+  max-height: min(62vh, calc(100dvh - 220px));
   background: #18181b;
   border-radius: 14px;
   overflow: hidden;
@@ -415,7 +424,7 @@
 }
 
 .lesson-button.done > svg {
-  color: #55a17f;
+  color: var(--success-foreground);
 }
 
 .curriculum .module-title {

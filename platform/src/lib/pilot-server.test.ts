@@ -15,6 +15,14 @@ function fixture(){
  return {me,db:db as unknown as Parameters<typeof readAcademy>[0],tables};
 }
 describe("API: isolamento de dados",()=>{
+ it("não expõe cursos ou colaboradores internos ao cartório",async()=>{
+  const {db,me}=fixture();
+  const {state}=await readAcademy(db,{...me,audience:"client",cartorio_id:"cartorio"});
+  expect(state.courses).toHaveLength(0);
+  expect(state.people.map(p=>p.id)).toEqual([me.id]);
+  expect(state.departments).toEqual([]);
+  expect(state.cartorios).toEqual([]);
+ });
  it("não entrega gabaritos, rascunhos ou avaliações de terceiros ao aluno",async()=>{
   const {db,me}=fixture();const {state}=await readAcademy(db,me);
   expect(state.courseDrafts).toHaveLength(0);expect(state.courses[0].questions.every(q=>q.correct==="")).toBe(true);

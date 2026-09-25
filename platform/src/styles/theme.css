@@ -9,9 +9,12 @@
   --foreground: var(--ink);
   --primary: #4f46e5;
   --primary-hover: #4338ca;
+  --primary-action: #4f46e5;
+  --primary-action-hover: #4338ca;
   --lavender: #eef2ff;
   --accent-subtle: #eef2ff;
-  --mint: #059669;
+  --mint: #047857;
+  --success-foreground: #047857;
   --mint-subtle: #ecfdf5;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 8px 24px -4px rgb(0 0 0 / 0.05);
   --shadow-hover: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 16px 32px -6px rgb(0 0 0 / 0.08);
@@ -29,11 +32,14 @@ html.dark {
   --line: #1e293b;
   --border: var(--line);
   --foreground: var(--ink);
-  --primary: #6366f1;
-  --primary-hover: #818cf8;
+  --primary: #a5b4fc;
+  --primary-hover: #c7d2fe;
+  --primary-action: #4f46e5;
+  --primary-action-hover: #4338ca;
   --lavender: #1e1b4b;
   --accent-subtle: #1e1b4b;
-  --mint: #10b981;
+  --mint: #047857;
+  --success-foreground: #6ee7b7;
   --mint-subtle: #064e3b33;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 8px 24px -4px rgb(0 0 0 / 0.35);
   --shadow-hover: 0 4px 8px -2px rgb(0 0 0 / 0.35), 0 16px 32px -6px rgb(0 0 0 / 0.45);
@@ -150,6 +156,18 @@ textarea::placeholder {
   top: 12px;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .app {
   min-height: 100vh;
 }
@@ -236,7 +254,7 @@ textarea::placeholder {
 .season-pill > span {
   width: 5px;
   height: 5px;
-  background: #6dbd9e;
+  background: var(--success-foreground);
   border-radius: 50%;
 }
 
