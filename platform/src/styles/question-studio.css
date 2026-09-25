@@ -1,5 +1,7 @@
 .question-studio { overscroll-behavior: contain; }
 .question-studio .panel { min-width: 0; }
+.question-studio-header, .question-studio-stepper, .question-studio-footer { flex-shrink: 0; }
+.question-studio-body { min-height: 0; }
 .question-studio button:focus-visible, .question-studio input:focus-visible, .question-studio textarea:focus-visible {
   outline: 2px solid var(--primary); outline-offset: 3px;
 }

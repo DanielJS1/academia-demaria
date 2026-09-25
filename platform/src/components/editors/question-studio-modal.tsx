@@ -44,10 +44,15 @@ export function QuestionStudioModal({
   const [error, setError] = useState("");
   useEffect(() => {
     const dialog = dialogRef.current;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     dialog?.showModal();
-    return () => { dialog?.close(); document.body.style.overflow = previousOverflow; };
+    return () => {
+      dialog?.close();
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
   }, []);
   const [items, setItems] = useState<StudioQuestion[]>(() =>
     questions.length > 0
@@ -286,7 +291,7 @@ export function QuestionStudioModal({
         </div>
 
         {/* Question Stepper Bar */}
-        <div
+        <div className="question-studio-stepper"
           style={{
             padding: "12px 24px",
             background: "var(--card-bg, #fbfbfd)",
