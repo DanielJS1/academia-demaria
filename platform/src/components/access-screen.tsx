@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, ShieldAlert, UserPlus } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Compass, Eye, EyeOff, ShieldAlert, TrendingUp, UserPlus } from "lucide-react";
 import { AcademyBrand } from "./academy-brand";
 import { browserAuth } from "@/lib/supabase-browser";
 import { DEPARTMENTS } from "@/lib/departments";
 import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
+
+const learningSteps = [
+  { label: "Descobrir", icon: Compass, title: "Encontre seu caminho", description: "Trilhas e conteúdos conectados aos desafios do seu dia a dia." },
+  { label: "Aprender", icon: BookOpen, title: "Aprenda no seu ritmo", description: "Aulas, leituras e prática em uma experiência feita para avançar." },
+  { label: "Evoluir", icon: TrendingUp, title: "Veja sua evolução", description: "Acompanhe seu progresso e reconheça cada conquista." },
+] as const;
 
 export function AccessScreen({ configured, signedIn }: { configured: boolean; signedIn: boolean }) {
   const router = useRouter();
@@ -21,6 +27,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [activeStep, setActiveStep] = useState(0);
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -116,15 +123,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
   return (
     <main className="access-page">
       <section className="access-story">
-        <div className="access-journey">
-          <div className="access-journey-ring access-journey-ring--outer" />
-          <div className="access-journey-ring access-journey-ring--inner" />
-          <span className="access-journey-point access-journey-point--one" />
-          <span className="access-journey-point access-journey-point--two" />
-          <span className="access-journey-point access-journey-point--three" />
-          <a className="access-brand access-journey-core" href="/" aria-label="Academia DeMaria — início"><AcademyBrand /></a>
-          <span className="access-journey-label">Aprender <span>·</span> Evoluir <span>·</span> Transformar</span>
-        </div>
+        <a className="access-brand" href="/" aria-label="Academia DeMaria — início"><AcademyBrand /></a>
         <span className="hero-eyebrow">DEMARIA · CONHECIMENTO QUE TRANSFORMA</span>
         <h1>
           Seu próximo nível
@@ -132,6 +131,21 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
           começa <em>aqui.</em>
         </h1>
         <p>Um espaço para aprender, compartilhar descobertas e evoluir com a sua equipe.</p>
+        <div className="access-path" aria-label="Conheça a jornada de aprendizado">
+          <div className="access-path-steps" role="group" aria-label="Etapas da jornada">
+            {learningSteps.map((step, index) => {
+              const Icon = step.icon;
+              return <button key={step.label} type="button" className={`access-path-step${activeStep === index ? " is-active" : ""}`} aria-pressed={activeStep === index} onMouseEnter={() => setActiveStep(index)} onFocus={() => setActiveStep(index)} onClick={() => setActiveStep(index)}>
+                <span className="access-path-icon"><Icon size={20} strokeWidth={1.8} /></span>
+                <span className="access-path-name">{step.label}</span>
+              </button>;
+            })}
+          </div>
+          <div key={activeStep} className="access-path-detail" aria-live="polite">
+            <strong>{learningSteps[activeStep].title}</strong>
+            <span>{learningSteps[activeStep].description}</span>
+          </div>
+        </div>
       </section>
 
       <section className="panel access-card">
