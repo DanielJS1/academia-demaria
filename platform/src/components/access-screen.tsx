@@ -116,7 +116,15 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
   return (
     <main className="access-page">
       <section className="access-story">
-        <a className="access-brand" href="/" aria-label="Academia DeMaria — início"><AcademyBrand /></a>
+        <div className="access-journey">
+          <div className="access-journey-ring access-journey-ring--outer" />
+          <div className="access-journey-ring access-journey-ring--inner" />
+          <span className="access-journey-point access-journey-point--one" />
+          <span className="access-journey-point access-journey-point--two" />
+          <span className="access-journey-point access-journey-point--three" />
+          <a className="access-brand access-journey-core" href="/" aria-label="Academia DeMaria — início"><AcademyBrand /></a>
+          <span className="access-journey-label">Aprender <span>·</span> Evoluir <span>·</span> Transformar</span>
+        </div>
         <span className="hero-eyebrow">DEMARIA · CONHECIMENTO QUE TRANSFORMA</span>
         <h1>
           Seu próximo nível
@@ -124,19 +132,10 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
           começa <em>aqui.</em>
         </h1>
         <p>Um espaço para aprender, compartilhar descobertas e evoluir com a sua equipe.</p>
-        <div className="access-journey" aria-label="Uma jornada contínua de aprendizado e evolução">
-          <div className="access-journey-ring access-journey-ring--outer" />
-          <div className="access-journey-ring access-journey-ring--inner" />
-          <span className="access-journey-point access-journey-point--one" />
-          <span className="access-journey-point access-journey-point--two" />
-          <span className="access-journey-point access-journey-point--three" />
-          <span className="access-journey-core"><img src="/academia-demaria-symbol.png" alt="" /></span>
-          <span className="access-journey-label">Aprender <span>·</span> Evoluir <span>·</span> Transformar</span>
-        </div>
       </section>
 
       <section className="panel access-card">
-        <img className="access-logo" src="/academia-demaria-symbol.png" alt="Academia DeMaria" width={120} height={120} />
+        <div className="access-mobile-brand" aria-label="Academia DeMaria"><AcademyBrand /></div>
         <span className="eyebrow">SUA JORNADA NA ACADEMIA DEMARIA</span>
         <h2>
           {!configured
