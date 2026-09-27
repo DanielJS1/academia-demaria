@@ -36,7 +36,7 @@ export function CourseEditor({ id }: { id: string }) {
           required: false,
           banner: "",
           logoUrl: "",
-          author: "Equipe DOC-Academy",
+          author: "Equipe Academia DeMaria",
           department: "",
           audience: "internal",
           requiredModules: [],
@@ -334,7 +334,7 @@ export function CourseEditor({ id }: { id: string }) {
                 placeholder="https://... ou /banners/..."
                 onChange={event => field("banner", event.target.value)}
               />
-              <small>Deixe vazio para usar a capa visual da DOC-Academy.</small>
+              <small>Deixe vazio para usar a capa visual da Academia DeMaria.</small>
             </label>
             <label className="field">
               <span>Logo central do produto (PNG recomendado)</span>

@@ -206,7 +206,7 @@ export function Evolution() {
           </div>
           <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7, margin: 0 }}>
             O <strong>Nível</strong> representa sua trajetória <strong>permanente e vitalícia</strong>. A cada{" "}
-            <strong>400 XP</strong> acumulados em qualquer atividade na DOC-Academy, você sobe um nível. Seu Nível e todo o
+            <strong>400 XP</strong> acumulados em qualquer atividade na Academia DeMaria, você sobe um nível. Seu Nível e todo o
             XP acumulado <strong>nunca são zerados ou perdidos</strong>.
           </p>
         </div>

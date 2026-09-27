@@ -100,7 +100,7 @@ export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
               )}
             </div>
             <span className="profile-photo-name">{me?.name}</span>
-            <span className="profile-photo-dept">{me?.department || "DOC-Academy"}</span>
+            <span className="profile-photo-dept">{me?.department || "Academia DeMaria"}</span>
           </div>
 
           {errorMessage && (

@@ -34,7 +34,7 @@
 ## Aparência
 
 - Tema escuro com fundo próximo do preto, superfícies neutras e roxo nos destaques.
-- Logo no topo da navegação; DOC-Academy no rodapé, com Academy roxo.
+- Logo no topo da navegação; Academia DeMaria no rodapé, com Academy roxo.
 - Indicador visual K removido; o atalho Ctrl/Cmd+K continua focando a pesquisa.
 - Movimento discreto no banner com o mouse, desativado em preferências de movimento reduzido e sem dependência de animação para navegação.
 

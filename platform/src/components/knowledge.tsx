@@ -315,7 +315,7 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
           )}
 
           <div className="info-note assistant-future-note">
-            <ShieldCheck size={16}/> Futuramente, os materiais publicados nesta biblioteca também poderão oferecer respostas diretamente na DOC-Academy.
+            <ShieldCheck size={16}/> Futuramente, os materiais publicados nesta biblioteca também poderão oferecer respostas diretamente na Academia DeMaria.
           </div>
         </section>
       )}

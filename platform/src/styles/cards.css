@@ -1249,3 +1249,44 @@
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
 }
+
+/* Academia DeMaria learning journey */
+.welcome-grid { grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; }
+.hero.hero-carousel,
+[data-theme="dark"] .hero.hero-carousel { border-radius: 22px; border: 1px solid rgba(122, 159, 255, .24); background: radial-gradient(circle at 77% 43%, rgba(111, 92, 255, .40), transparent 29%), radial-gradient(circle at 18% 95%, rgba(0, 173, 188, .22), transparent 48%), linear-gradient(125deg, #0b172a 0%, #132440 52%, #211e4f 100%); box-shadow: 0 22px 48px -24px rgba(24, 35, 85, .55), inset 0 1px rgba(255,255,255,.13); }
+.hero.hero-carousel--blue { background: radial-gradient(circle at 77% 43%, rgba(0, 173, 188, .36), transparent 31%), linear-gradient(125deg, #0b172a, #152d4f 62%, #203d67); }
+.hero.hero-carousel--amber { background: radial-gradient(circle at 77% 43%, rgba(111, 92, 255, .27), transparent 31%), linear-gradient(125deg, #0b172a, #1e263f 62%, #3b2f4c); }
+.hero.hero-carousel--rose { background: radial-gradient(circle at 77% 43%, rgba(138, 99, 255, .34), transparent 31%), linear-gradient(125deg, #0b172a, #262040 62%, #3d2758); }
+.hero-carousel { min-height: 355px; }
+.hero-carousel::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .48; background-image: radial-gradient(circle, rgba(222,240,255,.65) 1px, transparent 1.8px); background-size: 64px 52px; mask-image: linear-gradient(90deg, transparent 35%, #000); }
+.hero-slide-copy { padding: 36px 44px 66px; }
+.hero-slide-eyebrow { color: #98f1f1; }
+.hero-slide-spark { background: #40dfdf; box-shadow: 0 0 15px #00adbc; }
+.hero-carousel h2 { font-size: clamp(26px, 3vw, 40px); letter-spacing: -.045em; font-weight: 760; }
+.hero-carousel p { color: #d9e6f3; font-size: 14px; line-height: 1.6; }
+.hero-slide-orbit { position: relative; width: min(15vw, 172px); height: min(15vw, 172px); border-color: rgba(147, 204, 255, .42); background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.18), rgba(111,92,255,.12)); box-shadow: 0 0 0 20px rgba(0,173,188,.06), 0 0 0 48px rgba(111,92,255,.045), 0 18px 50px rgba(0,0,0,.18); }
+.hero-slide-orbit::before, .hero-slide-orbit::after { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #59e3e8; box-shadow: 0 0 14px #00adbc; }
+.hero-slide-orbit::before { top: 8%; left: 8%; }.hero-slide-orbit::after { right: -14%; bottom: 18%; width: 6px; height: 6px; background: #a697ff; box-shadow: 0 0 12px #6f5cff; }
+.hero-slide-actions .button { background: #fff; color: #151b3f; border-radius: 12px; font-weight: 750; box-shadow: 0 12px 30px -14px rgba(0,0,0,.45); }
+.hero-slide-actions .button:hover { background: #e9fbff; transform: translateY(-2px); }
+.hero-slide-badge { background: #5143bb; border-radius: 10px; }
+.journey-card { position: relative; overflow: hidden; padding: 24px 22px 0; border-radius: 22px; background: radial-gradient(circle at 90% 5%, var(--purple-soft), transparent 45%), var(--surface); }
+.journey-card::before { content: ""; position: absolute; top: 0; left: 24px; right: 24px; height: 2px; background: var(--academy-gradient); border-radius: 99px; opacity: .7; }
+.journey-ring { width: 152px; height: 152px; margin: 14px auto 8px; filter: drop-shadow(0 10px 18px var(--purple-soft)); }
+.ring-track { stroke: var(--surface2); }.ring-fill { stroke: url(#journey-gradient); stroke-width: 10; transition: stroke-dasharray .7s ease-out; }
+.journey-ring strong { font-size: 38px; letter-spacing: -.06em; }.journey-ring strong small { color: var(--academy-purple); }
+.journey-stat-row { border-radius: 11px; background: color-mix(in srgb, var(--surface2) 72%, transparent); }
+.mini-icon { border-radius: 9px; }.mini-icon.mint { background: var(--cyan-soft); color: var(--brand-cyan-dark); }
+.journey-link { min-height: 52px; }.journey-link:hover { color: var(--brand-cyan-dark); }
+.metric-strip { gap: 14px; padding: 0; margin: 22px 0 34px; border: 0; background: transparent; box-shadow: none; }
+.metric-strip > div { position: relative; min-height: 102px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease; }
+.metric-strip > div:last-child { border: 1px solid var(--line); }
+.metric-strip > div:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--academy-purple) 28%, var(--line)); box-shadow: var(--shadow-hover); }
+.metric-icon { width: 44px; height: 44px; flex: none; border-radius: 13px; color: var(--academy-purple); background: var(--purple-soft); }
+.metric-strip > div:first-child .metric-icon { color: var(--brand-cyan-dark); background: var(--cyan-soft); }
+.metric-strip > div:last-child .metric-icon { color: var(--academy-purple); background: var(--purple-soft); }
+.metric-strip small { font-size: 11px; letter-spacing: .025em; }.metric-strip strong { font-size: 20px; letter-spacing: -.04em; }
+.metric-tag { border-radius: 99px; background: var(--cyan-soft); color: var(--brand-cyan-dark); }
+.course-card { border-radius: 18px; box-shadow: var(--shadow); }
+@media (max-width: 700px) { .welcome-grid { grid-template-columns: 1fr; }.hero-carousel { min-height: 330px; }.hero-slide-copy { padding: 24px 24px 68px; }.metric-strip { gap: 10px; } }
+@media (prefers-reduced-motion: reduce) { .ring-fill { transition: none; } }

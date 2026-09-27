@@ -1,4 +1,4 @@
-# DOC-Academy
+# Academia DeMaria
 
 Este projeto foi reorganizado para separar a versão atual da demonstração antiga.
 
