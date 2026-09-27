@@ -7,6 +7,7 @@ import { useAcademy } from "./academy-provider";
 import { GlobalSearch } from "./global-search";
 import { Button } from "./ui/button";
 import { experience } from "@/lib/gamification";
+import { AcademyBrand } from "./academy-brand";
 
 const navigation = [
   { href: "/", label: "Visão geral", icon: Home },
@@ -158,14 +159,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="sidebar-header">
           <div className="sidebar-brand-control">
-            <Link href="/" className="brand" aria-label="DOC-Academy — início" onClick={closeMobileMenu}>
-              {isDocked ? (
-                <img className="brand-official" src="/doc-academy-logo-oficial.png" alt="DOC-Academy"/>
-              ) : (
-                <span className="brand-title">
-                  <strong>DOC·<span>Academy</span></strong>
-                </span>
-              )}
+            <Link href="/" className="brand" aria-label="Academia DeMaria — início" onClick={closeMobileMenu}>
+              <AcademyBrand compact={isDocked}/>
             </Link>
             {isDocked && (
               <button type="button" className="sidebar-brand-toggle" onClick={toggleCollapsed}
@@ -453,7 +448,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {storageError && <div className="storage-warning" role="alert">Não foi possível atualizar os dados do servidor. Confira sua conexão e tente novamente.</div>}
         <main id="conteudo" className="main-content">{children}</main>
         <footer className="main-footer">
-          <span>DOC-Academy <span>·</span> Feito para evoluir com você.</span>
+          <span>Academia DeMaria <span>·</span> Feito para evoluir com você.</span>
           <span>Ambiente interno · progresso salvo na sua conta</span>
         </footer>
       </div>

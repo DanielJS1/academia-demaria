@@ -1,6 +1,6 @@
 # AGENTS.md — Diretrizes para OpenAI Codex & Assistentes de IA
 
-Este documento orienta assistentes de IA (Codex, Copilot, etc.) a trabalhar no **DOC-Academy** com máxima eficiência e consumo mínimo de tokens.
+Este documento orienta assistentes de IA (Codex, Copilot, etc.) a trabalhar no **Academia DeMaria** com máxima eficiência e consumo mínimo de tokens.
 
 ---
 

@@ -51,7 +51,7 @@ export function ArticleEditor({ id }: { id: string }) {
   if (error) return <EmptyState title="Não foi possível abrir o artigo" description={error}><Button onClick={() => { setError(""); setAttempt(value => value + 1); }}>Tentar novamente</Button></EmptyState>;
   if (id !== "novo" && (!loaded || loaded.id !== id)) return <div className="empty-state" role="status">Carregando conteúdo do artigo…</div>;
   if (loaded && loaded.authorId !== me.id && me.role !== "admin") return <EmptyState title="Edição restrita ao autor" description="Gestores podem solicitar uma atualização pela página do artigo." />;
-  return <ArticleEditorForm key={id} initial={id === "novo" ? undefined : loaded!} firstProduct={state.products[0] || "DOC-Academy"} />;
+  return <ArticleEditorForm key={id} initial={id === "novo" ? undefined : loaded!} firstProduct={state.products[0] || "Academia DeMaria"} />;
 }
 
 function ArticleEditorForm({ initial, firstProduct }: { initial?: Article; firstProduct: string }) {

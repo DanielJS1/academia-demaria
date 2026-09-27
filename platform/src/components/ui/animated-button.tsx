@@ -12,7 +12,7 @@ export interface AnimatedButtonProps extends React.ButtonHTMLAttributes<HTMLButt
 
 /**
  * AnimatedButton — Botão com borda animada de gradiente rotativo (conic-gradient)
- * nas cores institucionais do DOC-Academy (Mint, Indigo e Sky).
+ * nas cores institucionais do Academia DeMaria (Mint, Indigo e Sky).
  */
 export function AnimatedButton({
   href,

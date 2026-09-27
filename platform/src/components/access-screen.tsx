@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, ShieldAlert, UserPlus } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, ShieldAlert, UserPlus } from "lucide-react";
+import { AcademyBrand } from "./academy-brand";
 import { browserAuth } from "@/lib/supabase-browser";
 import { DEPARTMENTS } from "@/lib/departments";
 import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
@@ -115,11 +116,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
   return (
     <main className="access-page">
       <section className="access-story">
-        <a className="brand" href="/">
-          <strong>
-            DOC-<span>Academy</span>
-          </strong>
-        </a>
+        <a className="access-brand" href="/" aria-label="Academia DeMaria — início"><AcademyBrand /></a>
         <span className="hero-eyebrow">DEMARIA · CONHECIMENTO QUE TRANSFORMA</span>
         <h1>
           Seu próximo nível
@@ -127,14 +124,20 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
           começa <em>aqui.</em>
         </h1>
         <p>Um espaço para aprender, compartilhar descobertas e evoluir com a sua equipe.</p>
-        <div className="hero-gem">
-          <LockKeyhole size={70} strokeWidth={1} />
+        <div className="access-journey" aria-label="Uma jornada contínua de aprendizado e evolução">
+          <div className="access-journey-ring access-journey-ring--outer" />
+          <div className="access-journey-ring access-journey-ring--inner" />
+          <span className="access-journey-point access-journey-point--one" />
+          <span className="access-journey-point access-journey-point--two" />
+          <span className="access-journey-point access-journey-point--three" />
+          <span className="access-journey-core"><img src="/academia-demaria-symbol.png" alt="" /></span>
+          <span className="access-journey-label">Aprender <span>·</span> Evoluir <span>·</span> Transformar</span>
         </div>
       </section>
 
       <section className="panel access-card">
-        <img className="access-logo" src="/doc-academy-logo-oficial.png" alt="DOC-Academy" width={180} height={120} />
-        <span className="eyebrow">SUA JORNADA NA DOC-ACADEMY</span>
+        <img className="access-logo" src="/academia-demaria-symbol.png" alt="Academia DeMaria" width={120} height={120} />
+        <span className="eyebrow">SUA JORNADA NA ACADEMIA DEMARIA</span>
         <h2>
           {!configured
             ? "Estamos preparando seu acesso"

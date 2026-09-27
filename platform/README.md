@@ -1,4 +1,4 @@
-# DOC-Academy — piloto interno
+# Academia DeMaria — piloto interno
 
 Aplicação Next.js, React e TypeScript com Supabase Auth e PostgreSQL. O exemplar antigo permanece em ../.legacy.
 
