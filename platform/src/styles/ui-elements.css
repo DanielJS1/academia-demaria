@@ -735,21 +735,6 @@ textarea.input {
 .access-story h1 { font-size: 50px; letter-spacing: -2px; margin: 18px 0; }
 .access-story h1 em { font-style: normal; color: var(--primary); }
 .access-story p { max-width: 350px; color: var(--muted); }
-.access-path { position: relative; width: min(415px, 100%); margin-top: 30px; padding: 19px 20px 16px; border: 1px solid var(--line); border-radius: 21px; background: radial-gradient(circle at 12% 0%, var(--cyan-soft), transparent 44%), var(--surface); box-shadow: var(--shadow); overflow: hidden; }
-.access-path::before { content: ""; position: absolute; inset: 0 22px auto; height: 2px; border-radius: 99px; background: var(--academy-gradient); opacity: .75; }
-.access-path-steps { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.access-path-steps::before { content: ""; position: absolute; top: 21px; left: 16%; right: 16%; height: 1px; background: color-mix(in srgb, var(--academy-purple) 30%, var(--line)); }
-.access-path-step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 2px 2px 10px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; transition: color .2s ease, transform .2s ease; }
-.access-path-step:hover { color: var(--academy-purple); transform: translateY(-2px); }
-.access-path-step:focus-visible { outline: 2px solid var(--academy-purple); outline-offset: 2px; }
-.access-path-icon { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--muted); box-shadow: 0 5px 14px -11px var(--ink); transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
-.access-path-step.is-active { color: var(--ink); }
-.access-path-step.is-active .access-path-icon { border-color: color-mix(in srgb, var(--academy-purple) 35%, var(--line)); background: var(--purple-soft); color: var(--academy-purple); box-shadow: 0 0 0 5px var(--purple-soft); }
-.access-path-detail { display: flex; flex-direction: column; gap: 3px; min-height: 72px; margin-top: 7px; padding: 13px 5px 0; border-top: 1px solid var(--line); animation: access-detail-in .25s ease-out; }
-.access-path-detail strong { color: var(--ink); font-size: 14px; letter-spacing: -.02em; }
-.access-path-detail span { color: var(--muted); font-size: 12px; line-height: 1.45; }
-@keyframes access-detail-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .access-path-detail { animation: none; } .access-path-step, .access-path-icon { transition: none; } }
 .access-card {
   padding: clamp(20px, 2.5vh, 30px);
   max-width: 430px;
@@ -798,8 +783,6 @@ textarea.input {
 @media (min-width: 901px) and (max-height: 720px) {
   .access-card { padding: 16px 24px; }
   .access-brand { margin-bottom: 20px; }
-  .access-path { margin-top: 18px; padding-top: 15px; padding-bottom: 10px; }
-  .access-path-detail { min-height: 60px; }
   .access-card p { margin: 6px 0 10px; }
   .access-card .portal-toggle-tabs { margin-bottom: 8px; }
   .access-card .field { margin-bottom: 8px; }
