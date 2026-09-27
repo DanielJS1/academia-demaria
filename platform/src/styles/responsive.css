@@ -125,6 +125,8 @@
     max-width: 440px;
     margin: auto;
   }
+  .access-mobile-brand { display: flex; justify-content: center; margin: 0 0 16px; }
+  .access-mobile-brand .academy-brand-image { width: 192px; height: auto; max-height: none; }
 }
 
 @media (min-width: 761px) {
@@ -288,10 +290,6 @@
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
-  .access-logo {
-    width: 150px;
-    margin: 0 auto 16px;
-  }
   .access-card h1,
   .access-card h2 {
     font-size: 22px;
@@ -385,7 +383,7 @@
   .metric-strip small { font-size: 8px; }
   .access-page { padding: 16px 12px; }
   .access-card { padding: 22px 14px; border-radius: 14px; }
-  .access-logo { width: 135px; margin-bottom: 12px; }
+  .access-mobile-brand { margin-bottom: 12px; }
   .access-card h1,
   .access-card h2 { font-size: 20px; }
   .access-card p { font-size: 12px; margin-bottom: 16px; }
