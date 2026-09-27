@@ -726,7 +726,7 @@ textarea.input {
   max-width: 480px;
   position: relative;
 }
-.access-brand { display: inline-flex; border-radius: 12px; }
+.access-brand { display: inline-flex; margin-bottom: clamp(32px, 6vh, 66px); border-radius: 12px; }
 .access-brand:focus-visible { outline: 2px solid var(--primary); outline-offset: 5px; }
 .access-brand .academy-brand-image { width: clamp(200px, 21vw, 260px); max-height: none; }
 .access-brand .academy-brand-dark img { width: 60px; height: 60px; }
@@ -735,23 +735,21 @@ textarea.input {
 .access-story h1 { font-size: 50px; letter-spacing: -2px; margin: 18px 0; }
 .access-story h1 em { font-style: normal; color: var(--primary); }
 .access-story p { max-width: 350px; color: var(--muted); }
-.access-journey { position: relative; width: min(400px, 100%); height: 255px; margin: 0 0 18px; isolation: isolate; }
-.access-journey::before { content: ""; position: absolute; inset: 36px 42px 15px; border-radius: 50%; background: radial-gradient(circle, var(--purple-soft), transparent 68%); filter: blur(10px); }
-.access-journey-ring { position: absolute; left: 50%; top: 45%; border: 1px solid var(--line); border-radius: 50%; transform: translate(-50%, -50%) rotate(-17deg); }
-.access-journey-ring--outer { width: 360px; height: 182px; border-color: color-mix(in srgb, var(--academy-purple) 28%, var(--line)); }
-.access-journey-ring--inner { width: 294px; height: 136px; border-style: dashed; border-color: color-mix(in srgb, var(--primary) 30%, var(--line)); }
-.access-journey-core { position: absolute; left: 50%; top: 45%; display: grid; place-items: center; width: 282px; min-height: 116px; padding: 18px 20px; transform: translate(-50%, -50%); border: 1px solid color-mix(in srgb, var(--academy-purple) 15%, var(--line)); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow), 0 0 45px var(--purple-soft); animation: journey-float 6s ease-in-out infinite; }
-.access-journey-core .academy-brand-image { width: 232px; max-height: none; }
-.access-journey-core .academy-brand-dark img { width: 58px; height: 58px; }
-.access-journey-point { position: absolute; z-index: 2; width: 11px; height: 11px; border-radius: 50%; background: var(--academy-gradient); box-shadow: 0 0 0 6px var(--purple-soft), 0 0 18px var(--purple-soft); animation: journey-pulse 3.5s ease-in-out infinite; }
-.access-journey-point--one { left: 22px; top: 112px; }
-.access-journey-point--two { right: 23px; top: 68px; animation-delay: 1.2s; }
-.access-journey-point--three { right: 77px; top: 197px; animation-delay: 2.2s; }
-.access-journey-label { position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: .11em; text-transform: uppercase; }
-.access-journey-label span { color: var(--academy-purple); padding: 0 5px; }
-@keyframes journey-float { 50% { transform: translate(-50%, calc(-50% - 7px)); } }
-@keyframes journey-pulse { 50% { opacity: .48; transform: scale(.72); } }
-@media (prefers-reduced-motion: reduce) { .access-journey-core, .access-journey-point { animation: none; } }
+.access-path { position: relative; width: min(415px, 100%); margin-top: 30px; padding: 19px 20px 16px; border: 1px solid var(--line); border-radius: 21px; background: radial-gradient(circle at 12% 0%, var(--cyan-soft), transparent 44%), var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+.access-path::before { content: ""; position: absolute; inset: 0 22px auto; height: 2px; border-radius: 99px; background: var(--academy-gradient); opacity: .75; }
+.access-path-steps { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.access-path-steps::before { content: ""; position: absolute; top: 21px; left: 16%; right: 16%; height: 1px; background: color-mix(in srgb, var(--academy-purple) 30%, var(--line)); }
+.access-path-step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 2px 2px 10px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 700; transition: color .2s ease, transform .2s ease; }
+.access-path-step:hover { color: var(--academy-purple); transform: translateY(-2px); }
+.access-path-step:focus-visible { outline: 2px solid var(--academy-purple); outline-offset: 2px; }
+.access-path-icon { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--muted); box-shadow: 0 5px 14px -11px var(--ink); transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.access-path-step.is-active { color: var(--ink); }
+.access-path-step.is-active .access-path-icon { border-color: color-mix(in srgb, var(--academy-purple) 35%, var(--line)); background: var(--purple-soft); color: var(--academy-purple); box-shadow: 0 0 0 5px var(--purple-soft); }
+.access-path-detail { display: flex; flex-direction: column; gap: 3px; min-height: 72px; margin-top: 7px; padding: 13px 5px 0; border-top: 1px solid var(--line); animation: access-detail-in .25s ease-out; }
+.access-path-detail strong { color: var(--ink); font-size: 14px; letter-spacing: -.02em; }
+.access-path-detail span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+@keyframes access-detail-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .access-path-detail { animation: none; } .access-path-step, .access-path-icon { transition: none; } }
 .access-card {
   padding: clamp(20px, 2.5vh, 30px);
   max-width: 430px;
@@ -799,7 +797,9 @@ textarea.input {
 }
 @media (min-width: 901px) and (max-height: 720px) {
   .access-card { padding: 16px 24px; }
-  .access-journey { height: 205px; }
+  .access-brand { margin-bottom: 20px; }
+  .access-path { margin-top: 18px; padding-top: 15px; padding-bottom: 10px; }
+  .access-path-detail { min-height: 60px; }
   .access-card p { margin: 6px 0 10px; }
   .access-card .portal-toggle-tabs { margin-bottom: 8px; }
   .access-card .field { margin-bottom: 8px; }
