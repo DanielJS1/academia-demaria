@@ -389,7 +389,7 @@ export function Team() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `relatorio-equipe-doc-academy-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `relatorio-equipe-academia-demaria-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify("Relatório consolidado exportado com sucesso.");
@@ -438,7 +438,7 @@ export function Team() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `avaliacoes-equipe-doc-academy-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `avaliacoes-equipe-academia-demaria-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify("Relatório de avaliações exportado com sucesso.");

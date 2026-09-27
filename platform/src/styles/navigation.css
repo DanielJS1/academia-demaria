@@ -200,6 +200,17 @@
   margin-right: auto;
 }
 
+.academy-brand { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
+.academy-brand img { display: block; width: 43px; height: 43px; object-fit: contain; flex: none; }
+.academy-brand-wordmark { display: flex; flex-direction: column; line-height: .98; white-space: nowrap; letter-spacing: -.045em; color: var(--ink); }
+.academy-brand-wordmark > span { font-size: 17px; font-weight: 350; }
+.academy-brand-wordmark strong { font-size: 22px; font-weight: 780; }
+.academy-brand--compact img { width: 40px; height: 40px; }
+.academy-brand > .academy-brand-image { width: 160px; height: auto; max-height: 49px; }
+.academy-brand-dark { display: none; align-items: center; gap: 9px; }
+[data-theme="dark"] .academy-brand-image, html.dark .academy-brand-image { display: none; }
+[data-theme="dark"] .academy-brand-dark, html.dark .academy-brand-dark { display: inline-flex; }
+
 .topbar-course-back {
   display: inline-flex;
   align-items: center;
@@ -910,6 +921,21 @@
   margin: 0;
   max-width: 300px;
 }
+
+/* Academia DeMaria navigation finish */
+.sidebar { box-shadow: 6px 0 34px -30px rgba(53, 69, 129, .35); }
+.workspace-label { border-radius: 12px; }
+.workspace-dot { background: var(--brand-cyan); box-shadow: 0 0 10px var(--cyan-soft); }
+.nav-item { border-radius: 12px; transition: background-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease; }
+.nav-item:hover { background: var(--cyan-soft); color: var(--ink); transform: translateX(2px); }
+.nav-item.active { background: linear-gradient(100deg, var(--cyan-soft), var(--purple-soft)); color: var(--primary); font-weight: 700; box-shadow: inset 3px 0 0 var(--brand-cyan), 0 8px 20px -16px var(--academy-purple); }
+.nav-item.active svg { color: var(--academy-purple); }
+.topbar { background: color-mix(in srgb, var(--surface) 94%, transparent); }
+.global-search-field { border-radius: 13px; }
+.global-search-field:hover { border-color: color-mix(in srgb, var(--brand-cyan) 45%, var(--line)); }
+.profile { transition: background-color .2s ease, transform .2s ease; }
+.profile:hover { background: var(--purple-soft); transform: translateY(-1px); }
+.sidebar-dock-item-btn.active { background: linear-gradient(135deg, var(--cyan-soft), var(--purple-soft)); color: var(--primary); }
 
 @keyframes modalFadeIn {
   from { opacity: 0; }

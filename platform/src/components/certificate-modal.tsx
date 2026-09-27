@@ -127,7 +127,7 @@ export function CertificateModal({
                 <div className="cert-signature-col">
                   <div className="cert-sig-line">
                     <span className="cert-sig-name">Daniel José</span>
-                    <small>Coordenação Geral DOC-Academy</small>
+                    <small>Coordenação Geral Academia DeMaria</small>
                   </div>
                 </div>
 

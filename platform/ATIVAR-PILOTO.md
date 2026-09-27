@@ -1,7 +1,7 @@
-# Ativar o piloto real da DOC-Academy
+# Ativar o piloto real da Academia DeMaria
 
-Projeto Supabase: `ktmymzokgxmmkleacclq`  
-Site: https://doc-academy-hazel.vercel.app  
+Projeto Supabase: `ktmymzokgxmmkleacclq`
+Site: https://academia-demaria.vercel.app
 Primeiro administrador: `daniel@sacdemaria.com.br`
 
 ## 1. Configurar a Vercel
@@ -13,7 +13,7 @@ Em **Settings → Environment Variables**, configure as quatro variáveis abaixo
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://ktmymzokgxmmkleacclq.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API Keys: chave pública/publishable ou anon |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys: chave secreta/secret ou service_role |
-| `NEXT_PUBLIC_SITE_URL` | `https://doc-academy-hazel.vercel.app` |
+| `NEXT_PUBLIC_SITE_URL` | `https://academia-demaria.vercel.app` |
 
 A chave secreta deve ficar apenas na variável sem prefixo NEXT_PUBLIC. Não cole chaves em arquivos versionados, mensagens ou capturas de tela. Depois de configurar, faça um novo deploy para que a Vercel incorpore as variáveis públicas.
 
@@ -51,7 +51,7 @@ Em um banco novo, execute cada arquivo de `supabase/migrations/` uma vez, nesta 
 
 ## 4. Criar um colaborador de teste
 
-Na DOC-Academy → **Administração → Pessoas → Cadastrar pessoa**:
+Na Academia DeMaria → **Administração → Pessoas → Cadastrar pessoa**:
 
 - Informe nome, e-mail, setor, gestor e perfil Colaborador.
 - Para testar sem SMTP, selecione **Criar com senha inicial (piloto)**. Escolha uma senha com pelo menos 12 caracteres e entregue-a diretamente à pessoa.
@@ -65,14 +65,14 @@ Contas existentes não têm seu e-mail alterado nesse editor. Desativar uma cont
 
 No Supabase → **Authentication**, configure o Site URL e os Redirect URLs autorizados:
 
-- `https://doc-academy-hazel.vercel.app/acesso`
+- `https://academia-demaria.vercel.app/acesso`
 - `http://127.0.0.1:4174/acesso` (somente para teste local)
 
 ### Remetente e Template de Redefinição de Senha
 No painel do Supabase do projeto (`ktmymzokgxmmkleacclq`), acesse **Authentication → Email Templates → Reset Password**:
 
-- **Subject (Assunto):** `DOC-Academy, resete sua senha`
-- **Sender Name (Nome do Remetente):** `DOC-Academy` (configurado em **Authentication → Email Settings**)
+- **Subject (Assunto):** `Academia DeMaria, resete sua senha`
+- **Sender Name (Nome do Remetente):** `Academia DeMaria` (configurado em **Authentication → Email Settings**)
 - **Body (Corpo do E-mail):** utilizar o template HTML em português com o link obrigatório `{{ .ConfirmationURL }}`.
 
 Desative o cadastro público de novos usuários. O cadastro interno é feito pelo administrador da plataforma. Para convites e recuperação em e-mails de colaboradores, configure SMTP próprio e faça um envio de teste; o serviço padrão do Supabase possui restrições. As credenciais SMTP devem ser inseridas diretamente no painel, nunca no GitHub.
@@ -83,7 +83,7 @@ Desative o cadastro público de novos usuários. O cadastro interno é feito pel
 2. Preencha título, descrição e produto.
 3. Adicione as atividades e organize a ordem com as setas. O mesmo nome de módulo agrupa as atividades.
 4. Nas videoaulas, cole links HTTPS do Vimeo. Para vídeos não listados, preserve o link completo, incluindo o identificador privado.
-5. No Vimeo, permita a incorporação no domínio `doc-academy-hazel.vercel.app`. Links não listados não substituem restrições por domínio.
+5. No Vimeo, permita a incorporação no domínio `academia-demaria.vercel.app`. Links não listados não substituem restrições por domínio.
 6. Adicione a avaliação e as questões. Questões objetivas precisam de alternativas distintas e gabarito; questões discursivas terão correção manual.
 7. Configure nota mínima, XP e a regra após reprovação. Salve rascunho e confira **Ver prévia salva**: a prévia não altera progresso ou XP.
 8. Publique. O servidor exige aulas, avaliação, leituras preenchidas e links Vimeo válidos.

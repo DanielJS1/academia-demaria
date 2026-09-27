@@ -1,6 +1,6 @@
-# 🏛️ DOC-Academy — Guia de Arquitetura e Engenharia
+# 🏛️ Academia DeMaria — Guia de Arquitetura e Engenharia
 
-Bem-vindo à documentação oficial de arquitetura do **DOC-Academy**, a plataforma corporativa de capacitação contínua e evolução dos colaboradores da **DeMaria**.
+Bem-vindo à documentação oficial de arquitetura do **Academia DeMaria**, a plataforma corporativa de capacitação contínua e evolução dos colaboradores da **DeMaria**.
 
 Este documento foi elaborado para que qualquer desenvolvedor (humano ou assistente de IA) possa compreender rapidamente a estrutura do projeto, manter a qualidade do código, aplicar novas funcionalidades e garantir a segurança das operações.
 
@@ -8,7 +8,7 @@ Este documento foi elaborado para que qualquer desenvolvedor (humano ou assisten
 
 ## 1. Visão Geral e Stack Tecnológica
 
-O **DOC-Academy** prioriza performance, clareza arquitetural e baixo overhead:
+O **Academia DeMaria** prioriza performance, clareza arquitetural e baixo overhead:
 
 - **Frontend & Roteamento:** [Next.js](https://nextjs.org/) (App Router), React 19, TypeScript.
 - **Backend & Autenticação:** [Supabase](https://supabase.com/) (PostgreSQL 15+, Auth, Row Level Security, Storage de PDFs privados).
@@ -21,7 +21,7 @@ O **DOC-Academy** prioriza performance, clareza arquitetural e baixo overhead:
 ## 2. Mapa do Repositório
 
 ```text
-DOC-Academy/
+Academia DeMaria/
 ├── .github/
 │   └── workflows/
 │       └── security.yml       # Scan automatizado de segurança Semgrep (OWASP/CWE)
@@ -133,7 +133,7 @@ Todos os modelos residem em `platform/src/lib/model.ts`:
 
 ## 5. Sistema de Gamificação (XP e Níveis)
 
-A gamificação do DOC-Academy foi desenhada para valorizar o tempo dedicado ao aprendizado real:
+A gamificação do Academia DeMaria foi desenhada para valorizar o tempo dedicado ao aprendizado real:
 
 | Ação | Recompensa de XP | Arquivo Responsável |
 | :--- | :--- | :--- |

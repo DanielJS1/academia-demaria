@@ -726,23 +726,31 @@ textarea.input {
   max-width: 480px;
   position: relative;
 }
-.access-story .brand { padding: 0 0 clamp(24px, 5vh, 58px); }
-.access-story .brand strong { font-size: 28px; }
+.access-brand { display: inline-flex; margin-bottom: clamp(24px, 5vh, 58px); border-radius: 12px; }
+.access-brand:focus-visible { outline: 2px solid var(--primary); outline-offset: 5px; }
+.access-brand .academy-brand-image { width: clamp(200px, 21vw, 260px); max-height: none; }
+.access-brand .academy-brand-dark img { width: 60px; height: 60px; }
+.access-brand .academy-brand-wordmark > span { font-size: 23px; }
+.access-brand .academy-brand-wordmark strong { font-size: 30px; }
 .access-story h1 { font-size: 50px; letter-spacing: -2px; margin: 18px 0; }
 .access-story h1 em { font-style: normal; color: var(--primary); }
 .access-story p { max-width: 350px; color: var(--muted); }
-.access-story .hero-gem {
-  position: relative;
-  left: auto;
-  top: auto;
-  transform: rotate(-12deg);
-  width: 110px;
-  height: 120px;
-  margin: 24px 0 0;
-  color: var(--primary);
-  border: 1px solid var(--line);
-  background: var(--surface);
-}
+.access-journey { position: relative; width: min(360px, 100%); height: 245px; margin: 16px 0 0; isolation: isolate; }
+.access-journey::before { content: ""; position: absolute; inset: 36px 42px 15px; border-radius: 50%; background: radial-gradient(circle, var(--purple-soft), transparent 68%); filter: blur(10px); }
+.access-journey-ring { position: absolute; left: 50%; top: 43%; border: 1px solid var(--line); border-radius: 50%; transform: translate(-50%, -50%) rotate(-17deg); }
+.access-journey-ring--outer { width: 280px; height: 156px; border-color: color-mix(in srgb, var(--academy-purple) 28%, var(--line)); }
+.access-journey-ring--inner { width: 214px; height: 112px; border-style: dashed; border-color: color-mix(in srgb, var(--primary) 30%, var(--line)); }
+.access-journey-core { position: absolute; left: 50%; top: 43%; display: grid; place-items: center; width: 112px; height: 112px; transform: translate(-50%, -50%); border: 1px solid color-mix(in srgb, var(--academy-purple) 25%, var(--line)); border-radius: 30px; background: var(--surface); box-shadow: var(--shadow), 0 0 45px var(--purple-soft); animation: journey-float 6s ease-in-out infinite; }
+.access-journey-core img { width: 78px; height: 78px; object-fit: contain; }
+.access-journey-point { position: absolute; z-index: 2; width: 11px; height: 11px; border-radius: 50%; background: var(--academy-gradient); box-shadow: 0 0 0 6px var(--purple-soft), 0 0 18px var(--purple-soft); animation: journey-pulse 3.5s ease-in-out infinite; }
+.access-journey-point--one { left: 45px; top: 97px; }
+.access-journey-point--two { right: 39px; top: 63px; animation-delay: 1.2s; }
+.access-journey-point--three { right: 79px; top: 174px; animation-delay: 2.2s; }
+.access-journey-label { position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: .11em; text-transform: uppercase; }
+.access-journey-label span { color: var(--academy-purple); padding: 0 5px; }
+@keyframes journey-float { 50% { transform: translate(-50%, calc(-50% - 7px)); } }
+@keyframes journey-pulse { 50% { opacity: .48; transform: scale(.72); } }
+@media (prefers-reduced-motion: reduce) { .access-journey-core, .access-journey-point { animation: none; } }
 .access-card {
   padding: clamp(20px, 2.5vh, 30px);
   max-width: 430px;
@@ -783,6 +791,16 @@ textarea.input {
   cursor: pointer;
 }
 .access-password-toggle:hover { color: var(--foreground); }
+
+/* Shared finishing details for the Academy identity */
+.button { border-radius: 11px; transition: transform .22s ease, background-color .22s ease, box-shadow .22s ease, border-color .22s ease; }
+.button-primary { background: var(--academy-gradient); box-shadow: 0 12px 25px -15px rgba(91, 71, 245, .65); }
+.button-primary:hover:not(:disabled) { background: var(--academy-gradient); box-shadow: 0 17px 30px -15px rgba(91, 71, 245, .76); transform: translateY(-2px); }
+.access-page { background: radial-gradient(circle at 12% 20%, var(--cyan-soft), transparent 34%), radial-gradient(circle at 83% 76%, var(--purple-soft), transparent 30%), var(--background); }
+.access-card { border-radius: 22px; }
+.access-story h1 { letter-spacing: -.05em; }
+.access-story h1 em { color: var(--academy-purple); }
+.access-logo { width: 104px; max-height: 92px; margin-bottom: 12px; }
 .access-password-toggle:focus-visible, .portal-tab-btn:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;

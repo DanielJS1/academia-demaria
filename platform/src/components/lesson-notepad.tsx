@@ -47,7 +47,7 @@ export function exportCourseNotesTxt(
 ) {
   const dateStr = new Date().toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
   let content = `============================================================\n`;
-  content += `DOC-ACADEMY · CADERNO DE ESTUDOS\n`;
+  content += `ACADEMIA DEMARIA · CADERNO DE ESTUDOS\n`;
   content += `Curso: ${courseTitle}\n`;
   content += `Aluno: ${studentName}\n`;
   content += `Data da Exportação: ${dateStr}\n`;
@@ -75,7 +75,7 @@ export function exportCourseNotesTxt(
   const a = document.createElement("a");
   a.href = url;
   const safeFilename = courseTitle.replace(/[^a-zA-Z0-9À-ÿ\s-]/g, "").trim().replace(/\s+/g, "_");
-  a.download = `DOC-Academy_Anotacoes_${safeFilename || "Curso"}.txt`;
+  a.download = `Academia DeMaria_Anotacoes_${safeFilename || "Curso"}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
