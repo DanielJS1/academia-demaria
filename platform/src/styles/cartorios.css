@@ -832,7 +832,7 @@
 
 /* Regras de Impressão */
 @media print {
-  body * {
+  body:where(:has(.cert-modal-overlay)) * {
     visibility: hidden !important;
   }
   .cert-modal-overlay,
