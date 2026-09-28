@@ -751,7 +751,7 @@
 @media print {
   @page { size: A4 landscape; margin: 12mm; }
   body:has(.team-reports) { background: white !important; color: #172033 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body:has(.team-reports) .sidebar, body:has(.team-reports) .topbar, body:has(.team-reports) .main-footer { display: none !important; }
+  body:has(.team-reports) .sidebar, body:has(.team-reports) .topbar, body:has(.team-reports) .main-footer, body:has(.team-reports) .toast, body:has(.team-reports) .save-indicator, body:has(.team-reports) .nav-scrim { display: none !important; }
   body:has(.team-reports) .app-content, body:has(.team-reports) .app-content.sidebar-collapsed { margin: 0 !important; }
   body:has(.team-reports) .main-content { max-width: none; min-height: 0; margin: 0; padding: 0; }
   .team-reports { animation: none; }
