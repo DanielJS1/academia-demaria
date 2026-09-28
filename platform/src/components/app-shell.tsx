@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
+import { ArrowUpRight, BarChart3, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { GlobalSearch } from "./global-search";
 import { Button } from "./ui/button";
@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const isDocked = !isMobile && (/^\/aprender\/[^/]+\/aula/.test(path) ? theaterCollapsed : collapsed);
-  const active = (href: string) => href === "/" ? path === "/" : path.startsWith(href);
+  const active = (href: string) => href === "/" ? path === "/" : href === "/equipe" ? path === "/equipe" : path.startsWith(href);
 
   const currentNav = isClientEnvironment
     ? [
@@ -133,7 +133,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? currentNav
     : [
         ...navigation,
-        ...(me.role !== "student" ? [{ href: "/equipe", label: "Minha equipe", icon: Users }] : []),
+        ...(me.role !== "student" ? [{ href: "/equipe", label: "Minha gestão", icon: Users }, { href: "/equipe/relatorios", label: "Relatórios", icon: BarChart3 }] : []),
         ...(me.role === "admin" ? [{ href: "/admin", label: "Administração", icon: Settings2 }] : []),
         { href: "/sobre", label: "Sobre a plataforma", icon: CircleHelp },
       ];
@@ -290,14 +290,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {!isClientEnvironment && (
                 <nav>
                   {me.role !== "student" && (
-                    <Link
+                    <><Link
                       href="/equipe"
                       className={`nav-item ${active("/equipe") ? "active" : ""}`}
                       aria-current={active("/equipe") ? "page" : undefined}
                       onClick={closeMobileMenu}
                     >
-                      <Users size={19}/> <span>Minha equipe</span>
+                      <Users size={19}/> <span>Minha gestão</span>
                     </Link>
+                    <Link href="/equipe/relatorios" className={`nav-item ${active("/equipe/relatorios") ? "active" : ""}`} aria-current={active("/equipe/relatorios") ? "page" : undefined} onClick={closeMobileMenu}>
+                      <BarChart3 size={19}/> <span>Relatórios</span>
+                    </Link></>
                   )}
                   {me.role === "admin" && (
                     <Link
