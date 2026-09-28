@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronUp,
   Clock3,
-  Download,
   Eye,
   FileText,
   Filter,
@@ -29,10 +28,11 @@ import {
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { CourseArt, EmptyState, PageHeading, Progress } from "./shared";
-import { csvCell, initials, normalize } from "@/lib/utils";
+import { initials, normalize } from "@/lib/utils";
 import { courseProgress, minutes, type Attempt, type Course, type Person } from "@/lib/model";
 import { formatActiveTime, formatLastAccess, type EngagementMember } from "@/lib/engagement";
 import { EngagementControls, MemberEngagement, useTeamEngagement } from "./team-engagement";
+import { managedPeople } from "@/lib/team-scope";
 
 // Determina se o curso é voltado especificamente para o departamento do colaborador
 function isCourseForSector(course: Course, department: string): boolean {
@@ -137,17 +137,7 @@ export function Team() {
 
   // Filtra pessoas monitoradas por este usuário (Admin vê todos; Gestor vê quem tem seu managerId ou do seu mesmo setor)
   const currentDept = me.department || state.people.find(p => p.id === me.id)?.department || "";
-  const people = useMemo(() => {
-    return state.people.filter(
-      person =>
-        (me.role === "admin" ||
-          person.managerId === me.id ||
-          (me.role === "manager" && !person.managerId && currentDept && person.department.trim().toLowerCase() === currentDept.trim().toLowerCase())) &&
-        person.id !== me.id &&
-        person.audience !== "client" &&
-        person.status !== "inactive"
-    );
-  }, [state.people, me.role, me.id, currentDept]);
+  const people = useMemo(() => managedPeople(state.people, me), [state.people, me]);
 
   const publishedCourses = useMemo(() => {
     return state.courses.filter(c => c.status === "published");
@@ -338,149 +328,22 @@ export function Team() {
     return Array.from(set).sort();
   }, [people]);
 
-  // Exportação CSV do Relatório Geral Consolidado
-  const exportGeneralReport = () => {
-    const headers = [
-      "Nome",
-      "E-mail",
-      "Departamento",
-      "Papel",
-      "Status",
-      "Progresso Geral (%)",
-      "Conteúdos Assistidos",
-      "Total de Conteúdos do Catálogo",
-      "Taxa de Absorção (%)",
-      "Último Acesso (Brasília)",
-      `Dias com Acesso (${engagement.days} dias)`,
-      `Tempo Ativo em Minutos (${engagement.days} dias)`,
-      "Início da Coleta de Presença",
-      "Total Avaliações",
-      "Média em Avaliações (%)",
-      "Horas Estimadas das Aulas Concluídas",
-      "XP da Temporada",
-    ];
-
-    const rows = filteredPeople.map(person => {
-      const m = peopleMetrics.get(person.id);
-      const presence = engagement.members.get(person.id);
-      return [
-        person.name,
-        person.email,
-        person.department,
-        person.role === "manager" ? "Gestor" : person.role === "admin" ? "Administrador" : "Colaborador",
-        person.status === "active" ? "Ativo" : "Pendente",
-        person.progress,
-        m?.watchedCount || 0,
-        totalAvailableLessons,
-        m?.watchedPercent || 0,
-        engagement.data ? formatLastAccess(presence?.lastAccessAt) : "Indisponível",
-        presence ? presence.activeDays : "Sem registro",
-        presence ? (presence.activeSeconds / 60).toFixed(1) : "Sem registro",
-        engagement.data ? formatLastAccess(engagement.data.collectedSince) : "Indisponível",
-        m?.attemptsCount || 0,
-        m?.averageScore || 0,
-        m ? (m.studyMinutes / 60).toFixed(1) : "0.0",
-        person.xp,
-      ].map(csvCell);
-    });
-
-    const lines = [headers.map(csvCell).join(";"), ...rows.map(r => r.join(";"))];
-    const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `relatorio-equipe-academia-demaria-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    notify("Relatório consolidado exportado com sucesso.");
-  };
-
-  // Exportação CSV do Relatório de Avaliações
-  const exportAssessmentsReport = () => {
-    const headers = [
-      "Data de Envio",
-      "Colaborador",
-      "E-mail",
-      "Departamento",
-      "Curso",
-      "Versão",
-      "Nota Obtida (%)",
-      "Nota Mínima (%)",
-      "Situação",
-      "Total Questões",
-      "Acertos",
-      "Erros",
-      "Feedback do Gestor",
-    ];
-
-    const rows = teamAttempts.map(attempt => {
-      const person = people.find(p => p.id === attempt.userId);
-      const analysis = analyzeAttempt(attempt);
-      return [
-        new Date(attempt.submittedAt).toLocaleDateString("pt-BR"),
-        person?.name || "Colaborador",
-        person?.email || "",
-        person?.department || "",
-        attempt.courseTitle,
-        attempt.courseVersion,
-        attempt.score ?? "Pendente",
-        attempt.passingScore,
-        attempt.status === "approved" ? "Aprovado" : attempt.status === "retry" ? "Nova tentativa" : "Aguardando correção",
-        analysis.totalQuestions,
-        analysis.correctCount,
-        analysis.errorCount,
-        attempt.feedback || "",
-      ].map(csvCell);
-    });
-
-    const lines = [headers.map(csvCell).join(";"), ...rows.map(r => r.join(";"))];
-    const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `avaliacoes-equipe-academia-demaria-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    notify("Relatório de avaliações exportado com sucesso.");
-  };
-
   return (
     <div className="page-enter">
       {/* Cabeçalho */}
       <PageHeading
-        eyebrow="INTELIGÊNCIA DE TREINAMENTO & EQUIPE"
-        title="Gestão de Talentos & Aprendizado"
-        description="Acompanhe acessos, constância e aprendizado para orientar o PDI da sua equipe."
+        eyebrow="SUA EQUIPE EM FOCO"
+        title="Minha gestão"
+        description="Acompanhe a jornada de aprendizagem dos seus colaboradores e identifique onde apoiar cada pessoa."
       >
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Button variant="secondary" onClick={exportGeneralReport}>
-            <Download size={15} /> Relatório Geral (CSV)
-          </Button>
-          <Button variant="secondary" onClick={exportAssessmentsReport}>
-            <Download size={15} /> Avaliações & Erros (CSV)
-          </Button>
-        </div>
+        <Button asChild><Link href="/equipe/relatorios"><BarChart3 size={16} /> Gerar relatório</Link></Button>
       </PageHeading>
 
       {/* Banner de Contexto para Gestores */}
       {me.role === "manager" && (
-        <div
-          style={{
-            margin: "-8px 0 20px",
-            padding: "10px 16px",
-            borderRadius: 8,
-            background: currentDept ? "var(--surface-sunken, rgba(99, 102, 241, 0.08))" : "rgba(239, 68, 68, 0.08)",
-            border: `1px solid ${currentDept ? "var(--primary-subtle, rgba(99, 102, 241, 0.2))" : "rgba(239, 68, 68, 0.25)"}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 10,
-            fontSize: 13,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Users size={16} style={{ color: currentDept ? "var(--primary)" : "#ef4444" }} />
+        <div className={`team-context panel ${currentDept ? "" : "team-context-warning"}`}>
+          <div className="team-context-main">
+            <Users size={18} />
             <span>
               {currentDept ? (
                 <>
@@ -493,15 +356,11 @@ export function Team() {
               )}
             </span>
           </div>
-          {currentDept && (
-            <span style={{ fontSize: 11, color: "var(--muted)" }}>
-              Colaboradores do setor {currentDept} ou atribuídos a você aparecem nesta tela automaticamente.
-            </span>
-          )}
+          {currentDept && <small>Colaboradores do setor ou atribuídos diretamente a você.</small>}
         </div>
       )}
 
-      <EngagementControls report={engagement} />
+      <div className="team-section-heading"><div><h2>Visão geral</h2><p>Indicadores para acompanhar a equipe.</p></div></div>
 
       {/* Grid de Métricas Principais (Team Pulse) */}
       <div className="team-stats-grid">
@@ -599,6 +458,10 @@ export function Team() {
           </div>
         </section>
       </div>
+
+      <EngagementControls report={engagement} />
+
+      <div className="team-section-heading"><div><h2>Explore os resultados</h2><p>Selecione uma visão e aprofunde a análise.</p></div></div>
 
       {/* Abas de Navegação dos Relatórios */}
       <div className="tabs">
