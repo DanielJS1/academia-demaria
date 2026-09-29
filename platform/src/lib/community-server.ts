@@ -21,11 +21,17 @@ export async function readCommunity(db: Database, me: Profile) {
   return result;
 }
 
-export async function readCommunityArticle(db: Database, me: Profile, id: string, edit: boolean) {
+export async function readCommunityArticle(db: Database, me: Profile, id: string, edit: boolean, proposalId?: string) {
   if (me.audience === "client" || me.status !== "active") throw new ApiError("A biblioteca é exclusiva dos colaboradores aprovados.", 403);
   const { data, error } = await db.rpc("academy_community_read", { actor: me.id, article_id: id, edit });
   if (error) throw new ApiError(error.message, error.message.includes("não encontrado") ? 404 : 403);
   const result = data as { article: Article; comments: ArticleComment[] };
+  if (proposalId) {
+    if (result.article.authorId !== me.id) throw new ApiError("Somente o autor pode revisar esta proposta.",403);
+    const proposal = await db.from("academy_article_suggestions").select("id,proposer_id,proposed_text,proposed_body,base_revision,status,academy_profiles!academy_article_suggestions_proposer_id_fkey(name)").eq("id",proposalId).eq("article_id",id).maybeSingle();
+    if (proposal.error || !proposal.data || proposal.data.status !== "pending") throw new ApiError("Proposta não encontrada ou já analisada.",404);
+    return {article:(proposal.data.proposed_body || result.article) as Article,original:result.article,comments:[],proposal:{id:proposal.data.id,message:proposal.data.proposed_text,proposer:(proposal.data.academy_profiles as unknown as {name:string})?.name || "Colaborador",baseRevision:proposal.data.base_revision ?? result.article.revision,legacy:!proposal.data.proposed_body}};
+  }
   const coauthor = await db.from("academy_article_coauthors").select("user_id,academy_profiles!academy_article_coauthors_user_id_fkey(name)").eq("article_id",id).maybeSingle();
   if (coauthor.error) throw new ApiError("Não foi possível consultar a colaboração.",503);
   if (coauthor.data) result.article.coauthor = { id:coauthor.data.user_id, name:(coauthor.data.academy_profiles as unknown as {name:string})?.name || "Colaborador" };
@@ -40,8 +46,17 @@ export async function readCommunityArticle(db: Database, me: Profile, id: string
 export async function executeCommunity(db: Database, me: Profile, command: Command) {
   if (me.audience === "client" || me.status !== "active") throw new ApiError("A biblioteca é exclusiva dos colaboradores aprovados.", 403);
   if ((command.type === "community-delete" || command.type === "community-request-update") && me.role === "student") throw new ApiError("Somente administradores e gestores podem moderar a biblioteca.", 403);
-  if (command.type === "community-suggest" || command.type === "community-review-suggestion") {
-    const {error}=await db.rpc("academy_article_collaborate",{actor:me.id,command});
+  if (command.type === "community-suggest") {
+    if(command.articleId!==command.data.id)throw new ApiError("Artigo inválido.");
+    const problem=communityValidationError(command.data,true);if(problem)throw new ApiError(problem);
+    const content=command.data.richContent?command.data.content.trim():command.data.blocks?articlePlainText(command.data.blocks):command.data.content.trim();
+    const {error}=await db.rpc("academy_article_suggest_edit",{actor:me.id,article_id:command.articleId,expected_revision:command.expectedVersion,proposal:{...command.data,content},message:command.message});
+    if(error)throw new ApiError(error.message);
+    return;
+  }
+  if (command.type === "community-review-suggestion") {
+    if(command.data){if(command.articleId!==command.data.id)throw new ApiError("Artigo inválido.");const problem=communityValidationError(command.data,true);if(problem)throw new ApiError(problem);}
+    const {error}=await db.rpc("academy_article_review_edit",{actor:me.id,article_id:command.articleId,suggestion_id:command.suggestionId,decision:command.decision,adjustment:command.data ?? null});
     if(error)throw new ApiError(error.message);
     return;
   }

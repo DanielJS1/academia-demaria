@@ -17,6 +17,7 @@ beforeAll(async()=>{
  await db.exec("alter table academy_profiles add column audience text not null default 'internal';");
  await db.exec(migration("202609210001_community"));
  await db.exec(migration("20260929183000_article_collaboration"));
+ await db.exec(migration("20260929193000_full_article_suggestions"));
  for(const [id,name] of [[author,"Autora"],[contributor,"Colaborador"],[reader,"Leitora"]]){
   await db.query("insert into auth.users values($1)",[id]);
   await db.query("insert into academy_profiles(id,name,email) values($1,$2,$3)",[id,name,`${id}@demaria.com.br`]);
@@ -56,4 +57,47 @@ it("recusar mantém o artigo e não concede coautoria",async()=>{
  await collaborate(author,{type:"community-review-suggestion",articleId:"rejected",suggestionId:suggestion.id,decision:"reject"});
  expect((await db.query("select * from academy_article_coauthors where article_id='rejected'")).rows).toHaveLength(0);
  expect((await db.query<{published:{content:string}}>("select published from academy_resources where id='rejected'")).rows[0].published.content).not.toContain("conferência");
+});
+
+it("proposta completa preserva o original até o autor aceitar e publica mídia e código",async()=>{
+ const id="full-edit";
+ const original="Procedimento original com orientações suficientes para publicar o artigo e apoiar toda a equipe durante o atendimento.";
+ const changed="Procedimento revisado com novas etapas, uma imagem e um comando SQL para apoiar toda a equipe durante o atendimento.";
+ const originalArticle={id,title:"Procedimento original",product:"Geral",category:"Guia",content:original,author:"Autora",status:"draft",revision:1,updatedAt:"2026-01-01",richContent:{type:"doc",content:[{type:"paragraph",content:[{type:"text",text:original}]}]}};
+ await db.query("select academy_community_mutate($1::uuid,$2::jsonb)",[author,JSON.stringify({type:"community-save",data:originalArticle,publish:true,expectedVersion:0})]);
+ const before=(await db.query<{published:{title:string;content:string};revision:number}>("select published,revision from academy_resources where id=$1",[id])).rows[0];
+ const richContent={type:"doc",content:[{type:"paragraph",content:[{type:"text",text:changed}]},{type:"image",attrs:{src:"https://example.com/help.png",alt:"Nova captura"}},{type:"codeBlock",content:[{type:"text",text:"select 1;"}]}]};
+ const proposal={...originalArticle,title:"Procedimento revisado",content:changed,richContent};
+ const suggest=()=>db.query<{academy_article_suggest_edit:string}>("select academy_article_suggest_edit($1::uuid,$2,$3,$4::jsonb,$5)",[contributor,id,before.revision,JSON.stringify(proposal),"Atualizei o fluxo e incluí imagem e SQL."]);
+ await expect(db.query("select academy_article_suggest_edit($1::uuid,$2,$3,$4::jsonb,$5)",[author,id,before.revision,JSON.stringify(proposal),"Atualizei o fluxo e incluí imagem e SQL."])).rejects.toThrow("já é autor");
+ const suggestionId=(await suggest()).rows[0].academy_article_suggest_edit;
+ expect((await db.query<{published:{title:string;content:string}}>("select published from academy_resources where id=$1",[id])).rows[0].published).toEqual(before.published);
+ await expect(db.query("select academy_article_review_edit($1::uuid,$2,$3::uuid,$4)",[reader,id,suggestionId,"accept"])).rejects.toThrow("Somente o autor");
+ await db.query("select academy_article_review_edit($1::uuid,$2,$3::uuid,$4)",[author,id,suggestionId,"accept"]);
+ const after=(await db.query<{published:{title:string;content:string;richContent:typeof richContent};revision:number}>("select published,revision from academy_resources where id=$1",[id])).rows[0];
+ expect(after.published.title).toBe("Procedimento revisado");
+ expect(after.published.content).toBe(changed);
+ expect(after.published.richContent).toEqual(richContent);
+ expect(after.revision).toBe(before.revision+1);
+ expect((await db.query("select * from academy_article_coauthors where article_id=$1",[id])).rows).toHaveLength(1);
+ expect((await db.query<{amount:number}>("select amount from academy_xp where user_id=$1 and event_key=$2",[contributor,`collab:bonus:${suggestionId}`])).rows[0].amount).toBe(5);
+});
+
+it("o autor pode ajustar a proposta completa antes de aceitar",async()=>{
+ const id="adjusted";
+ const original="Texto original com detalhes suficientes para orientar o atendimento da equipe em um procedimento de rotina.";
+ const proposed="Texto proposto com detalhes suficientes para orientar o atendimento da equipe em um procedimento de rotina.";
+ const adjusted="Texto ajustado pela autora com detalhes suficientes para orientar o atendimento da equipe em um procedimento de rotina.";
+ const article={id,title:"Guia original",product:"Geral",category:"Guia",content:original,author:"Autora",status:"draft",revision:1,updatedAt:"2026-01-01",richContent:{type:"doc",content:[{type:"paragraph",content:[{type:"text",text:original}]}]}};
+ await db.query("select academy_community_mutate($1::uuid,$2::jsonb)",[author,JSON.stringify({type:"community-save",data:article,publish:true,expectedVersion:0})]);
+ const revision=(await db.query<{revision:number}>("select revision from academy_resources where id=$1",[id])).rows[0].revision;
+ const proposal={...article,title:"Guia proposto",content:proposed,richContent:{type:"doc",content:[{type:"paragraph",content:[{type:"text",text:proposed}]}]}};
+ const suggestionId=(await db.query<{academy_article_suggest_edit:string}>("select academy_article_suggest_edit($1::uuid,$2,$3,$4::jsonb,$5)",[contributor,id,revision,JSON.stringify(proposal),"Atualizei as orientações do procedimento."])).rows[0].academy_article_suggest_edit;
+ const adjustment={...proposal,title:"Guia aprovado com ajustes",content:adjusted,richContent:{type:"doc",content:[{type:"paragraph",content:[{type:"text",text:adjusted}]}]}};
+ await db.query("select academy_article_review_edit($1::uuid,$2,$3::uuid,$4,$5::jsonb)",[author,id,suggestionId,"accept",JSON.stringify(adjustment)]);
+ const published=(await db.query<{published:{title:string;content:string;richContent:{content:{content:{text:string}[]}[]}}}>("select published from academy_resources where id=$1",[id])).rows[0].published;
+ expect(published.title).toBe("Guia aprovado com ajustes");
+ expect(published.content).toBe(adjusted);
+ expect(published.richContent.content[0].content[0].text).toBe(adjusted);
+ expect((await db.query("select * from academy_article_coauthors where article_id=$1",[id])).rows).toHaveLength(1);
 });

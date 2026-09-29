@@ -68,7 +68,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const authoredArticles=community.articles.filter(article=>article.authorId===me.id);
  const pendingSuggestions=authoredArticles.length?await db.from("academy_article_suggestions").select("id,article_id,proposed_text,created_at").eq("status","pending").in("article_id",authoredArticles.map(article=>article.id)):null;
  if(pendingSuggestions?.error)throw new ApiError("Não foi possível consultar as sugestões da biblioteca.",503);
- const collaborationNotices=(pendingSuggestions?.data??[]).map(row=>({id:`suggestion:${row.id}`,userId:me.id,title:`Nova sugestão: ${authoredArticles.find(article=>article.id===row.article_id)?.title??"artigo"}`,message:row.proposed_text.slice(0,180),link:`/conhecimento/${encodeURIComponent(row.article_id)}`,read:false,createdAt:row.created_at}));
+ const collaborationNotices=(pendingSuggestions?.data??[]).map(row=>({id:`suggestion:${row.id}`,userId:me.id,title:`Nova sugestão: ${authoredArticles.find(article=>article.id===row.article_id)?.title??"artigo"}`,message:row.proposed_text.slice(0,180),link:`/conhecimento/${encodeURIComponent(row.article_id)}/editar?proposta=${encodeURIComponent(row.id)}`,read:false,createdAt:row.created_at}));
  const published:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,level:normalizeStoredCourseLevel(r.published.level),xp:courseXp(r.published)}));
  const ownCartorio=(cartoriosResult.data??[]).find((row:any)=>row.id===me.cartorio_id);
  const courses=published.filter(course=>course.status==="published"&&(me.audience==="client"
