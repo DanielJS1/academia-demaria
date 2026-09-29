@@ -15,3 +15,6 @@ __pycache__/
 *.pyc
 platform/tests/e2e/.env
 platform/data/lesson-notes.json
+brag-output/
+platform/AGENTS.md
+platform/CLAUDE.md

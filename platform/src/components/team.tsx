@@ -29,7 +29,7 @@ import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { CourseArt, EmptyState, PageHeading, Progress } from "./shared";
 import { initials, normalize } from "@/lib/utils";
-import { courseProgress, minutes, type Attempt, type Course, type Person } from "@/lib/model";
+import { courseLevelLabels, courseProgress, minutes, type Attempt, type Course, type Person } from "@/lib/model";
 import { formatActiveTime, formatLastAccess, type EngagementMember } from "@/lib/engagement";
 import { EngagementControls, MemberEngagement, useTeamEngagement } from "./team-engagement";
 import { managedPeople } from "@/lib/team-scope";
@@ -847,7 +847,7 @@ function TeamCoursesView({
                       {course.department && (
                         <span className="team-badge primary">Setor: {course.department}</span>
                       )}
-                      <span className="team-badge">{course.level}</span>
+                      <span className="team-badge">{courseLevelLabels[course.level]}</span>
                     </div>
                     <h3>{course.title}</h3>
                     <small style={{ color: "var(--muted)" }}>
@@ -1489,7 +1489,7 @@ function CollaboratorModal({
                     <tr key={item.course.id}>
                       <td>
                         <strong>{item.course.title}</strong>
-                        <small>{item.course.level}</small>
+                        <small>{courseLevelLabels[item.course.level]}</small>
                       </td>
                       <td>
                         <span className="team-badge">{item.course.product}</span>

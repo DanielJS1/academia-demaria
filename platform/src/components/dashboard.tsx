@@ -32,7 +32,7 @@ export function Dashboard() {
   const nextUp = continuing[0];
   const heroResume = nextUp?.lesson ? { title: nextUp.course.title, lesson: nextUp.lesson.title, minutes: nextUp.lesson.minutes, position: nextUp.position,
     href: `/aprender/${encodeURIComponent(nextUp.course.id)}/aula?aula=${encodeURIComponent(nextUp.lesson.id)}${nextUp.position > 0 ? `&t=${Math.floor(nextUp.position)}` : ""}` } : undefined;
-  const recentCourse = courses.find(course => course.version === 1 && !(state.completed[course.id] || []).length);
+  const recentCourse = courses.find(course => course.required) ?? courses.find(course => course.version === 1 && !(state.completed[course.id] || []).length);
   const featuredCourse = recentCourse ? { title: recentCourse.title, description: recentCourse.description.slice(0, 145), href: `/aprender/${encodeURIComponent(recentCourse.id)}` } : undefined;
   const rank = people.findIndex(person => person.id === me.id) + 1;
   const heroRanking = { season: DEMO_SEASON, rank, xp: evolution.annual, gap: Math.max(0, (people[4]?.xp ?? 0) - evolution.annual + 1) };
