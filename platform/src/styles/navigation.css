@@ -1007,6 +1007,9 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.password-input-wrap input::-ms-reveal,
+.password-input-wrap input::-ms-clear { display: none; }
+
 .password-input-wrap input:focus {
   outline: none;
   border-color: var(--primary);
