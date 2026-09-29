@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Award, BookOpen, CheckCircle2, Clock3, FileText, PlayCircle, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { useAcademy } from "./academy-provider";
+import { CourseLevelBadge } from "./course-level-badge";
 import { CourseArt, EmptyState, CheckLabel } from "./shared";
 import { AnimatedButton } from "./ui/animated-button";
 import { minutes, courseProgress } from "@/lib/model";
@@ -55,7 +56,8 @@ export function CourseDetail({ id }: { id: string }) {
         <div className="course-detail-art"><CourseArt course={course} large /></div>
         <div className="course-detail-intro">
           <div>
-            <span className="pill">{course.category}</span>
+            <span className="pill">{course.category}</span>{" "}
+            <CourseLevelBadge level={course.level} />
             <h1>{course.title}</h1>
             <div className="detail-metrics">
               <span><Clock3 size={15} />{minutes(course)} min</span>

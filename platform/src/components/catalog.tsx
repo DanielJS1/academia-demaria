@@ -5,7 +5,7 @@ import { Bookmark, BookOpen, CheckCircle2, Clock3, Search, SlidersHorizontal, Sp
 import { useAcademy } from "./academy-provider";
 import { CourseCard, EmptyState, PageHeading } from "./shared";
 import { Button } from "./ui/button";
-import { isCourseAvailableForCartorio } from "@/lib/model";
+import { courseLevels, isCourseAvailableForCartorio } from "@/lib/model";
 import { isCourseComplete } from "@/lib/rewards";
 import { normalize } from "@/lib/utils";
 
@@ -17,6 +17,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   const [product, setProduct] = useState("Todos");
   const [selectedTab, setTab] = useState<CatalogTab | null>(null);
   const [level, setLevel] = useState("Todos");
+  const [pendingOnly, setPendingOnly] = useState(false);
 
   const published = state.courses.filter(course => {
     if (course.status !== "published") return false;
@@ -63,6 +64,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
     }
 
     const isCompleted = isCourseComplete(course, state, me.id);
+    if (pendingOnly && isCompleted) return false;
     const hasStarted = (state.completed[course.id] || []).length > 0 || Object.values(state.videoProgress[course.id] || {}).some(progress => progress.position > 0);
 
     if (tab === "in_progress") return hasStarted && !isCompleted;
@@ -165,10 +167,15 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
           aria-label="Filtrar por nível"
         >
           <option value="Todos">Todos os níveis</option>
-          <option>Essencial</option>
-          <option>Intermediário</option>
-          <option>Avançado</option>
+          {courseLevels.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
         </select>
+        <label className="checkbox-field">
+          <input type="checkbox" checked={pendingOnly} onChange={event => {
+            setPendingOnly(event.target.checked);
+            if (event.target.checked) setTab("all");
+          }} />
+          Apenas pendentes
+        </label>
       </div>
 
       <div className="results-label">
@@ -199,7 +206,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
             )
           }
           title={
-            search.trim() || product !== "Todos" || level !== "Todos"
+            search.trim() || product !== "Todos" || level !== "Todos" || pendingOnly
               ? "Nenhum curso encontrado com esses filtros"
               : tab === "completed"
               ? "Você ainda não concluiu nenhum curso"
@@ -212,7 +219,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
               : "Nenhum curso encontrado"
           }
           description={
-            search.trim() || product !== "Todos" || level !== "Todos"
+            search.trim() || product !== "Todos" || level !== "Todos" || pendingOnly
               ? "Experimente buscar por outros termos ou redefinir os filtros acima."
               : tab === "completed"
               ? "Conclua as aulas e avaliações de um curso para vê-lo aqui na sua galeria de concluídos."
@@ -231,10 +238,11 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
               setSearch("");
               setProduct("Todos");
               setLevel("Todos");
+              setPendingOnly(false);
               setTab("all");
             }}
           >
-            {tab !== "all" || search.trim() || product !== "Todos" || level !== "Todos"
+            {tab !== "all" || search.trim() || product !== "Todos" || level !== "Todos" || pendingOnly
               ? "Ver todos os cursos"
               : "Limpar busca"}
           </Button>
