@@ -1,7 +1,6 @@
 import { courseValidationError, normalizeCourse } from "./course-activities";
 import { createClient } from "@supabase/supabase-js";
 import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./registration-security";
-import { DEPARTMENTS } from "./departments";
 import { courseXp } from "./rewards";
 import { commandSchema } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
@@ -66,6 +65,10 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult,recognitionsResult,pdiNotesResult]=results;
  const community=await readCommunity(db,me);
+ const authoredArticles=community.articles.filter(article=>article.authorId===me.id);
+ const pendingSuggestions=authoredArticles.length?await db.from("academy_article_suggestions").select("id,article_id,proposed_text,created_at").eq("status","pending").in("article_id",authoredArticles.map(article=>article.id)):null;
+ if(pendingSuggestions?.error)throw new ApiError("Não foi possível consultar as sugestões da biblioteca.",503);
+ const collaborationNotices=(pendingSuggestions?.data??[]).map(row=>({id:`suggestion:${row.id}`,userId:me.id,title:`Nova sugestão: ${authoredArticles.find(article=>article.id===row.article_id)?.title??"artigo"}`,message:row.proposed_text.slice(0,180),link:`/conhecimento/${encodeURIComponent(row.article_id)}`,read:false,createdAt:row.created_at}));
  const published:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,level:normalizeStoredCourseLevel(r.published.level),xp:courseXp(r.published)}));
  const ownCartorio=(cartoriosResult.data??[]).find((row:any)=>row.id===me.cartorio_id);
  const courses=published.filter(course=>course.status==="published"&&(me.audience==="client"
@@ -114,7 +117,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   status:c.status??"active",createdAt:c.created_at??new Date().toISOString()
  }));
  const visibleAttempts=(attempts.data??[]).filter((a: any)=>managedIds.has(a.user_id)&&courses.some(c=>c.id===a.course_id));
- const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"&&me.audience!=="client"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>({...r.draft,level:normalizeStoredCourseLevel(r.draft.level)})):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:me.audience==="client"?[]:settings.data.departments,products:me.audience==="client"?[...new Set(courses.map(c=>c.product))]:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
+ const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"&&me.audience!=="client"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>({...r.draft,level:normalizeStoredCourseLevel(r.draft.level)})):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:me.audience==="client"?[]:settings.data.departments,products:me.audience==="client"?[...new Set(courses.map(c=>c.product))]:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:collaborationNotices,
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
   teamProgress,cartorios,recognitions,pdiNotes};
@@ -176,7 +179,8 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   const {error}=await db.rpc("academy_mutate",{actor:me.id,command:{...command,data:command.kind==="course"?{...normalizeCourse(body as Course),xp:courseXp(body as Course)}:body}});if(error)throw new ApiError(error.message);return;
  }
  if(command.type==="invite"){
-  if(!DEPARTMENTS.some(d=>d===command.department))throw new ApiError("Selecione um setor da DeMaria.");
+  const departments=await db.from("academy_settings").select("departments").eq("id",true).single();ensure(departments);
+  if(!departments.data?.departments?.includes(command.department))throw new ApiError("Selecione um setor da DeMaria.");
   if(!isAllowedCompanyEmail(command.email))throw new ApiError("Use um e-mail @demaria.com.br ou @sacdemaria.com.br.");
   const normalizedEmail=normalizeEmail(command.email);
   const site=process.env.NEXT_PUBLIC_SITE_URL;
@@ -191,7 +195,7 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  if(command.type==="profile"){
   const existing=await db.from("academy_profiles").select("email,department").eq("id",command.data.id).single();
   if(existing.error||existing.data.email!==command.data.email)throw new ApiError("A alteração de e-mail exige um fluxo de confirmação e não está disponível neste editor.");
-  if(existing.data.department!==command.data.department&&!DEPARTMENTS.some(d=>d===command.data.department))throw new ApiError("Selecione um setor da DeMaria.");
+  if(existing.data.department!==command.data.department){const departments=await db.from("academy_settings").select("departments").eq("id",true).single();ensure(departments);if(!departments.data?.departments?.includes(command.data.department))throw new ApiError("Selecione um setor da DeMaria.");}
   if(command.data.status==="active"){
    try{await db.auth.admin.updateUserById(command.data.id,{email_confirm:true});}catch{}
   }

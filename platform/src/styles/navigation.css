@@ -418,6 +418,13 @@
   display: none;
 }
 
+.tier-avatar { --tier-ring: #ad7751; position: relative; overflow: visible; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px var(--tier-ring), 0 5px 14px rgba(0,0,0,.16); }
+.tier-avatar::after { content: "◆"; position: absolute; right: -8px; bottom: -5px; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; background: var(--tier-ring); color: #fff; border: 1.5px solid var(--surface); font-size: 8px; line-height: 1; z-index: 1; }
+.tier-avatar.tier-prata { --tier-ring: #8996a8; }
+.tier-avatar.tier-ouro { --tier-ring: #d49d29; }
+.tier-avatar.tier-platina { --tier-ring: #617f9b; }
+.tier-avatar.tier-diamante { --tier-ring: #5a67d8; box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px #6d85ec, 0 0 14px rgba(91,112,230,.55); }
+
 .notifications {
   position: relative;
 }
@@ -845,11 +852,13 @@
   overflow: hidden;
   margin-bottom: 12px;
 }
+.profile-photo-preview.tier-avatar { overflow: visible; }
 
 .profile-photo-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
   display: block;
 }
 

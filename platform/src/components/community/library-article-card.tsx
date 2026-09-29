@@ -17,7 +17,7 @@ export function LibraryArticleCard({ article }: { article: Article }) {
   const [pending, setPending] = useState(false);
   const view = optimistic ? { ...article, ...optimistic } : article;
   const draft = article.status === "draft";
-  const own = article.authorId === me.id;
+  const own = article.authorId === me.id || article.coauthor?.id === me.id;
   const href = draft ? `/conhecimento/${article.id}/editar` : `/conhecimento/${article.id}`;
   const disabled = draft || own || pending || busy;
 
@@ -40,7 +40,7 @@ export function LibraryArticleCard({ article }: { article: Article }) {
     <Link href={href} className="community-card-open" aria-label={`${draft ? "Editar" : "Abrir"} artigo: ${article.title}`} />
     <div className="community-card-top"><span className="article-icon"><FileText size={22} /></span><span className="pill">{article.category}</span></div>
     {draft && <span className="community-status">Rascunho privado</span>}{article.updateRequest && <span className="community-status">Atualização solicitada</span>}
-    <h3>{article.title}</h3><p>{article.summary || article.content || "Continue o seu rascunho."}</p><div className="community-card-author">{article.author} · {article.product}</div>
+    <h3>{article.title}</h3><p>{article.summary || article.content || "Continue o seu rascunho."}</p><div className="community-card-author">{article.author}{article.coauthor ? ` e ${article.coauthor.name}` : ""} · {article.product}</div>
     <div className="community-card-stats" aria-label={`Interações com ${article.title}`}>
       {draft ? <><span><Heart size={14} aria-hidden="true" /> {view.likeCount || 0}</span><span><Flame size={14} aria-hidden="true" /> {view.hypeCount || 0}</span><span><MessageCircle size={14} aria-hidden="true" /> {view.commentCount || 0}</span></> : <>
         <Button type="button" variant="ghost" size="sm" className="community-card-action" disabled={disabled} title={own ? "Você não pode curtir o próprio artigo" : undefined} aria-label={`${view.liked ? "Remover curtida de" : "Curtir"} ${article.title}. ${view.likeCount || 0} curtidas`} aria-pressed={!!view.liked} onClick={event => void react(event, "like")}><Heart size={16} fill={view.liked ? "currentColor" : "none"} aria-hidden="true" /> {view.likeCount || 0}</Button>
