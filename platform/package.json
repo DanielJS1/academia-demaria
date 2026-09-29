@@ -8,6 +8,7 @@
     "start": "next start --hostname 127.0.0.1 --port 4174",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:players": "node scripts/test-video-players.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
