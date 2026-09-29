@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, Bookmark, BookOpen, Check, Clock3, FileStack, Headphones, Layers3, LockKeyhole, Monitor, Play, ScanLine, Sparkles } from "lucide-react";
 import { useAcademy } from "./academy-provider";
+import { CourseLevelBadge } from "./course-level-badge";
 import { Button } from "./ui/button";
 import { courseProgress, minutes, type Course } from "@/lib/model";
 import { isCourseComplete } from "@/lib/rewards";
@@ -24,11 +25,11 @@ export function CourseCard({ course }: { course: Course }) {
         <CourseArt course={course}/>
         <div className="course-card-body">
           <div className="course-card-meta">
-            <span>{course.level}</span>
+            <CourseLevelBadge level={course.level} />
             {completed ? (
               <span className="completed-label"><Check size={12}/> Concluído</span>
             ) : course.required ? (
-              <span className="required-label">Essencial para você</span>
+              <span className="required-label">Em destaque</span>
             ) : progress > 0 ? (
               <span className="progress-label">Em andamento</span>
             ) : null}

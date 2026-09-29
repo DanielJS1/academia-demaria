@@ -5,7 +5,7 @@ import { DEPARTMENTS } from "./departments";
 import { courseXp } from "./rewards";
 import { commandSchema } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
-import { courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
+import { normalizeStoredCourseLevel, courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
 import { isStoredMediaUrl } from "./storage-service";
 export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
 export function database(){
@@ -44,7 +44,7 @@ export async function canAccessCourse(db:ReturnType<typeof database>,me:Profile,
 }
 export async function requireCourseAccess(db:ReturnType<typeof database>,me:Profile,courseId:string):Promise<Course>{
  const result=await db.from("academy_resources").select("published").eq("id",courseId).eq("kind","course").maybeSingle();ensure(result);
- const parsed=courseSchema.safeParse(result.data?.published);
+ const parsed=courseSchema.safeParse(result.data?.published ? {...result.data.published, level: normalizeStoredCourseLevel(result.data.published.level)} : undefined);
  if(!parsed.success||!await canAccessCourse(db,me,parsed.data))throw new ApiError("Curso não autorizado.",403);
  return parsed.data;
 }
@@ -66,7 +66,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult,recognitionsResult,pdiNotesResult]=results;
  const community=await readCommunity(db,me);
- const published:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,xp:courseXp(r.published)}));
+ const published:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,level:normalizeStoredCourseLevel(r.published.level),xp:courseXp(r.published)}));
  const ownCartorio=(cartoriosResult.data??[]).find((row:any)=>row.id===me.cartorio_id);
  const courses=published.filter(course=>course.status==="published"&&(me.audience==="client"
   ? ownCartorio?.status==="active"&&isCourseAvailableForCartorio(course,ownCartorio as Cartorio)
@@ -114,7 +114,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   status:c.status??"active",createdAt:c.created_at??new Date().toISOString()
  }));
  const visibleAttempts=(attempts.data??[]).filter((a: any)=>managedIds.has(a.user_id)&&courses.some(c=>c.id===a.course_id));
- const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"&&me.audience!=="client"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>r.draft):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:me.audience==="client"?[]:settings.data.departments,products:me.audience==="client"?[...new Set(courses.map(c=>c.product))]:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
+ const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"&&me.audience!=="client"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>({...r.draft,level:normalizeStoredCourseLevel(r.draft.level)})):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:me.audience==="client"?[]:settings.data.departments,products:me.audience==="client"?[...new Set(courses.map(c=>c.product))]:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:[],
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
   teamProgress,cartorios,recognitions,pdiNotes};

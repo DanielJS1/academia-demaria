@@ -1,5 +1,20 @@
 import { z } from "zod";
 
+export const courseLevelSchema = z.enum(["essencial", "recomendado", "facultativo"]);
+export type CourseLevel = z.infer<typeof courseLevelSchema>;
+export const courseLevels = [
+  { value: "essencial", label: "Essencial", description: "Obrigatório / Fundamental para a função" },
+  { value: "recomendado", label: "Recomendado", description: "Importante para aprimoramento contínuo" },
+  { value: "facultativo", label: "Facultativo", description: "Conteúdo livre / Eletivo" },
+] as const;
+export const courseLevelLabels: Record<CourseLevel, string> = Object.fromEntries(courseLevels.map(level => [level.value, level.label])) as Record<CourseLevel, string>;
+
+// Compatibilidade somente na leitura; novos comandos usam o enum estrito.
+export function normalizeStoredCourseLevel(value: unknown): CourseLevel {
+  const normalized = typeof value === "string" ? value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : value;
+  return courseLevelSchema.parse(normalized === "intermediario" ? "recomendado" : normalized === "avancado" ? "facultativo" : normalized);
+}
+
 export const questionSchema = z.object({ id: z.string(), prompt: z.string().min(1), type: z.enum(["choice", "text"]), options: z.array(z.string()), correct: z.string(), multiple: z.boolean().optional() });
 export const lessonSchema = z.object({
   id: z.string(),
@@ -15,7 +30,7 @@ export const lessonSchema = z.object({
   ufFilter: z.array(z.string()).optional(),
 });
 export const courseSchema = z.object({
-  id: z.string(), title: z.string().min(3).max(120), description: z.string(), product: z.string().min(1), category: z.string(), level: z.string(),
+  id: z.string(), title: z.string().min(3).max(120), description: z.string(), product: z.string().min(1), category: z.string(), level: courseLevelSchema,
   accent: z.enum(["violet", "mint", "peach", "blue", "pink", "slate"]), status: z.enum(["draft", "published"]),
   xp: z.number().int().min(0).max(10000), required: z.boolean(), banner: z.string(), logoUrl: z.string().optional(), author: z.string(),
   department: z.string().optional(),

@@ -11,7 +11,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Check, Eye, Plus, Save, Trash2, X } from
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { CourseArt, EmptyState, PageHeading } from "../shared";
-import { courseSchema, safeImage, vimeoEmbed, type Course } from "@/lib/model";
+import { courseLevels, courseLevelSchema, normalizeStoredCourseLevel, courseSchema, safeImage, vimeoEmbed, type Course } from "@/lib/model";
 import { BRAZILIAN_UFS, ALL_MODULES_MAP } from "@/lib/cartorio-modules";
 
 const uuid = () => crypto.randomUUID();
@@ -29,7 +29,7 @@ export function CourseEditor({ id }: { id: string }) {
           description: "",
           product: state.products[0] || "Conhecimentos gerais",
           category: "Produtos",
-          level: "Essencial",
+          level: "essencial",
           accent: "violet",
           status: "draft",
           xp: 200,
@@ -62,6 +62,7 @@ export function CourseEditor({ id }: { id: string }) {
       const raw = sessionStorage.getItem(recoveryKey);
       if (raw) {
         const recovered = JSON.parse(raw);
+        recovered.level = normalizeStoredCourseLevel(recovered.level);
         const serverVersion = existing?.version || 1;
         const draftVersion = recovered?.version || 1;
         // If server version is strictly higher, local draft is obsolete
@@ -276,11 +277,10 @@ export function CourseEditor({ id }: { id: string }) {
               </label>
               <label className="field">
                 <span>Nível</span>
-                <select value={course.level} onChange={event => field("level", event.target.value)}>
-                  <option>Essencial</option>
-                  <option>Intermediário</option>
-                  <option>Avançado</option>
+                <select aria-describedby="course-level-help" value={course.level} onChange={event => field("level", courseLevelSchema.parse(event.target.value))}>
+                  {courseLevels.map(level => <option key={level.value} value={level.value} title={level.description}>{level.label}</option>)}
                 </select>
+                <small id="course-level-help">{courseLevels.find(level => level.value === course.level)?.description}</small>
               </label>
               <label className="field">
                 <span>Responsável pelo conteúdo</span>
@@ -639,7 +639,7 @@ export function CourseEditor({ id }: { id: string }) {
                 checked={course.required}
                 onChange={event => field("required", event.target.checked)}
               />
-              Destacar como essencial
+              Destacar no catálogo principal (Vitrine/Hero)
             </label>
             <Button disabled={busy || uploads > 0} variant="secondary" onClick={() => save(false)}>
               <Save size={15} /> Salvar rascunho

@@ -8,7 +8,7 @@ const lessons = (prefix: string): Lesson[] => [
   { id: `${prefix}-5`, title: "Consolide seu aprendizado", module: "03 · Próximo nível", minutes: 5, type: "quiz", content: "Avaliação de exemplo sobre a experiência da plataforma, sem conteúdo técnico de produto.", videoUrl: "" },
 ];
 const base: Omit<Course, "id" | "title" | "description" | "product" | "accent" | "lessons"> = {
-  category: "Produtos", level: "Essencial", status: "published", xp: 420, required: false, banner: "", author: "Equipe Academia DeMaria", passingScore: 70, retryPolicy: "free", version: 1,
+  category: "Produtos", level: "essencial", status: "published", xp: 420, required: false, banner: "", author: "Equipe Academia DeMaria", passingScore: 70, retryPolicy: "free", version: 1,
   audience: "internal", requiredModules: [], isSelagem: false,
   hasProficiencyTest: false, proficiencyScore: 85, proficiencyQuestions: [],
   questions: [
@@ -26,7 +26,7 @@ export const initialState: AcademyState = {
     { ...base, id: "atendimento", title: "Atendimento que gera confiança", description: "Comunicação, escuta e conhecimento para uma experiência de atendimento melhor.", product: "Conhecimentos gerais", category: "Desenvolvimento", department: "Comercial", accent: "peach", xp: 280, lessons: lessons("service") },
     { ...base, id: "rotinas", title: "O universo dos cartórios", description: "Uma introdução aos temas e rotinas que fazem parte do nosso trabalho.", product: "Conhecimentos gerais", category: "Cartórios", department: "Geral", accent: "blue", xp: 320, lessons: lessons("cart") },
     { ...base, id: "seguranca", title: "Cuidado com a informação", description: "Um espaço para aprender boas práticas e aprofundar o cuidado com os dados.", product: "Conhecimentos gerais", category: "Desenvolvimento", department: "Geral", accent: "pink", xp: 240, lessons: lessons("sec") },
-    { ...base, id: "atualizacoes", title: "Sempre em evolução", description: "Uma trilha de atualização contínua para acompanhar novas possibilidades.", product: "DOC-Windows", level: "Intermediário", department: "Financeiro", accent: "slate", xp: 380, lessons: lessons("up") },
+    { ...base, id: "atualizacoes", title: "Sempre em evolução", description: "Uma trilha de atualização contínua para acompanhar novas possibilidades.", product: "DOC-Windows", level: "recomendado", department: "Financeiro", accent: "slate", xp: 380, lessons: lessons("up") },
     {
       ...base,
       id: "client-win-casamento",
