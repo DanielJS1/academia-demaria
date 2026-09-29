@@ -753,17 +753,16 @@
   top: 10px;
   display: grid;
   place-items: center;
-  padding: 4px 7px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, .88);
-  box-shadow: 0 4px 14px rgba(15, 23, 42, .08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
   z-index: 4;
 }
 
 .art-brand img {
   display: block;
-  width: 112px;
-  height: auto;
+  width: 46px;
+  height: 46px;
 }
 
 .art-edition {
