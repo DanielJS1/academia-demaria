@@ -4,7 +4,6 @@ import { useAcademy } from "./academy-provider";
 import { browserAuth } from "@/lib/supabase-browser";
 import { youtubeEmbed, type Course, type Lesson } from "@/lib/model";
 import { isVideoNearEnd } from "@/lib/video-completion";
-import { videoIsComplete } from "@/lib/video-completion";
 import { mergeWatched } from "@/lib/pilot-contract";
 
 declare global {
@@ -33,7 +32,7 @@ export function YouTubeLesson({
   const playerRef = useRef<any>(null);
   const { mutate, state } = useAcademy();
   const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
+  const retrySave = useRef<() => void>(() => {});
   const [nearEnd, setNearEnd] = useState(false);
 
   const completed = (state.completed[course.id] || []).includes(lesson.id);
@@ -46,7 +45,8 @@ export function YouTubeLesson({
     let lastRecord = 0;
     let inFlight = false;
     let queued = false;
-    let debounce: ReturnType<typeof setTimeout> | null = null;
+    let dirty = false;
+    let wasNearEnd = false;
     let token = "";
     let lastSnapshot: { currentTime: number; duration: number } | null = null;
     let lastTracked: number | null = null;
@@ -55,7 +55,7 @@ export function YouTubeLesson({
 
     const commandFor = (currentTime: number, duration: number) => ({
       type: "video" as const, courseId: course.id, version: course.version, lessonId: lesson.id,
-      duration, position: currentTime, ranges: watched.slice(-1999).map(range => [...range] as [number, number]),
+      duration, position: currentTime, ranges: mergeWatched(watched, duration).ranges as [number, number][],
     });
     const onExit = () => {
       if (preview || !token || !playerRef.current) return;
@@ -66,27 +66,28 @@ export function YouTubeLesson({
 
     const record = async (currentTime: number, duration: number, force = false) => {
       if (preview || duration <= 0 || !active) return;
-      if (debounce) { clearTimeout(debounce); debounce = null; }
       lastSnapshot = { currentTime, duration };
       if (inFlight) {
+        dirty = true;
         if (force) queued = true;
         return;
       }
       if (!force && Date.now() - lastRecord < 10000) return;
       inFlight = true;
+      dirty = false;
       lastRecord = Date.now();
 
       try {
-        const near = isVideoNearEnd(currentTime, duration);
-        setNearEnd(videoIsComplete(mergeWatched(watched, duration).seconds, duration));
+        setNearEnd(isVideoNearEnd(currentTime, duration));
 
         const saved = await mutate(commandFor(currentTime, duration), { silent: true });
 
         if (active) {
-          if (!saved) lastRecord = 0;
-          setError(saved ? "" : "Não foi possível salvar o avanço. Pause o vídeo para tentar novamente.");
+          if (!saved) dirty = true;
+          setError(saved ? "" : "Não foi possível salvar o avanço. Tentaremos novamente automaticamente.");
         }
       } catch {
+        dirty = true;
         if (active) setError("Não foi possível acompanhar o vídeo. Verifique a conexão com o YouTube.");
       } finally {
         inFlight = false;
@@ -107,15 +108,21 @@ export function YouTubeLesson({
         const advance = currentTime - lastTracked;
         if (advance > 0 && advance < 5) {
           const previous = watched[watched.length - 1];
-          if (previous && lastTracked <= previous[1] + 0.25) previous[1] = currentTime;
+          if (previous && lastTracked >= previous[0] && lastTracked <= previous[1] + 0.25) previous[1] = Math.max(previous[1], currentTime);
           else watched.push([lastTracked, currentTime]);
         }
       }
       lastTracked = currentTime;
       lastSnapshot = { currentTime, duration };
-      if (debounce) clearTimeout(debounce);
-      debounce = setTimeout(() => void record(currentTime, duration), 1500);
+      dirty = true;
+      void record(currentTime, duration);
     };
+
+    retrySave.current = () => {
+      const player = playerRef.current;
+      if (player) void record(player.getCurrentTime(), player.getDuration(), true);
+    };
+    const retryTimer = setInterval(() => { if (dirty) retrySave.current(); }, 10000);
 
     const setupPlayer = () => {
       if (!active || !window.YT || !window.YT.Player || !iframeRef.current) return;
@@ -126,10 +133,12 @@ export function YouTubeLesson({
         playerRef.current = new window.YT.Player(iframeId, {
           events: {
             onReady: (event: { target: { seekTo: (seconds: number, allowSeekAhead: boolean) => void; getDuration: () => number } }) => {
+              const duration = event.target.getDuration();
+              const position = duration > 0 ? Math.min(initialPosition, Math.max(0, duration - Math.min(1, duration * 0.005))) : initialPosition;
               if (active && initialPosition > 0) {
-                const duration = event.target.getDuration();
-                event.target.seekTo(duration > 0 ? Math.min(initialPosition, Math.max(0, duration - 1)) : initialPosition, true);
+                event.target.seekTo(position, true);
               }
+              if (active) void record(position, duration, true);
             },
             onStateChange: (event: { data: number }) => {
               if (!active) return;
@@ -137,7 +146,7 @@ export function YouTubeLesson({
               if (!player || typeof player.getCurrentTime !== "function") return;
 
               const currentTime = player.getCurrentTime() || 0;
-              const duration = player.getDuration() || (lesson.minutes * 60);
+              const duration = player.getDuration() || 0;
 
               // 1 = PLAYING
               if (event.data === 1) {
@@ -146,13 +155,14 @@ export function YouTubeLesson({
                 timer = setInterval(() => {
                   if (!active || !playerRef.current) return;
                   const cur = playerRef.current.getCurrentTime() || 0;
-                  const dur = playerRef.current.getDuration() || (lesson.minutes * 60);
+                  const dur = playerRef.current.getDuration() || 0;
                   const near = isVideoNearEnd(cur, dur);
                   schedule(cur, dur);
-                  if (near) {
-                    setNearEnd(videoIsComplete(mergeWatched(watched, dur).seconds, dur));
+                  if (near && !wasNearEnd) {
+                    setNearEnd(near);
                     void record(cur, dur, true);
                   }
+                  wasNearEnd = near;
                   window.dispatchEvent(new Event("academy:video-activity"));
                 }, 2000);
               } else {
@@ -161,7 +171,7 @@ export function YouTubeLesson({
                 lastTracked = null;
                 // 0 = ENDED, 2 = PAUSED
                 if (event.data === 0) {
-                  setNearEnd(videoIsComplete(mergeWatched(watched, duration).seconds, duration));
+                  setNearEnd(isVideoNearEnd(currentTime, duration));
                   void record(duration, duration, true);
                 } else if (event.data === 2) {
                   void record(currentTime, duration, true);
@@ -202,8 +212,9 @@ export function YouTubeLesson({
     return () => {
       onExit();
       active = false;
+      clearInterval(retryTimer);
+      retrySave.current = () => {};
       if (timer) clearInterval(timer);
-      if (debounce) clearTimeout(debounce);
       window.removeEventListener("pagehide", onExit);
       document.removeEventListener("visibilitychange", onVisibility);
       if (playerRef.current && typeof playerRef.current.destroy === "function") {
@@ -212,7 +223,7 @@ export function YouTubeLesson({
         } catch {}
       }
     };
-  }, [course.id, course.version, lesson.id, lesson.minutes, mutate, preview, retry, iframeId, initialPosition]);
+  }, [course.id, course.version, lesson.id, lesson.minutes, mutate, preview, iframeId, initialPosition]);
 
   return (
     <>
@@ -232,9 +243,9 @@ export function YouTubeLesson({
         <div className="video-next-action" aria-live="polite">
           <div>
             <strong>
-              {preview ? "Final da prévia" : completed ? "Aula concluída!" : "Registrando conclusão…"}
+              {preview ? "Final da prévia" : completed ? "Aula concluída!" : "Final do vídeo"}
             </strong>
-            <p>{nextTitle ? `A seguir: ${nextTitle}` : "Você chegou à última aula deste curso."}</p>
+            <p>{!preview && !completed ? "Para concluir, assista a pelo menos 50% da aula e chegue ao final. Administradores precisam apenas chegar ao final." : nextTitle ? `A seguir: ${nextTitle}` : "Você chegou à última aula deste curso."}</p>
           </div>
           {onNext && (
             <button className="button button-primary" disabled={!preview && !completed} onClick={onNext}>
@@ -247,8 +258,8 @@ export function YouTubeLesson({
       {error && (
         <div className="form-error" role="alert">
           {error}
-          <button className="button button-secondary" onClick={() => setRetry(v => v + 1)}>
-            Reconectar acompanhamento
+          <button className="button button-secondary" onClick={() => retrySave.current()}>
+            Tentar salvar novamente
           </button>
         </div>
       )}

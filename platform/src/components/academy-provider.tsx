@@ -20,7 +20,7 @@ export function AcademyProvider({children}:{children:ReactNode}){
  const request=useCallback(async(command?:Command, silentVideo=false)=>{
   const client=browserAuth();const session=await client?.auth.getSession();const token=session?.data.session?.access_token;
   if(!token)throw new Error("Entre na sua conta para continuar.");
-  const response=await fetch("/api/academy",{method:command?"POST":"GET",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},...(command?{body:JSON.stringify(command)}:{}),cache:"no-store"});
+  const response=await fetch("/api/academy",{method:command?"POST":"GET",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},...(command?{body:JSON.stringify(command)}:{}),cache:"no-store",...(command?.type==="video"?{signal:AbortSignal.timeout(20000)}:{})});
   const data=await response.json();if(!response.ok){if(response.status===401||(!command&&response.status===403)){setReady(false);setMe(null);current.current=empty;setState(empty);}throw new Error(data.error||"Não foi possível salvar.");}
   if(data.progress){
    if(identity.current!==data.userId)return;
