@@ -228,7 +228,8 @@
   .course-card h3 { font-size: 12px; }
   .course-art { height: 146px; }
   .art-composition { transform: scale(0.9); }
-  .art-brand { font-size: 8px; left: 12px; }
+  .art-brand { left: 10px; top: 8px; padding: 3px 5px; }
+  .art-brand img { width: 92px; }
   .art-product { font-size: 10px; left: 12px; }
   .bookmark-button { opacity: 1; width: 25px; height: 25px; }
   .course-card-meta { font-size: 7px; flex-wrap: wrap; }
