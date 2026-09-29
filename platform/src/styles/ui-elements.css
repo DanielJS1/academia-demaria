@@ -754,6 +754,8 @@ textarea.input {
 .access-card .field { margin-bottom: 10px; }
 .access-password-wrap { position: relative; }
 .access-password-wrap input { width: 100%; padding-right: 48px; }
+.access-password-wrap input::-ms-reveal,
+.access-password-wrap input::-ms-clear { display: none; }
 .access-password-toggle {
   position: absolute;
   inset: 0 4px 0 auto;

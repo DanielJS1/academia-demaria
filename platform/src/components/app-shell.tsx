@@ -136,7 +136,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ...navigation,
         ...(me.role !== "student" ? [{ href: "/equipe", label: "Minha gestão", icon: Users }, { href: "/equipe/relatorios", label: "Relatórios", icon: BarChart3 }] : []),
         ...(me.role === "admin" ? [{ href: "/admin", label: "Administração", icon: Settings2 }] : []),
-        { href: "/sobre", label: "Sobre a plataforma", icon: CircleHelp },
       ];
 
   return (
@@ -249,8 +248,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="sidebar-dock-bottom">
               <Link
                 href="/sobre"
-                className="sidebar-dock-item-btn"
+                className={`sidebar-dock-item-btn ${active("/sobre") ? "active" : ""}`}
                 aria-label="Sobre a plataforma"
+                aria-current={active("/sobre") ? "page" : undefined}
                 title="Sobre a plataforma"
               >
                 <CircleHelp size={18} />
