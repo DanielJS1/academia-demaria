@@ -7,7 +7,7 @@ import { ArrowRight, Award, Camera, ChevronLeft, ChevronRight, Flame, Gem, KeyRo
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, PageHeading, Progress, SectionHeading } from "./shared";
-import { experience, tiers, DEMO_SEASON } from "@/lib/gamification";
+import { experience, tiers, DEMO_SEASON, tierClass } from "@/lib/gamification";
 import { initials, number } from "@/lib/utils";
 import { ProfilePhotoModal } from "./profile-photo-modal";
 import { PasswordChangeModal } from "./password-change-modal";
@@ -58,7 +58,7 @@ export function Evolution() {
       <section className="evolution-profile-card">
         <div className="profile-card-left">
           <div className="profile-card-avatar-wrap">
-            <div className="profile-card-avatar">
+            <div className={`profile-card-avatar tier-avatar ${tierClass(xp.annual)}`} title={`Faixa ${xp.tier.name}`}>
               {avatar ? (
                 <img src={avatar} alt={me.name} className="profile-card-img" />
               ) : (
@@ -313,7 +313,7 @@ export function Evolution() {
               {(() => {
                 const personAvatar = person.avatar || (person.id === me.id ? avatar : undefined);
                 return (
-                  <span className={`avatar avatar-${index % 5}`} style={{ overflow: "hidden", padding: 0 }}>
+                  <span className={`avatar avatar-${index % 5} tier-avatar ${tierClass(person.xp)}`} title={`Faixa ${tierClass(person.xp).slice(5)}`} style={{ padding: 0 }}>
                     {personAvatar ? <img src={personAvatar} alt={person.name} className="avatar-img" /> : initials(person.name)}
                   </span>
                 );
