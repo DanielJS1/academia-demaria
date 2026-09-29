@@ -33,6 +33,7 @@ import { courseLevelLabels, courseProgress, minutes, type Attempt, type Course, 
 import { formatActiveTime, formatLastAccess, type EngagementMember } from "@/lib/engagement";
 import { EngagementControls, MemberEngagement, useTeamEngagement } from "./team-engagement";
 import { managedPeople } from "@/lib/team-scope";
+import { tierClass } from "@/lib/gamification";
 
 // Determina se o curso é voltado especificamente para o departamento do colaborador
 function isCourseForSector(course: Course, department: string): boolean {
@@ -589,7 +590,7 @@ export function Team() {
                       >
                         <td>
                           <div className="team-person-cell">
-                            <span className="team-avatar" style={{ overflow: "hidden", padding: 0 }}>{person.avatar ? <img src={person.avatar} alt={person.name} className="avatar-img" /> : initials(person.name)}</span>
+                            <span className={`team-avatar tier-avatar ${tierClass(person.xp)}`} title={`Faixa ${tierClass(person.xp).slice(5)}`} style={{ padding: 0 }}>{person.avatar ? <img src={person.avatar} alt={person.name} className="avatar-img" /> : initials(person.name)}</span>
                             <div className="team-person-info">
                               <strong>{person.name}</strong>
                               <small>{person.email}</small>
@@ -1138,7 +1139,7 @@ function TeamAssessmentsView({
                     </td>
                     <td>
                       <div className="team-person-cell">
-                        <span className="team-avatar" style={{ width: 30, height: 30, fontSize: 10, overflow: "hidden", padding: 0 }}>
+                        <span className={`team-avatar tier-avatar ${tierClass(person?.xp || 0)}`} title={`Faixa ${tierClass(person?.xp || 0).slice(5)}`} style={{ width: 30, height: 30, fontSize: 10, padding: 0 }}>
                           {person?.avatar ? <img src={person.avatar} alt={person?.name || "Colaborador"} className="avatar-img" /> : initials(person?.name || "Colaborador")}
                         </span>
                         <div>
@@ -1361,7 +1362,7 @@ function CollaboratorModal({
         {/* Header do Perfil */}
         <div className="team-modal-header">
           <div className="team-modal-profile">
-            <div className="team-modal-avatar" style={{ overflow: "hidden", padding: 0 }}>{person.avatar ? <img src={person.avatar} alt={person.name} className="avatar-img" /> : initials(person.name)}</div>
+            <div className={`team-modal-avatar tier-avatar ${tierClass(person.xp)}`} title={`Faixa ${tierClass(person.xp).slice(5)}`} style={{ padding: 0 }}>{person.avatar ? <img src={person.avatar} alt={person.name} className="avatar-img" /> : initials(person.name)}</div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>{person.name}</h2>

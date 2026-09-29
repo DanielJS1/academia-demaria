@@ -5,6 +5,7 @@ import { Check, Pencil } from "lucide-react";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { initials, normalize } from "@/lib/utils";
+import { tierClass } from "@/lib/gamification";
 
 export function AdminPeople({ search }: { search: string }) {
   const { state, me, update, mutate, notify, busy } = useAcademy();
@@ -30,7 +31,7 @@ export function AdminPeople({ search }: { search: string }) {
               <tr key={person.id}>
                 <td>
                   <div className="table-person">
-                    <span className="avatar" style={{ overflow: "hidden", padding: 0 }}>{person.avatar ? <img src={person.avatar} alt={person.name} className="avatar-img" /> : initials(person.name)}</span>
+                    <span className={`avatar tier-avatar ${tierClass(person.xp)}`} title={`Faixa ${tierClass(person.xp).slice(5)}`} style={{ padding: 0 }}>{person.avatar ? <img src={person.avatar} alt={person.name} className="avatar-img" /> : initials(person.name)}</span>
                     <div>
                       <strong>{person.name}</strong>
                       <small>{person.email}</small>

@@ -5,6 +5,7 @@ import { Camera, Upload, Trash2, X, AlertCircle } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { uploadMedia } from "@/lib/storage-service";
 import { Button } from "./ui/button";
+import { tierClass } from "@/lib/gamification";
 
 interface ProfilePhotoModalProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ interface ProfilePhotoModalProps {
 }
 
 export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
-  const { me, avatar, setAvatar, notify } = useAcademy();
+  const { me, avatar, setAvatar, notify, state } = useAcademy();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -90,7 +91,7 @@ export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
 
         <div className="profile-photo-body">
           <div className="profile-photo-preview-wrap">
-            <div className="profile-photo-preview">
+            <div className={`profile-photo-preview tier-avatar ${tierClass(state.people.find(person => person.id === me?.id)?.xp || 0)}`}>
               {avatar ? (
                 <img src={avatar} alt={me?.name || "Foto de perfil"} className="profile-photo-img" />
               ) : (

@@ -10,6 +10,8 @@ export const commandSchema = z.discriminatedUnion("type", [
  z.object({ type:z.literal("community-comment"), articleId:id, commentId:z.string().uuid(), content:z.string().trim().min(2).max(2000) }),
  z.object({ type:z.literal("community-delete"), articleId:id }),
  z.object({ type:z.literal("community-request-update"), articleId:id, message:z.string().trim().min(5).max(1500) }),
+ z.object({ type:z.literal("community-suggest"), articleId:id, content:z.string().trim().min(20).max(5000) }),
+ z.object({ type:z.literal("community-review-suggestion"), articleId:id, suggestionId:z.string().uuid(), decision:z.enum(["accept","reject"]), content:z.string().trim().min(20).max(5000).optional() }),
  // courseSchema exige a classificação corporativa; valores legados são convertidos apenas na leitura.
  z.object({ type:z.literal("save-resource"), kind:z.enum(["course","article"]), data:z.union([courseSchema,articleSchema]), publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
  z.object({ type:z.literal("complete"), courseId:id, version:z.number().int().positive(), lessonId:id }),

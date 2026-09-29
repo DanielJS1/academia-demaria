@@ -58,6 +58,8 @@ export const articleSchema = z.object({
   likeCount: z.number().int().nonnegative().optional(), hypeCount: z.number().int().nonnegative().optional(), commentCount: z.number().int().nonnegative().optional(),
   liked: z.boolean().optional(), hyped: z.boolean().optional(),
   updateRequest: z.object({ message: z.string(), requestedAt: z.string(), requestedBy: z.string() }).nullable().optional(),
+  coauthor: z.object({ id:z.string().uuid(), name:z.string() }).nullable().optional(),
+  suggestions: z.array(z.object({ id:z.string().uuid(), proposerId:z.string().uuid(), proposer:z.string(), proposedText:z.string(), status:z.enum(["pending","accepted","rejected"]), createdAt:z.string() })).optional(),
 });
 export type ArticleBlock = z.infer<typeof articleBlockSchema>;
 export type ArticleComment = { id: string; articleId: string; userId: string; author: string; content: string; createdAt: string };

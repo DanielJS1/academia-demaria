@@ -9,7 +9,6 @@ import { Button } from "../ui/button";
 import { EmptyState, PageHeading } from "../shared";
 import { personSchema, type Person } from "@/lib/model";
 import { normalize } from "@/lib/utils";
-import { DEPARTMENTS } from "@/lib/departments";
 import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
 
 const uuid = () => crypto.randomUUID();
@@ -136,8 +135,8 @@ export function PersonEditor({ id }: { id: string }) {
               }}
             >
               <option value="">Selecione o setor</option>
-              {person.department && !DEPARTMENTS.some(d => d === person.department) && <option value={person.department}>{person.department} (atualizar)</option>}
-              {DEPARTMENTS.map(item => (
+              {person.department && !state.departments.includes(person.department) && <option value={person.department}>{person.department} (atualizar)</option>}
+              {state.departments.map(item => (
                 <option key={item}>{item}</option>
               ))}
             </select>

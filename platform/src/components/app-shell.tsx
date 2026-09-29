@@ -6,7 +6,7 @@ import { ArrowUpRight, BarChart3, Bell, BookOpen, ChevronLeft, ChevronRight, Cir
 import { useAcademy } from "./academy-provider";
 import { GlobalSearch } from "./global-search";
 import { Button } from "./ui/button";
-import { experience } from "@/lib/gamification";
+import { experience, tierClass } from "@/lib/gamification";
 import { AcademyBrand } from "./academy-brand";
 
 const navigation = [
@@ -126,7 +126,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       text: article.updateRequest!.message,
       href: `/conhecimento/${encodeURIComponent(article.id)}/editar`,
     }));
-  const notices = [...updateNotices, ...defaultNotices];
+  const collaborationNotices = state.notifications.map(item => ({id:item.id,title:item.title,text:item.message,href:item.link}));
+  const notices = [...collaborationNotices, ...updateNotices, ...defaultNotices];
   const unread = notices.filter(item => !state.readNotices.includes(item.id)).length;
 
   const allNavItems = isClientEnvironment
@@ -404,7 +405,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="topbar-divider"/>
             {isClientEnvironment ? (
               <Link href="/conquistas" className="profile" aria-label="Ver minha evolução">
-                <span className="avatar avatar-daniel" style={{ background: avatar ? "transparent" : "var(--mint-9)", color: "#fff" }}>
+                <span className={`avatar avatar-daniel tier-avatar ${tierClass(exp.annual)}`} title={`Faixa ${exp.tier.name}`} style={{ background: avatar ? "transparent" : "var(--mint-9)", color: "#fff" }}>
                   {avatar ? (
                     <img src={avatar} alt={me.name} className="avatar-img" />
                   ) : (
@@ -420,7 +421,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             ) : (
               <Link href="/conquistas" className="profile" aria-label={`Ver minha evolução — Nível ${exp.level}, ${exp.total} XP`}>
-                <span className="avatar avatar-daniel" style={{ background: avatar ? "transparent" : undefined }}>
+                <span className={`avatar avatar-daniel tier-avatar ${tierClass(exp.annual)}`} title={`Faixa ${exp.tier.name}`} style={{ background: avatar ? "transparent" : undefined }}>
                   {avatar ? (
                     <img src={avatar} alt={me.name} className="avatar-img" />
                   ) : (
