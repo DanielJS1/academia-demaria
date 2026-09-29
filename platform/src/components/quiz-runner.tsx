@@ -22,6 +22,7 @@ import {
 import { Button } from "./ui/button";
 import { useAcademy } from "./academy-provider";
 import { completeActivity, type Course, type Question } from "@/lib/model";
+import { isChoiceAnswerCorrect } from "@/lib/course-activities";
 
 export function QuizRunner({
   course,
@@ -165,7 +166,7 @@ export function QuizRunner({
 
       for (const q of questions) {
         if (q.type === "choice") {
-          if (answers[q.id] === q.correct) correctCount++;
+          if (isChoiceAnswerCorrect(answers[q.id], q.correct, q.multiple)) correctCount++;
         } else if (q.type === "text" && answers[q.id]?.trim().length >= 10) {
           correctCount++;
         }
