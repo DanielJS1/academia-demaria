@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
-import { ArrowRight, FileText, Flame, Heart, MessageCircle } from "lucide-react";
+import { ArrowRight, FileText, Flame, Heart, MessageCircle, Pencil } from "lucide-react";
 import type { Article } from "@/lib/model";
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
@@ -46,6 +46,7 @@ export function LibraryArticleCard({ article }: { article: Article }) {
         <Button type="button" variant="ghost" size="sm" className="community-card-action" disabled={disabled} title={own ? "Você não pode curtir o próprio artigo" : undefined} aria-label={`${view.liked ? "Remover curtida de" : "Curtir"} ${article.title}. ${view.likeCount || 0} curtidas`} aria-pressed={!!view.liked} onClick={event => void react(event, "like")}><Heart size={16} fill={view.liked ? "currentColor" : "none"} aria-hidden="true" /> {view.likeCount || 0}</Button>
         <Button type="button" variant="ghost" size="sm" className="community-card-action" disabled={disabled} title={own ? "Você não pode dar hype ao próprio artigo" : undefined} aria-label={`${view.hyped ? "Remover hype de" : "Dar hype a"} ${article.title}. ${view.hypeCount || 0} hypes`} aria-pressed={!!view.hyped} onClick={event => void react(event, "hype")}><Flame size={16} aria-hidden="true" /> {view.hypeCount || 0}</Button>
         <Link href={`${href}#comentarios`} className="community-card-action community-card-comments" aria-label={`Ver ${view.commentCount || 0} comentários de ${article.title}`} onClick={event => event.stopPropagation()}><MessageCircle size={16} aria-hidden="true" /> {view.commentCount || 0}</Link>
+        {!own && article.community && <Link href={`/conhecimento/${article.id}/editar?sugerir=1`} className="community-card-action" aria-label={`Sugerir melhoria para ${article.title}`} onClick={event => event.stopPropagation()}><Pencil size={16} aria-hidden="true" /> Sugerir melhoria</Link>}
       </>}
       {own && !draft && <small className="community-card-own-note">Seu artigo: reações próprias indisponíveis</small>}
     </div>
