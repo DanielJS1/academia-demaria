@@ -5,7 +5,11 @@ import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { TableKit } from "@tiptap/extension-table";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import Placeholder from "@tiptap/extension-placeholder";
 import { Node, type JSONContent } from "@tiptap/core";
+import { Bold, Check, CheckSquare, ChevronDown, FileUp, ImagePlus, Italic, Link2, List, ListOrdered, Plus, Quote, Redo2, Strikethrough, Table2, Underline, Undo2, X } from "lucide-react";
 import { uploadMedia } from "@/lib/storage-service";
 import { Button } from "../ui/button";
 
@@ -22,8 +26,25 @@ export function RichArticleEditor({ value, onChange, disabled, onUploadingChange
   const imageInput = useRef<HTMLInputElement>(null);
   const attachmentInput = useRef<HTMLInputElement>(null);
   const editorRef = useRef<Editor | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [slash, setSlash] = useState<string | null>(null);
+  const [slashPosition, setSlashPosition] = useState({ top: 70, left: 24 });
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [revision, setRevision] = useState(0);
+  const updateSlash = (instance: Editor) => {
+    const { $from } = instance.state.selection;
+    const before = $from.parent.textBetween(0, $from.parentOffset);
+    const query = $from.parent.type.name === "paragraph" && /^\/[\wÀ-ÿ ]{0,30}$/.test(before) ? before.slice(1) : null;
+    setSlash(query);
+    if (query !== null && canvasRef.current) {
+      const caret = instance.view.coordsAtPos($from.pos);
+      const canvas = canvasRef.current.getBoundingClientRect();
+      setSlashPosition({ top: caret.bottom - canvas.top + 8, left: Math.max(12, Math.min(caret.left - canvas.left, canvas.width - 312)) });
+    }
+  };
   const upload = async (file: File, attachment: boolean, instance?: Editor) => {
     const target = instance || editorRef.current;
     if (!target) return;
@@ -37,10 +58,15 @@ export function RichArticleEditor({ value, onChange, disabled, onUploadingChange
   };
   const editor = useEditor({
     immediatelyRender: false,
-    extensions: [StarterKit, Image.configure({ allowBase64: false }), TableKit, Attachment],
+    extensions: [StarterKit, Image.configure({ allowBase64: false }), TableKit, TaskList, TaskItem.configure({ nested: true }), Placeholder.configure({ placeholder: "Escreva seu artigo ou digite / para inserir um bloco…" }), Attachment],
     content: value,
     editable: !disabled,
-    onUpdate: ({ editor: instance }) => onChange(instance.getJSON() as RichDocument, instance.getText({ blockSeparator: "\n" })),
+    onUpdate: ({ editor: instance }) => {
+      onChange(instance.getJSON() as RichDocument, instance.getText({ blockSeparator: "\n" }));
+      updateSlash(instance);
+      setRevision(current => current + 1);
+    },
+    onSelectionUpdate: ({ editor: instance }) => { updateSlash(instance); setRevision(current => current + 1); },
     editorProps: { handlePaste: (_view, event) => {
       const file = Array.from(event.clipboardData?.files || []).find(item => item.type.startsWith("image/"));
       if (!file) return false;
@@ -50,26 +76,59 @@ export function RichArticleEditor({ value, onChange, disabled, onUploadingChange
   });
   editorRef.current = editor;
   if (!editor) return <div role="status">Preparando editor…</div>;
-  const action = (label: string, fn: () => void, active = false) => <Button type="button" variant={active ? "secondary" : "ghost"} size="sm" disabled={disabled || uploading} aria-label={label} aria-pressed={active} onClick={fn}>{label}</Button>;
+  const action = (label: string, icon: React.ReactNode, fn: () => void, active = false, inactive = false) => <button type="button" className={`rich-tool ${active ? "is-active" : ""}`} disabled={disabled || uploading || inactive} aria-label={label} title={label} aria-pressed={active} onClick={fn}>{icon}</button>;
+  const insert = (kind: string) => {
+    if (slash !== null) {
+      const { $from } = editor.state.selection;
+      editor.chain().focus().deleteRange({ from: $from.pos - slash.length - 1, to: $from.pos }).run();
+    }
+    setSlash(null);
+    if (kind === "heading1" || kind === "heading2" || kind === "heading3") editor.chain().focus().toggleHeading({ level: Number(kind.slice(-1)) as 1 | 2 | 3 }).run();
+    else if (kind === "bulletList") editor.chain().focus().toggleBulletList().run();
+    else if (kind === "orderedList") editor.chain().focus().toggleOrderedList().run();
+    else if (kind === "taskList") editor.chain().focus().toggleTaskList().run();
+    else if (kind === "blockquote") editor.chain().focus().toggleBlockquote().run();
+    else if (kind === "codeBlock") editor.chain().focus().toggleCodeBlock().run();
+    else if (kind === "horizontalRule") editor.chain().focus().setHorizontalRule().run();
+    else if (kind === "table") editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    else if (kind === "image") imageInput.current?.click();
+    else if (kind === "attachment") attachmentInput.current?.click();
+    else editor.chain().focus().setParagraph().run();
+  };
+  const blocks = [
+    { kind: "paragraph", label: "Texto", hint: "Parágrafo simples" },
+    { kind: "heading1", label: "Título 1", hint: "Seção principal" },
+    { kind: "heading2", label: "Título 2", hint: "Subseção" },
+    { kind: "heading3", label: "Título 3", hint: "Detalhe" },
+    { kind: "bulletList", label: "Lista com marcadores", hint: "Itens sem ordem" },
+    { kind: "orderedList", label: "Lista numerada", hint: "Etapas em sequência" },
+    { kind: "taskList", label: "Lista de tarefas", hint: "Checklist de verificação" },
+    { kind: "blockquote", label: "Dica ou atenção", hint: "Informação em destaque" },
+    { kind: "codeBlock", label: "Bloco de código", hint: "Comandos e exemplos" },
+    { kind: "horizontalRule", label: "Divisória", hint: "Separar assuntos" },
+    { kind: "table", label: "Tabela", hint: "Organizar dados" },
+    { kind: "image", label: "Imagem", hint: "Captura de tela" },
+    { kind: "attachment", label: "Anexo", hint: "Arquivo de apoio" },
+  ];
+  const matchingBlocks = slash === null ? [] : blocks.filter(block => `${block.label} ${block.hint}`.toLocaleLowerCase("pt-BR").includes(slash.toLocaleLowerCase("pt-BR")));
+  const headings: { text: string; level: number; pos: number }[] = [];
+  editor.state.doc.descendants((node, pos) => { if (node.type.name === "heading") headings.push({ text: node.textContent || "Título sem texto", level: node.attrs.level, pos }); });
+  const wordCount = editor.getText().trim().split(/\s+/).filter(Boolean).length;
+  const currentStyle = editor.isActive("heading", { level: 1 }) ? "Título 1" : editor.isActive("heading", { level: 2 }) ? "Título 2" : editor.isActive("heading", { level: 3 }) ? "Título 3" : editor.isActive("taskList") ? "Tarefas" : editor.isActive("bulletList") ? "Lista" : editor.isActive("orderedList") ? "Numerada" : editor.isActive("blockquote") ? "Destaque" : editor.isActive("codeBlock") ? "Código" : "Texto";
+  void revision;
   return <div className="rich-article-editor">
     <div className="rich-article-toolbar" role="toolbar" aria-label="Formatação do artigo">
-      {action("Parágrafo", () => editor.chain().focus().setParagraph().run(), editor.isActive("paragraph"))}
-      {([1, 2, 3] as const).map(level => <span key={level}>{action(`H${level}`, () => editor.chain().focus().toggleHeading({ level }).run(), editor.isActive("heading", { level }))}</span>)}
-      {action("Negrito", () => editor.chain().focus().toggleBold().run(), editor.isActive("bold"))}
-      {action("Itálico", () => editor.chain().focus().toggleItalic().run(), editor.isActive("italic"))}
-      {action("Sublinhado", () => editor.chain().focus().toggleUnderline().run(), editor.isActive("underline"))}
-      {action("Riscado", () => editor.chain().focus().toggleStrike().run(), editor.isActive("strike"))}
-      {action("Lista", () => editor.chain().focus().toggleBulletList().run(), editor.isActive("bulletList"))}
-      {action("Numerada", () => editor.chain().focus().toggleOrderedList().run(), editor.isActive("orderedList"))}
-      {action("Dica / Atenção", () => editor.chain().focus().toggleBlockquote().run(), editor.isActive("blockquote"))}
-      {action("Código", () => editor.chain().focus().toggleCodeBlock().run(), editor.isActive("codeBlock"))}
-      {action("Tabela", () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run())}
-      {editor.isActive("table") && <>{action("Linha +", () => editor.chain().focus().addRowAfter().run())}{action("Coluna +", () => editor.chain().focus().addColumnAfter().run())}{action("Excluir tabela", () => editor.chain().focus().deleteTable().run())}</>}
-      {action("Link", () => { const href = window.prompt("URL HTTPS do link:", editor.getAttributes("link").href || "https://"); if (href && /^https:\/\//i.test(href)) editor.chain().focus().setLink({ href, target: "_blank" }).run(); })}
-      {action("Imagem", () => imageInput.current?.click())}
-      {action("Anexo", () => attachmentInput.current?.click())}
+      <div className="rich-tool-group">{action("Desfazer", <Undo2 size={17} />, () => editor.chain().focus().undo().run(), false, !editor.can().undo())}{action("Refazer", <Redo2 size={17} />, () => editor.chain().focus().redo().run(), false, !editor.can().redo())}</div>
+      <div className="rich-tool-group"><label className="rich-style-select"><span className="sr-only">Tipo de bloco</span><select aria-label="Tipo de bloco" value={currentStyle} disabled={disabled || uploading} onChange={event => insert(({ "Texto": "paragraph", "Título 1": "heading1", "Título 2": "heading2", "Título 3": "heading3", "Lista": "bulletList", "Numerada": "orderedList", "Tarefas": "taskList", "Destaque": "blockquote", "Código": "codeBlock" } as Record<string, string>)[event.target.value])}>{["Texto", "Título 1", "Título 2", "Título 3", "Lista", "Numerada", "Tarefas", "Destaque", "Código"].map(item => <option key={item}>{item}</option>)}</select><ChevronDown size={14} /></label></div>
+      <div className="rich-tool-group">{action("Negrito", <Bold size={17} />, () => editor.chain().focus().toggleBold().run(), editor.isActive("bold"))}{action("Itálico", <Italic size={17} />, () => editor.chain().focus().toggleItalic().run(), editor.isActive("italic"))}{action("Sublinhado", <Underline size={17} />, () => editor.chain().focus().toggleUnderline().run(), editor.isActive("underline"))}{action("Riscado", <Strikethrough size={17} />, () => editor.chain().focus().toggleStrike().run(), editor.isActive("strike"))}</div>
+      <div className="rich-tool-group">{action("Lista com marcadores", <List size={18} />, () => insert("bulletList"), editor.isActive("bulletList"))}{action("Lista numerada", <ListOrdered size={18} />, () => insert("orderedList"), editor.isActive("orderedList"))}{action("Lista de tarefas", <CheckSquare size={18} />, () => insert("taskList"), editor.isActive("taskList"))}{action("Dica ou atenção", <Quote size={18} />, () => insert("blockquote"), editor.isActive("blockquote"))}</div>
+      <div className="rich-tool-group">{action("Inserir link", <Link2 size={18} />, () => { setLinkUrl(editor.getAttributes("link").href || "https://"); setLinkOpen(true); }, editor.isActive("link"))}{action("Inserir imagem", <ImagePlus size={18} />, () => imageInput.current?.click())}{action("Inserir anexo", <FileUp size={18} />, () => attachmentInput.current?.click())}{action("Inserir tabela", <Table2 size={18} />, () => insert("table"))}</div>
+      <details className="rich-insert-menu"><summary><Plus size={17} /> Inserir bloco <ChevronDown size={14} /></summary><div className="rich-block-menu">{blocks.map(block => <button key={block.kind} type="button" disabled={disabled || uploading} onClick={event => { insert(block.kind); event.currentTarget.closest("details")?.removeAttribute("open"); }}><strong>{block.label}</strong><small>{block.hint}</small></button>)}</div></details>
     </div>
-    <EditorContent editor={editor} className="rich-article-canvas community-prose" aria-label="Corpo do artigo" />
+    {editor.isActive("table") && <div className="rich-table-tools" role="toolbar" aria-label="Editar tabela">{action("Adicionar linha", <><Plus size={15} /> Linha</>, () => editor.chain().focus().addRowAfter().run())}{action("Adicionar coluna", <><Plus size={15} /> Coluna</>, () => editor.chain().focus().addColumnAfter().run())}{action("Remover linha", "− Linha", () => editor.chain().focus().deleteRow().run())}{action("Remover coluna", "− Coluna", () => editor.chain().focus().deleteColumn().run())}{action("Excluir tabela", <><X size={15} /> Tabela</>, () => editor.chain().focus().deleteTable().run())}</div>}
+    {linkOpen && <form className="rich-link-form" onSubmit={event => { event.preventDefault(); if (/^https:\/\/\S+$/i.test(linkUrl)) { editor.chain().focus().setLink({ href: linkUrl, target: "_blank" }).run(); setLinkOpen(false); setError(""); } else setError("Use uma URL HTTPS válida."); }}><label>Endereço do link <input type="url" autoFocus value={linkUrl} onChange={event => setLinkUrl(event.target.value)} placeholder="https://exemplo.com" /></label><Button type="submit" size="sm"><Check size={16} /> Aplicar</Button>{editor.isActive("link") && <Button type="button" variant="ghost" size="sm" onClick={() => { editor.chain().focus().unsetLink().run(); setLinkOpen(false); }}>Remover</Button>}<Button type="button" variant="ghost" size="sm" onClick={() => setLinkOpen(false)} aria-label="Fechar link"><X size={16} /></Button></form>}
+    <div className="rich-article-workspace"><div ref={canvasRef} className="rich-canvas-wrap" onKeyDown={event => { if (slash === null || (event.target as HTMLElement).closest(".rich-slash-menu")) return; if (event.key === "Escape") { event.preventDefault(); setSlash(null); } else if (event.key === "Enter" && matchingBlocks[0]) { event.preventDefault(); insert(matchingBlocks[0].kind); } else if (event.key === "ArrowDown") { event.preventDefault(); canvasRef.current?.querySelector<HTMLButtonElement>(".rich-slash-menu button")?.focus(); } }}><EditorContent editor={editor} className="rich-article-canvas community-prose" aria-label="Corpo do artigo" />{slash !== null && !disabled && <div className="rich-slash-menu" role="menu" aria-label="Inserir bloco" style={slashPosition}>{matchingBlocks.length ? matchingBlocks.map(block => <button key={block.kind} type="button" role="menuitem" onClick={() => insert(block.kind)}><strong>{block.label}</strong><small>{block.hint}</small></button>) : <p>Nenhum bloco encontrado.</p>}</div>}</div><aside className="rich-outline" aria-label="Sumário do artigo"><strong>Neste artigo</strong>{headings.length ? <nav>{headings.map((heading, index) => <button key={`${heading.pos}-${index}`} type="button" className={`level-${heading.level}`} onClick={() => { editor.chain().focus().setTextSelection(heading.pos + 1).run(); editor.view.dom.querySelectorAll("h1,h2,h3")[index]?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>{heading.text}</button>)}</nav> : <p>Os títulos criam um sumário para navegar pelo artigo.</p>}</aside></div>
+    <div className="rich-editor-footer"><span>Digite <kbd>/</kbd> para inserir blocos</span><span>{wordCount} {wordCount === 1 ? "palavra" : "palavras"}</span></div>
     <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void upload(file, false); }} />
     <input ref={attachmentInput} type="file" accept=".sql,.xlsx,.pdf" hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void upload(file, true); }} />
     {uploading && <p role="status">Enviando arquivo…</p>}{error && <p className="form-error" role="alert">{error}</p>}
