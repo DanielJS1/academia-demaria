@@ -20,6 +20,23 @@ export function isCorrectAnswerValid(question: Pick<Question, "type" | "options"
   }
   return question.options.includes(question.correct);
 }
+export function isChoiceAnswerCorrect(answer: string | undefined, correct: string | undefined, multiple?: boolean): boolean {
+  if (!answer || !correct) return false;
+  if (answer === correct) return true;
+  if (multiple) {
+    try {
+      const a = JSON.parse(answer);
+      const c = JSON.parse(correct);
+      if (Array.isArray(a) && Array.isArray(c)) {
+        if (a.length !== c.length) return false;
+        const sortedA = [...a].map(s => String(s).trim()).sort();
+        const sortedC = [...c].map(s => String(s).trim()).sort();
+        return sortedA.every((val, idx) => val === sortedC[idx]);
+      }
+    } catch {}
+  }
+  return false;
+}
 
 export function courseValidationError(course: Course, publish: boolean): string | null {
   const parsed=courseSchema.safeParse(course);

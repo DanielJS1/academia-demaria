@@ -7,6 +7,7 @@ import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { EmptyState } from "../shared";
 import { type Attempt } from "@/lib/model";
+import { isChoiceAnswerCorrect } from "@/lib/course-activities";
 
 export function AdminReviews() {
   const { state } = useAcademy();
@@ -97,7 +98,7 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
     if (total === 0) return 0;
     for (const q of attempt.questions) {
       if (q.type === "choice") {
-        if (attempt.answers[q.id] === q.correct) earned += 1;
+        if (isChoiceAnswerCorrect(attempt.answers[q.id], q.correct, q.multiple)) earned += 1;
       } else {
         if (nextCorrect.includes(q.id)) earned += 1;
         else if (nextPartial.includes(q.id)) earned += 0.5;
@@ -132,7 +133,7 @@ function ReviewForm({ attempt, close }: { attempt: Attempt; close: () => void })
         const studentAnswer = attempt.answers[question.id] || "—";
         const studentComment = attempt.answers[`${question.id}__comment`];
         const isChoice = question.type === "choice";
-        const isCorrectChoice = isChoice && studentAnswer === question.correct;
+        const isCorrectChoice = isChoice && isChoiceAnswerCorrect(studentAnswer, question.correct, question.multiple);
         const formatChoiceDisplay = (raw: string) => {
           try {
             const parsed = JSON.parse(raw);
