@@ -43,6 +43,8 @@ function renderRich(node: RichNode, key: number): ReactNode {
   }
   if (node.type === "image") { const src = secureUrl(node.attrs?.src); return src ? <figure key={key}><ArticleImage src={src} alt={String(node.attrs?.alt || "")} /></figure> : null; }
   if (node.type === "attachment") { const href = secureUrl(node.attrs?.href); return href ? <ArticleAttachment key={key} href={href} name={String(node.attrs?.name || "Baixar arquivo")} /> : null; }
+  if (node.type === "taskList") return <ul key={key} data-type="taskList">{children}</ul>;
+  if (node.type === "taskItem") return <li key={key} data-checked={node.attrs?.checked === true}><label><input type="checkbox" checked={node.attrs?.checked === true} readOnly disabled aria-label="Tarefa concluída" /></label><div>{children}</div></li>;
   const tag = ({ doc: "div", paragraph: "p", heading: `h${[1,2,3].includes(Number(node.attrs?.level)) ? node.attrs?.level : 2}`, bulletList: "ul", orderedList: "ol", listItem: "li", blockquote: "aside", table: "table", tableRow: "tr", tableHeader: "th", tableCell: "td" } as Record<string, string>)[node.type || ""];
   if (!tag) return null;
   return createElement(tag, { key, ...(node.type === "blockquote" ? { className: "community-callout" } : {}) }, children);

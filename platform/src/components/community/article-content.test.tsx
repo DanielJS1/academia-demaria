@@ -20,4 +20,17 @@ describe("leitura de artigos ricos", () => {
     expect(html).toContain("<hr/>");
     expect(html).toContain("alt=\"Diagrama\"");
   });
+  it("mostra listas de verificação na leitura publicada", () => {
+    const html = renderToStaticMarkup(<ArticleContent article={{
+      content: "Confirme a configuração", blocks: undefined,
+      richContent: { type: "doc", content: [{ type: "taskList", content: [
+        { type: "taskItem", attrs: { checked: true }, content: [{ type: "paragraph", content: [{ type: "text", text: "Conferir acesso" }] }] },
+        { type: "taskItem", attrs: { checked: false }, content: [{ type: "paragraph", content: [{ type: "text", text: "Validar resultado" }] }] },
+      ] }] },
+    }} />);
+    expect(html).toContain('data-type="taskList"');
+    expect(html).toContain('data-checked="true"');
+    expect(html).toContain("Conferir acesso");
+    expect(html).toContain("Validar resultado");
+  });
 });
