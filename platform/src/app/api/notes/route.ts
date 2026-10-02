@@ -4,7 +4,7 @@ import { authenticate, ApiError, requireCourseAccess } from "@/lib/pilot-server"
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store, private" };
-const noteSchema = z.object({ courseId: z.string().min(1).max(100), lessonId: z.string().min(1).max(100), content: z.string().max(10000) });
+const noteSchema = z.object({ courseId: z.string().min(1).max(100), lessonId: z.string().min(1).max(100), content: z.string().max(10000) }).strict();
 function failure(error: unknown) {
   return Response.json({ error: error instanceof ApiError ? error.message : "Não foi possível acessar o caderno." }, { status: error instanceof ApiError ? error.status : 500, headers });
 }
