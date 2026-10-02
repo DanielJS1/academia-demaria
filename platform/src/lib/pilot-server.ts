@@ -18,12 +18,12 @@ export async function authenticate(request:Request){
  if(!token)throw new ApiError("Entre na sua conta para continuar.",401);
  const db=database();const {data,error}=await db.auth.getUser(token);
  if(error||!data.user)throw new ApiError("Sua sessão expirou. Entre novamente.",401);
- let profile=await db.from("academy_profiles").select("*").eq("id",data.user.id).maybeSingle();
+ let profile=await db.from("academy_profiles").select("id,name,email,department,manager_id,role,status,audience,cartorio_id,avatar").eq("id",data.user.id).maybeSingle();
  let currentProfile: Profile | null = (profile.data as Profile) ?? null;
  if(!currentProfile){
   if(!data.user.email||!isAllowedCompanyEmail(data.user.email))throw new ApiError("Este e-mail não pertence a um domínio autorizado.",403);
   const name=(data.user.user_metadata?.name as string)||data.user.email?.split("@")[0]||"Colaborador";
-  const {data:created}=await db.from("academy_profiles").insert(pendingStudentProfile(data.user.id,name,data.user.email)).select().single();
+  const {data:created}=await db.from("academy_profiles").insert(pendingStudentProfile(data.user.id,name,data.user.email)).select("id,name,email,department,manager_id,role,status,audience,cartorio_id,avatar").single();
   currentProfile=(created as Profile)??null;
  }
  if(!currentProfile||currentProfile.status!=="active"){
@@ -54,16 +54,17 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   return {data:rows,error:null};
  }
  const results=await Promise.all([
-  all("academy_resources","*","kind","course"),all("academy_profiles","*",me.audience==="client"?"id":undefined,me.id),
-  db.from("academy_settings").select("*").single(),
+  all("academy_resources","id,kind,published,draft","kind","course"),all("academy_profiles","id,name,email,department,manager_id,role,status,audience,cartorio_id,avatar",me.audience==="client"?"id":undefined,me.id),
+  db.from("academy_settings").select("departments,products").single(),
   all("academy_progress","user_id,course_id,version,lesson_id,done,position,duration,updated_at",me.audience==="client"?"user_id":undefined,me.id),
-  all("academy_attempts","*",me.audience==="client"||me.role==="student"?"user_id":undefined,me.id),
+  all("academy_attempts","id,user_id,course_id,version,quiz_id,snapshot,answers,status,feedback,score,submitted_at,retry_allowed,correct_text_ids,partial_text_ids",me.audience==="client"||me.role==="student"?"user_id":undefined,me.id),
   all("academy_attempts","user_id,submitted_at",me.audience==="client"?"user_id":undefined,me.id),
-  all("academy_xp","*",me.audience==="client"?"user_id":undefined,me.id),db.from("academy_preferences").select("*").eq("user_id",me.id).maybeSingle(),
-  all("academy_cartorios","*",me.audience==="client"?"id":undefined,me.cartorio_id??"__none__"), all("academy_recognitions","*",me.audience==="client"?"user_id":undefined,me.id), all("academy_pdi_notes","*",me.audience==="client"?"user_id":undefined,me.id),
+  all("academy_xp","id,user_id,amount,season,label",me.audience==="client"?"user_id":undefined,me.id),db.from("academy_preferences").select("bookmarks,read_notices").eq("user_id",me.id).maybeSingle(),
+  all("academy_cartorios","id,name,city,uf,cns,modules,key_user_id,key_user_name,key_user_email,status,created_at",me.audience==="client"?"id":undefined,me.cartorio_id??"__none__"), all("academy_recognitions","id,user_id,manager_id,title,message,created_at",me.audience==="client"?"user_id":undefined,me.id), all("academy_pdi_notes","id,user_id,manager_id,content,created_at",me.audience==="client"?"user_id":undefined,me.id),
  ]);
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult,recognitionsResult,pdiNotesResult]=results;
+ if(!settings.data)throw new ApiError("Configuração da academia indisponível.",503);
  const community=await readCommunity(db,me);
  const authoredArticles=community.articles.filter(article=>article.authorId===me.id);
  const pendingSuggestions=authoredArticles.length?await db.from("academy_article_suggestions").select("id,article_id,proposed_text,created_at").eq("status","pending").in("article_id",authoredArticles.map(article=>article.id)):null;
