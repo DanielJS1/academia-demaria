@@ -1,20 +1,12 @@
 import { PGlite } from "@electric-sql/pglite";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const db = new PGlite();
+const migrations = readdirSync(join("supabase", "migrations")).filter(name => name.endsWith(".sql")).sort();
 try {
   await db.exec("create schema auth; create table auth.users(id uuid primary key); create role service_role; create role anon; create role authenticated; create schema storage; create table storage.buckets (id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);");
-  for (const name of [
-    "202609150001_pilot.sql", "202609160001_learning_rewards.sql",
-    "202609170001_activity_assessments.sql", "202609170002_fix_settings_where_clause.sql",
-    "202609170003_cartorios_and_clients.sql", "202609170004_partial_reviews_and_proficiency.sql",
-    "202609210001_community.sql", "202609210002_engagement.sql", "202609210003_profile_avatar.sql",
-    "202609230001_media_rich_articles.sql", "202609230001_video_resume.sql",
-    "202609240001_manager_recognition.sql", "202609240005_private_article_files.sql",
-    "202609240006_video_progress.sql", "202609240007_recognition_idempotency.sql",
-    "202609240008_lesson_notes.sql",
-  ]) {
+  for (const name of migrations.filter(name => name <= "202609240008_lesson_notes.sql")) {
     try {
       await db.exec(readFileSync(join("supabase", "migrations", name), "utf8").replace(/^\uFEFF/, ""));
       process.stdout.write(`${name} OK\n`);
@@ -29,7 +21,7 @@ try {
     const learner = "00000000-0000-4000-8000-000000000002";
     await db.query("insert into auth.users(id) values ($1::uuid),($2::uuid)", [manager, learner]);
     await db.query("insert into public.academy_profiles(id,name,email,department,role,status) values ($1::uuid,'Gestor','g@example.test','TI','admin','active'),($2::uuid,'Aluno','a@example.test','TI','student','active')", [manager, learner]);
-    const course = { id: "course", status: "published", audience: "internal", title: "Curso", lessons: [{ id: "lesson", type: "video", title: "Vídeo", minutes: 1 }] };
+    const course = { id: "course", status: "published", audience: "internal", title: "Curso", level: "essencial", lessons: [{ id: "lesson", type: "video", title: "Vídeo", minutes: 1 }] };
     await db.query("insert into public.academy_resources(id,kind,published,revision) values ('course','course',$1::jsonb,1)", [JSON.stringify(course)]);
     const video = { type: "video", courseId: "course", version: 1, lessonId: "lesson", duration: 100, position: 90, ranges: [[0, 90]] };
     let shortRejected = false;
@@ -52,5 +44,24 @@ try {
     const reward = await db.query("select count(*)::integer as count from public.academy_xp where user_id=$1::uuid and event_key=$2", [learner, `recognition:${requestId}`]);
     if (reward.rows[0].count !== 1) throw new Error("Recognition granted XP twice");
     process.stdout.write("RPC behavior OK\n");
+    // Preserve the original security regression at its schema boundary. Later
+    // video recovery migrations intentionally changed duration validation.
+    for (const name of migrations.filter(name => name > "202609240008_lesson_notes.sql")) {
+      await db.exec(readFileSync(join("supabase", "migrations", name), "utf8").replace(/^\uFEFF/, ""));
+      process.stdout.write(`${name} OK\n`);
+    }
+    const definitions = await db.query("select proname, pg_get_functiondef(oid) as definition, prosecdef, has_function_privilege('anon',oid,'EXECUTE') as anon_execute, has_function_privilege('authenticated',oid,'EXECUTE') as client_execute, has_function_privilege('service_role',oid,'EXECUTE') as server_execute from pg_proc where pronamespace='public'::regnamespace and proname in ('academy_save_periodic_quiz','academy_submit_periodic_quiz','academy_set_periodic_quiz_active','academy_delete_periodic_quiz','academy_read_periodic_quiz','academy_list_periodic_quizzes','academy_set_quiz_notifications','academy_read_quiz_notifications')");
+    if (definitions.rows.length !== 8) throw new Error("Final quiz RPC set is incomplete or contains obsolete overloads");
+    for (const rpc of definitions.rows) {
+      if (rpc.prosecdef || rpc.anon_execute || rpc.client_execute || !rpc.server_execute) throw new Error(`Unsafe final RPC grants: ${rpc.proname}`);
+      if (rpc.definition.includes('academy_save_periodic_quiz.quiz_id')) throw new Error("Invalid quiz identifier survived the migration chain");
+    }
+    process.stdout.write("Final challenge RPC definitions and grants OK\n");
+    const tables = await db.query("select relname,relrowsecurity,has_table_privilege('anon',oid,'SELECT,INSERT,UPDATE,DELETE') as anon_access,has_table_privilege('authenticated',oid,'SELECT,INSERT,UPDATE,DELETE') as client_access from pg_class where relnamespace='public'::regnamespace and relname in ('academy_quizzes','academy_quiz_questions','academy_quiz_attempts','academy_preferences')");
+    if (tables.rows.length !== 4 || tables.rows.some(table => !table.relrowsecurity || table.anon_access || table.client_access)) throw new Error("Final challenge table RLS or grants are unsafe");
+    process.stdout.write("Final challenge table RLS and grants OK\n");
   }
+} catch (error) {
+  process.stderr.write(`${error.message}\n`);
+  process.exitCode = 1;
 } finally { await db.close(); }

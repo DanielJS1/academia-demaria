@@ -1,18 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Check, Clock3, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Check, Clock3, Copy, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { browserAuth } from "@/lib/supabase-browser";
 import { Button } from "@/components/ui/button";
 import { PeriodicQuizQuestions } from "./periodic-quiz-questions";
 import type { PeriodicQuizQuestion as Question } from "@/lib/periodic-quiz-studio";
 
+import { requiredCorrect } from "@/lib/periodic-quizzes";
+
 type Option = { id: string; text: string };
-type Draft = { id?: string; title: string; slug: string; description: string; category: string; xpReward: number; passingScore: number;
+type Draft = { id?: string; expectedRevision?: number; title: string; slug: string; description: string; category: string; xpReward: number; passingScore: number;
   periodType: string; targetAudience: string; isActive: boolean; isFeatured: boolean; availableFrom: string; expiresAt: string; questions: Question[] };
-type QuizRow = { id: string; title: string; slug: string; description: string; category: string; xp_reward: number; passing_score: number;
+type QuizRow = { id: string; revision: number; has_attempts: boolean; audience_locked: boolean; title: string; slug: string; description: string; category: string; xp_reward: number; passing_score: number;
   period_type: string; target_audience: string; is_active: boolean; is_featured: boolean; available_from: string; expires_at: string | null;
-  questions: { prompt: string; options: Option[]; correct_option_id: string; explanation: string; image_url: string | null; image_alt: string | null }[] };
+  questions: { id: string; prompt: string; options: Option[]; correct_option_id: string; explanation: string; image_url: string | null; image_alt: string | null }[] };
 
 const categories = [["legislacao", "Legislação"], ["sistema", "Sistema"], ["suporte", "Suporte"], ["pro", "PRO"], ["fiscal", "Fiscal"]];
 const periods = [["weekly", "Semanal"], ["biweekly", "Quinzenal"], ["monthly", "Mensal"]];
@@ -31,11 +33,11 @@ function blankDraft(): Draft {
     questions: [newQuestion(), newQuestion()] };
 }
 function toDraft(quiz: QuizRow): Draft {
-  return { id: quiz.id, title: quiz.title, slug: quiz.slug, description: quiz.description, category: quiz.category,
+  return { id: quiz.id, expectedRevision: quiz.revision, title: quiz.title, slug: quiz.slug, description: quiz.description, category: quiz.category,
     xpReward: quiz.xp_reward, passingScore: quiz.passing_score, periodType: quiz.period_type,
     targetAudience: quiz.target_audience, isActive: quiz.is_active, isFeatured: quiz.is_featured,
     availableFrom: localDate(quiz.available_from), expiresAt: quiz.expires_at ? localDate(quiz.expires_at) : "",
-    questions: quiz.questions.map(question => ({ prompt: question.prompt, options: question.options,
+    questions: quiz.questions.map(question => ({ id: question.id, prompt: question.prompt, options: question.options,
       correctOptionId: question.correct_option_id, explanation: question.explanation,
       imageUrl: question.image_url ?? "", imageAlt: question.image_alt ?? "" })) };
 }
@@ -50,6 +52,8 @@ export function AdminQuizzes() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const locked = !!quizzes.find(quiz => quiz.id === draft?.id)?.has_attempts;
+  const audienceLocked = locked || !!quizzes.find(quiz => quiz.id === draft?.id)?.audience_locked;
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (!draft) return;
@@ -91,7 +95,7 @@ export function AdminQuizzes() {
   }
   async function toggle(quiz: QuizRow) {
     setBusy(true); setError(""); setNotice("");
-    try { await api("PATCH", { id: quiz.id, active: !quiz.is_active }); await load(); setNotice(quiz.is_active ? "Desafio pausado." : "Desafio ativado."); }
+    try { await api("PATCH", { id: quiz.id, expectedRevision: quiz.revision, active: !quiz.is_active }); await load(); setNotice(quiz.is_active ? "Desafio pausado." : "Desafio ativado."); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível alterar o desafio."); }
     finally { setBusy(false); }
   }
@@ -99,12 +103,32 @@ export function AdminQuizzes() {
     if (busy || !window.confirm(`Excluir “${quiz.title}”? O desafio sairá do painel e da Visão geral. Tentativas e XP já registrados serão preservados.`)) return;
     setBusy(true); setError(""); setNotice("");
     try {
-      await api("DELETE", { id: quiz.id });
+      await api("DELETE", { id: quiz.id, expectedRevision: quiz.revision });
       if (draft?.id === quiz.id) setDraft(null);
       await load();
       setNotice("Desafio excluído.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível excluir o desafio."); }
     finally { setBusy(false); }
+  }
+
+  function duplicate(quiz: QuizRow) {
+    const copy = toDraft(quiz);
+    const dates = blankDraft();
+    setDraft({ ...copy, id: undefined, expectedRevision: undefined, title: `${quiz.title.slice(0, 180)} — nova edição`,
+      slug: `${quiz.slug.slice(0, 95)}-${crypto.randomUUID().slice(0, 8)}`, isActive: false, isFeatured: false,
+      availableFrom: dates.availableFrom, expiresAt: dates.expiresAt,
+      questions: copy.questions.map(({ id: _id, ...question }) => question) });
+    setError(""); setNotice("Nova edição em rascunho, sem tentativas ou XP copiados.");
+  }
+  async function reloadDraft() {
+    if (!draft?.id || !window.confirm("Recarregar a versão salva? As alterações deste formulário serão descartadas.")) return;
+    try {
+      const data = await api("GET") as { quizzes: QuizRow[] };
+      const updated = data.quizzes.find(quiz => quiz.id === draft.id);
+      setQuizzes(data.quizzes);
+      if (!updated) throw new Error("Este desafio não está mais disponível para edição.");
+      setDraft(toDraft(updated)); setError("");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível recarregar."); }
   }
 
   return <section className="admin-quizzes" aria-labelledby="admin-quizzes-title">
@@ -120,6 +144,7 @@ export function AdminQuizzes() {
       return <article className="panel admin-quiz-row" key={quiz.id}><div><div className="admin-quiz-row-top"><span className={`admin-quiz-status${status === "No ar" ? " is-live" : ""}`}>{status}</span>{quiz.is_featured && <span className="admin-quiz-featured"><Sparkles size={14} aria-hidden="true"/> Primeiro no banner</span>}</div>
         <h3>{quiz.title}</h3><p>{quiz.questions.length} questões · {quiz.xp_reward} XP · {categories.find(([value]) => value === quiz.category)?.[1] || quiz.category}</p></div>
         <div className="admin-quiz-row-actions"><Button variant="secondary" size="sm" type="button" onClick={() => { setDraft(toDraft(quiz)); setError(""); setNotice(""); }}><Pencil size={15} aria-hidden="true"/> Editar</Button>
+          <Button variant="secondary" size="sm" type="button" disabled={busy} onClick={() => duplicate(quiz)}><Copy size={15} aria-hidden="true"/> Criar nova edição</Button>
           <Button variant="ghost" size="sm" type="button" disabled={busy || (!quiz.is_active && expired)} onClick={() => void toggle(quiz)}>{quiz.is_active ? "Pausar" : "Ativar"}</Button>
           <Button className="admin-quiz-delete" variant="ghost" size="sm" type="button" disabled={busy} onClick={() => void remove(quiz)} aria-label={`Excluir desafio ${quiz.title}`}><Trash2 size={15} aria-hidden="true"/> Excluir</Button></div></article>;
     })}{!quizzes.length && <div className="panel admin-quiz-empty">Nenhum desafio cadastrado. Crie o primeiro para começar.</div>}</div>}
@@ -127,23 +152,26 @@ export function AdminQuizzes() {
     {draft && <form ref={formRef} className="panel admin-quiz-form" onSubmit={event => void save(event)}>
       <div className="admin-quiz-form-head"><div><span className="eyebrow">{draft.id ? "EDITAR DESAFIO" : "NOVO DESAFIO"}</span><h3>Configuração e perguntas</h3></div>
         <Button type="button" variant="ghost" size="icon" aria-label="Fechar edição" onClick={() => setDraft(null)}><X size={18} aria-hidden="true"/></Button></div>
+      {locked && <p role="status">Este desafio já tem respostas. Alterações de corte, prêmio e metadados valem apenas para novas tentativas; resultados anteriores não serão recalculados. Perguntas, gabarito e público estão bloqueados. Use Criar nova edição para modificá-los.</p>}
+      {audienceLocked && !locked && <p role="status">Esta edição já foi publicada. Para mudar o público ou gerar um novo aviso, use Criar nova edição.</p>}
       <div className="admin-quiz-fields">
         <label className="admin-quiz-field admin-quiz-wide">Título <input required maxLength={200} value={draft.title} onChange={event => setDraft(previous => previous && ({ ...previous, title: event.target.value, slug: previous.id ? previous.slug : slugify(event.target.value) }))}/></label>
         <label className="admin-quiz-field">Identificador na URL <input required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={120} value={draft.slug} onChange={event => setDraft(previous => previous && ({ ...previous, slug: event.target.value }))}/></label>
         <label className="admin-quiz-field">Categoria <select value={draft.category} onChange={event => setDraft(previous => previous && ({ ...previous, category: event.target.value }))}>{categories.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
         <label className="admin-quiz-field admin-quiz-wide">Descrição <textarea rows={2} maxLength={2000} value={draft.description} onChange={event => setDraft(previous => previous && ({ ...previous, description: event.target.value }))}/></label>
         <label className="admin-quiz-field">Prêmio em XP <input type="number" min={0} max={500} required value={draft.xpReward} onChange={event => setDraft(previous => previous && ({ ...previous, xpReward: Number(event.target.value) }))}/></label>
-        <label className="admin-quiz-field">Nota mínima (%) <input type="number" min={0} max={100} required value={draft.passingScore} onChange={event => setDraft(previous => previous && ({ ...previous, passingScore: Number(event.target.value) }))}/></label>
+        <label className="admin-quiz-field">Nota mínima (%) <input type="number" min={0} max={100} required value={draft.passingScore} onChange={event => setDraft(previous => previous && ({ ...previous, passingScore: Number(event.target.value) }))}/><small>Exige {requiredCorrect(draft.questions.length, draft.passingScore)} de {draft.questions.length} acertos ({Math.ceil(requiredCorrect(draft.questions.length, draft.passingScore) / draft.questions.length * 100)}%).</small></label>
         <label className="admin-quiz-field">Periodicidade <select value={draft.periodType} onChange={event => setDraft(previous => previous && ({ ...previous, periodType: event.target.value }))}>{periods.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
-        <label className="admin-quiz-field">Público <select value={draft.targetAudience} onChange={event => setDraft(previous => previous && ({ ...previous, targetAudience: event.target.value }))}><option value="internal">Equipe interna</option><option value="client">Clientes</option></select></label>
+        <label className="admin-quiz-field">Público <select disabled={audienceLocked} value={draft.targetAudience} onChange={event => setDraft(previous => previous && ({ ...previous, targetAudience: event.target.value }))}><option value="internal">Equipe interna</option><option value="client">Clientes</option></select></label>
         <label className="admin-quiz-field">Liberar em <input type="datetime-local" required value={draft.availableFrom} onChange={event => setDraft(previous => previous && ({ ...previous, availableFrom: event.target.value }))}/></label>
         <label className="admin-quiz-field">Encerrar em (opcional) <input type="datetime-local" value={draft.expiresAt} onChange={event => setDraft(previous => previous && ({ ...previous, expiresAt: event.target.value }))}/></label>
       </div>
       <div className="admin-quiz-flags"><label><input type="checkbox" checked={draft.isActive} onChange={event => setDraft(previous => previous && ({ ...previous, isActive: event.target.checked }))}/><span><strong>Ativar desafio</strong><small>Aparece quando chegar a data de liberação.</small></span></label>
         <label><input type="checkbox" checked={draft.isFeatured} onChange={event => setDraft(previous => previous && ({ ...previous, isFeatured: event.target.checked }))}/><span><strong>Mostrar primeiro no banner</strong><small>Prioriza este desafio na Visão geral quando estiver disponível.</small></span></label></div>
-      <PeriodicQuizQuestions title={draft.title} questions={draft.questions}
+      <p>Aprovado recebe o prêmio de {draft.xpReward} XP. Reprovado recebe 2 XP por acerto, até o limite de {draft.xpReward} XP. Uma tentativa oficial por edição; a revisão não concede XP novamente.</p>
+      <PeriodicQuizQuestions readOnly={locked} title={draft.title} questions={draft.questions}
         onChange={questions => setDraft(previous => previous && ({ ...previous, questions }))}/>
-      {error && <p className="admin-quizzes-error" role="alert">{error}</p>}
+      {error && <p className="admin-quizzes-error" role="alert">{error} {draft.id && <Button type="button" variant="secondary" disabled={busy} onClick={() => void reloadDraft()}>Recarregar versão salva</Button>}</p>}
       <div className="admin-quiz-form-actions"><span><Clock3 size={15} aria-hidden="true"/> O prazo segue o horário do seu navegador.</span><Button type="submit" disabled={busy}>{busy ? "Salvando…" : "Salvar desafio"}</Button></div>
     </form>}
   </section>;

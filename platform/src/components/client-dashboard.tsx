@@ -10,6 +10,8 @@ import { CertificateModal } from "./certificate-modal";
 import { isCourseAvailableForCartorio, courseProgress, type Cartorio, type Course } from "@/lib/model";
 import { formatModuleName } from "@/lib/cartorio-modules";
 
+import { QuizDashboardAccess } from "./quizzes/quiz-dashboard-access";
+
 interface ClientDashboardProps {
   cartorio: Cartorio;
 }
@@ -62,6 +64,8 @@ export function ClientDashboard({ cartorio }: ClientDashboardProps) {
           </Button>
         )}
       </PageHeading>
+
+      <QuizDashboardAccess/>
 
       {/* Certification Status Hero */}
       <div className="client-hero panel">

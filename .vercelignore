@@ -1,0 +1,12 @@
+**/.env
+**/.env.*
+**/test-results/**
+**/playwright-report/**
+**/*.log
+.agents/**
+platform/tests/**
+.codex/
+.agents/
+platform/tests/
+platform/test-results/
+platform/playwright-report/

@@ -179,6 +179,8 @@
 }
 
 /* Topbar */
+/* Avoid a non-scrolling body container trapping sticky navigation on challenge pages. */
+body:has(.challenge-page), body:has(.quiz-center) { overflow-x: clip; }
 .topbar {
   height: 78px;
   background: var(--surface);

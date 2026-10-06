@@ -1,6 +1,6 @@
 import { test as base, expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
-type Role = "colaborador" | "gestor" | "cartorio";
+type Role = "colaborador" | "gestor" | "cartorio" | "admin";
 type Lesson = { id: string; type: string; title: string; minutes: number; attachmentPath?: string };
 type Course = { id: string; version: number; audience: string; title: string; lessons: Lesson[] };
 export type AcademyState = { courses: Course[]; completed: Record<string, string[]>; xpEvents: Array<{ id: string; label: string; amount: number }>; videoProgress: Record<string, Record<string, { position: number }>> };
@@ -37,7 +37,7 @@ export async function login(browser: Browser, role: Role): Promise<AuthSession> 
   expect(response.status(), `Login ${role}: ${await response.text()}`).toBe(200);
   const payload = await response.json() as { me: { id: string; role: string; audience: string }; state: AcademyState };
   expect(payload.me.audience).toBe(role === "cartorio" ? "client" : "internal");
-  expect(payload.me.role).toBe(role === "gestor" ? "manager" : "student");
+  expect(payload.me.role).toBe(role === "admin" ? "admin" : role === "gestor" ? "manager" : "student");
   const token = response.request().headers().authorization?.replace(/^Bearer /, "");
   if (!token) throw new Error(`Token de ${role} ausente no request /api/academy.`);
   return { context, page, token, userId: payload.me.id, state: payload.state };
