@@ -22,7 +22,9 @@ Concorrência: dois payloads simultâneos produzem uma tentativa/evento e replay
 
 Supabase separado `attnodzrjlhqydhrgqtr` provisionado na organização DanielJS, com as 28 migrations, quatro contas dedicadas e dados fictícios. Os sete E2E passaram contra Auth/API/banco reais: isolamento de públicos, PDF privado, anotações, XP único, relatórios, desafios e retomada do Vimeo. Foram executados em grupos; o teste de desafios passou após corrigir uma espera prematura pelo controle de avisos. O Vimeo falhou inicialmente por ausência de resposta do player externo na reabertura e passou na repetição, sem alteração da aplicação.
 
-Semgrep não está disponível no Python deste host; o scan do workflow permanece pendente. Leitor de tela nativo não foi validado; testes verificam semântica, descrição, foco e teclado no navegador.
+Semgrep SAST e secrets scan aprovados no GitHub Actions (`37543741836`). Build final de homologação aprovado localmente e na Vercel; login administrativo e central conferidos no deployment Preview. Leitor de tela nativo não foi validado; testes verificam semântica, descrição, foco e teclado no navegador.
+
+No mesmo CI, typecheck e os 220 testes de domínio passaram; seis E2E passaram, incluindo desafios. O gate de qualidade ficou vermelho porque o iframe Vimeo não respondeu a `getDuration` no runner GitHub, inclusive no retry (retorno de timeout `-1`). A captura do runner confirmou uma página do Vimeo restringindo a conexão: “We couldn't verify the security of your connection.” O teste passou localmente contra o mesmo Supabase isolado. Não foi removido nem convertido em sucesso artificial. Validar esse gate em runner com conexão aceita pelo Vimeo antes da aprovação de produção; não contornar o bloqueio do provedor.
 
 ## Fluxo e publicação
 
