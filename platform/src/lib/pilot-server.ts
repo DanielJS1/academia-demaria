@@ -6,7 +6,10 @@ import { commandSchema } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
 import { normalizeStoredCourseLevel, courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
 import { isStoredMediaUrl } from "./storage-service";
-export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
+import { readQuizNotifications, setQuizNotifications } from "./quiz-notifications-server";
+import { mergeQuizNotices } from "./quiz-notifications";
+import { ApiError } from "./api-error";
+export { ApiError } from "./api-error";
 export function database(){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)throw new ApiError("O Supabase ainda não foi configurado no servidor.",503);
@@ -65,7 +68,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult,recognitionsResult,pdiNotesResult]=results;
  if(!settings.data)throw new ApiError("Configuração da academia indisponível.",503);
- const community=await readCommunity(db,me);
+ const [community,quizNotices]=await Promise.all([readCommunity(db,me),readQuizNotifications(db,me)]);
  const authoredArticles=community.articles.filter(article=>article.authorId===me.id);
  const pendingSuggestions=authoredArticles.length?await db.from("academy_article_suggestions").select("id,article_id,proposed_text,created_at").eq("status","pending").in("article_id",authoredArticles.map(article=>article.id)):null;
  if(pendingSuggestions?.error)throw new ApiError("Não foi possível consultar as sugestões da biblioteca.",503);
@@ -121,12 +124,15 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"&&me.audience!=="client"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>({...r.draft,level:normalizeStoredCourseLevel(r.draft.level)})):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:me.audience==="client"?[]:settings.data.departments,products:me.audience==="client"?[...new Set(courses.map(c=>c.product))]:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:collaborationNotices,
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
-  teamProgress,cartorios,recognitions,pdiNotes};
+  teamProgress,cartorios,recognitions,pdiNotes,quizNotifications:quizNotices.quizNotifications};
+ state.notifications=mergeQuizNotices(state.notifications,quizNotices.notifications);
+ state.readNotices=quizNotices.readNotices;
  return {state,me:{id:me.id,name:me.name,email:me.email,department:me.department,role:me.role,audience:me.audience??"internal",cartorioId:me.cartorio_id??null,avatar:me.avatar?.startsWith("https://")?me.avatar:null}};
 }
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");
  const command=parsed.data;
+ if(command.type==="quiz-notifications"){await setQuizNotifications(db,me,command.enabled);return;}
  if(command.type==="video"||command.type==="complete"||command.type==="submit")await requireCourseAccess(db,me,command.courseId);
  if(command.type==="avatar"){
   if(command.avatar && (!isStoredMediaUrl(command.avatar,"academy-avatars") || !new URL(command.avatar).pathname.includes(`/${me.id}/`)))throw new ApiError("URL de avatar inválida.");

@@ -8,7 +8,7 @@ const csp = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
   `connect-src 'self' ${supabaseOrigin} https://*.vimeo.com https://*.youtube.com https://*.googlevideo.com https://challenges.cloudflare.com`,
   `img-src 'self' data: blob: https:`,

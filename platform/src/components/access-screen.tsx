@@ -175,6 +175,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
             : "Entre com seu e-mail e senha para continuar aprendendo."}
         </p>
 
+        {process.env.NEXT_PUBLIC_APP_ENV === "homologacao" && <p className="info-note">Homologação · use as contas de teste. Dados e XP deste ambiente são separados da produção.</p>}
         {message && (
           <div
             role={message.type === "error" ? "alert" : "status"}

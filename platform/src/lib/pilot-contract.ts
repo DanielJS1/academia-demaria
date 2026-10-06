@@ -24,6 +24,7 @@ export const commandSchema = z.discriminatedUnion("type", [
  z.strictObject({ type:z.literal("profile"), data:personSchema }),
  z.strictObject({ type:z.literal("invite"), temporaryPassword:newPasswordSchema.optional(), name:z.string().trim().min(2).max(120), email:z.string().email(), department:z.string().max(80), managerId:z.string(), role:z.enum(["student","manager","admin"]) }),
  z.strictObject({ type:z.literal("preferences"), bookmarks:z.array(id).max(2000), readNotices:z.array(id).max(2000) }),
+ z.strictObject({ type:z.literal("quiz-notifications"), enabled:z.boolean() }),
  z.strictObject({ type:z.literal("settings"), kind:z.enum(["departments","products"]), oldName:z.string().optional(), name:z.string().trim().min(1).max(80) }),
  z.strictObject({ type:z.literal("delete-setting"), kind:z.enum(["departments","products"]), name:z.string().trim().min(1).max(80) }),
  z.strictObject({ type:z.literal("save-cartorio"), data:cartorioSchema, initialPassword:newPasswordSchema.optional() }),
