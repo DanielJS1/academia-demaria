@@ -2,6 +2,10 @@
 
 ## Ambientes
 
+Link permanente: https://academia-demaria-git-codex-homologacao-daniel-js.vercel.app
+
+Esse alias acompanha automaticamente os deployments da branch `codex/homologacao`. Pode ser necessário entrar na Vercel com a conta DanielJS antes do login da academia. As contas dedicadas e senhas estão no arquivo privado de acessos entregue ao responsável, fora do repositório.
+
 | Ambiente | Código | Banco | Finalidade |
 | --- | --- | --- | --- |
 | Produção | `main` | `ktmymzokgxmmkleacclq` | Uso real da academia |
