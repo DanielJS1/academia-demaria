@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { articleSchema, courseSchema, personSchema, cartorioSchema, type AcademyState } from "./model";
+import { articleSchema, courseSchema, courseAvailabilitySchema, personSchema, cartorioSchema, type AcademyState } from "./model";
 import { newPasswordSchema } from "./auth-policy";
 const id = z.string().min(1).max(100);
 export const commandSchema = z.discriminatedUnion("type", [
+ z.strictObject({ type:z.literal("course-availability"), courseId:id, availability:courseAvailabilitySchema, expectedAvailability:courseAvailabilitySchema, expectedVersion:z.number().int().nonnegative() }),
  z.strictObject({ type:z.literal("grant-recognition"), requestId:z.string().uuid(), userId:z.string().uuid(), title:z.string().trim().min(3).max(120), message:z.string().trim().min(5).max(2000) }),
  z.strictObject({ type:z.literal("add-pdi-note"), userId:z.string().uuid(), content:z.string().trim().min(3).max(2000) }),
  z.strictObject({ type:z.literal("community-save"), data:articleSchema, publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
