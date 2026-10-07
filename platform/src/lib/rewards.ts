@@ -5,7 +5,10 @@ export const COURSE_BONUS = 30;
 export const APPROVAL_BONUS = 30;
 export const RETRY_BONUS = 10;
 export const isCourseComplete = (course: Course, state: AcademyState, userId: string) =>
-  courseProgress(course,state.completed[course.id]||[])===100 && course.lessons.filter(l=>l.type==="quiz").every(l=>state.attempts.some(a=>a.courseId===course.id&&a.courseVersion===course.version&&a.userId===userId&&a.status==="approved"&&(a.quizId===l.id||(!a.quizId&&course.lessons.find(x=>x.type==="quiz")?.id===l.id))));
+  courseProgress(course,state.completed[course.id]||[])===100 && (
+    state.attempts.some(a=>a.courseId===course.id&&a.userId===userId&&a.status==="approved"&&(a.quizId==="proficiency"||(a as any).snapshot?.proficiency))
+    || course.lessons.filter(l=>l.type==="quiz").every(l=>state.attempts.some(a=>a.courseId===course.id&&a.courseVersion===course.version&&a.userId===userId&&a.status==="approved"&&(a.quizId===l.id||(!a.quizId&&course.lessons.find(x=>x.type==="quiz")?.id===l.id))))
+  );
 export const lessonXp = (minutes: number) => 10 + 5 * Math.max(1, Math.ceil(minutes / 5));
 export const courseXp = (course: Pick<Course, "lessons" | "questions">) =>
   course.lessons.filter(l => l.type !== "quiz").reduce((sum, l) => sum + lessonXp(l.minutes), 0)
