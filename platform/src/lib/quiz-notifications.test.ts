@@ -6,7 +6,7 @@ import { mergeQuizNotices, quizNoticesSchema } from "./quiz-notifications";
 
 const admin = "11111111-1111-4111-8111-111111111111", a = "22222222-2222-4222-8222-222222222222";
 const b = "33333333-3333-4333-8333-333333333333", client = "44444444-4444-4444-8444-444444444444", inactive = "55555555-5555-4555-8555-555555555555";
-let db: PGlite, sequence = 0;
+let db: PGlite, sequence = 0, legacyDeleted: string;
 const sql = (name: string) => readFileSync(new URL(`../../supabase/migrations/${name}.sql`, import.meta.url), "utf8");
 function draft(active = true, date = "2020-01-01T00:00:00Z", audience = "internal") {
   return { title: "Desafio novo", slug: `aviso-${++sequence}`, category: "sistema", description: "", xpReward: 70, passingScore: 70,
@@ -46,11 +46,18 @@ beforeAll(async () => {
     await db.query("insert into academy_profiles values($1,$2,$3,$4)", [id, id === inactive ? "inactive" : "active", id === client ? "client" : "internal", id === admin ? "admin" : "student"]);
   }
   await save(draft());
+  legacyDeleted = await save(draft());
+  await db.query("select academy_delete_periodic_quiz($1,$2,1)", [admin, legacyDeleted]);
   await db.exec(sql("20261006193250_periodic_quiz_notifications"));
 }, 30000);
 afterAll(async () => { await db?.close(); });
 
 describe("preferência e publicação de desafios", () => {
+  it("instala os avisos com desafios legados excluídos sem alterar sua exclusão", async () => {
+    const deleted = (await db.query<{ deleted: boolean; announcement_at: string | null }>("select deleted_at is not null as deleted,announcement_at from academy_quizzes where id=$1", [legacyDeleted])).rows[0];
+    expect(deleted).toEqual({ deleted: true, announcement_at: null });
+    await expect(active(legacyDeleted, true)).rejects.toThrow();
+  });
   it("começa desligada e não anuncia o backfill ao aderir", async () => {
     expect((await read()).quizNotifications).toEqual({ enabled: false, since: null });
     await pref(); expect((await read()).notifications).toEqual([]);
