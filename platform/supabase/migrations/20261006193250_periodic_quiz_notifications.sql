@@ -8,7 +8,8 @@ alter table public.academy_quizzes add column announcement_at timestamptz;
 -- at their existing dates; an old draft needing a fresh announcement must become a new edition.
 update public.academy_quizzes set announcement_at = case
  when available_from <= now() then least(now(),greatest(created_at,available_from))
- when is_active then available_from else null end;
+ when is_active then available_from else null end
+where deleted_at is null;
 create index academy_quizzes_announcements on public.academy_quizzes(target_audience,announcement_at)
  where is_active and deleted_at is null;
 
