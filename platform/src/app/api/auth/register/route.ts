@@ -17,7 +17,8 @@ const registerSchema = z.object({
     .email("Informe um e-mail válido.")
     .refine(isAllowedCompanyEmail, "Use um e-mail @demaria.com.br ou @sacdemaria.com.br."),
   password: newPasswordSchema,
-});
+  turnstileToken: z.string().max(2048).default(""),
+}).strict();
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +51,10 @@ export async function POST(request: Request) {
         { status: 429 }
       );
     }
-    const raw = await request.json();
+    const text = await request.text();
+    if (Buffer.byteLength(text, "utf8") > 16_384) return Response.json({ error: "Solicitação inválida." }, { status: 413 });
+    let raw: unknown;
+    try { raw = JSON.parse(text); } catch { return Response.json({ error: "Solicitação inválida." }, { status: 400 }); }
     const result = registerSchema.safeParse(raw);
     if (!result.success) {
       return Response.json(
@@ -58,7 +62,24 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const { name, email, password, department } = result.data;
+    const { name, email, password, department, turnstileToken } = result.data;
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+    if (process.env.NODE_ENV === "production" && !turnstileSecret) {
+      return Response.json({ error: "Cadastro temporariamente indisponível." }, { status: 503 });
+    }
+    if (turnstileSecret) {
+      if (!turnstileToken) return Response.json({ error: "Confirme a verificação de segurança." }, { status: 400 });
+      const verification = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: turnstileSecret, response: turnstileToken }),
+        signal: AbortSignal.timeout(5000),
+        cache: "no-store",
+      });
+      if (!verification.ok || !(await verification.json() as { success?: boolean }).success) {
+        return Response.json({ error: "Verificação de segurança inválida. Tente novamente." }, { status: 400 });
+      }
+    }
     const db = database();
     const normalizedEmail = normalizeEmail(email);
 

@@ -3,37 +3,38 @@ import { articleSchema, courseSchema, personSchema, cartorioSchema, type Academy
 import { newPasswordSchema } from "./auth-policy";
 const id = z.string().min(1).max(100);
 export const commandSchema = z.discriminatedUnion("type", [
- z.object({ type:z.literal("grant-recognition"), requestId:z.string().uuid(), userId:z.string().uuid(), title:z.string().trim().min(3).max(120), message:z.string().trim().min(5).max(2000) }),
- z.object({ type:z.literal("add-pdi-note"), userId:z.string().uuid(), content:z.string().trim().min(3).max(2000) }),
- z.object({ type:z.literal("community-save"), data:articleSchema, publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
- z.object({ type:z.literal("community-react"), articleId:id, reaction:z.enum(["like","hype"]), active:z.boolean() }),
- z.object({ type:z.literal("community-comment"), articleId:id, commentId:z.string().uuid(), content:z.string().trim().min(2).max(2000) }),
- z.object({ type:z.literal("community-delete"), articleId:id }),
- z.object({ type:z.literal("community-request-update"), articleId:id, message:z.string().trim().min(5).max(1500) }),
- z.object({ type:z.literal("community-suggest"), articleId:id, expectedVersion:z.number().int().nonnegative(), message:z.string().trim().min(20).max(500), data:articleSchema }),
- z.object({ type:z.literal("community-review-suggestion"), articleId:id, suggestionId:z.string().uuid(), decision:z.enum(["accept","reject"]), data:articleSchema.optional() }),
+ z.strictObject({ type:z.literal("grant-recognition"), requestId:z.string().uuid(), userId:z.string().uuid(), title:z.string().trim().min(3).max(120), message:z.string().trim().min(5).max(2000) }),
+ z.strictObject({ type:z.literal("add-pdi-note"), userId:z.string().uuid(), content:z.string().trim().min(3).max(2000) }),
+ z.strictObject({ type:z.literal("community-save"), data:articleSchema, publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
+ z.strictObject({ type:z.literal("community-react"), articleId:id, reaction:z.enum(["like","hype"]), active:z.boolean() }),
+ z.strictObject({ type:z.literal("community-comment"), articleId:id, commentId:z.string().uuid(), content:z.string().trim().min(2).max(2000) }),
+ z.strictObject({ type:z.literal("community-delete"), articleId:id }),
+ z.strictObject({ type:z.literal("community-request-update"), articleId:id, message:z.string().trim().min(5).max(1500) }),
+ z.strictObject({ type:z.literal("community-suggest"), articleId:id, expectedVersion:z.number().int().nonnegative(), message:z.string().trim().min(20).max(500), data:articleSchema }),
+ z.strictObject({ type:z.literal("community-review-suggestion"), articleId:id, suggestionId:z.string().uuid(), decision:z.enum(["accept","reject"]), data:articleSchema.optional() }),
  // courseSchema exige a classificação corporativa; valores legados são convertidos apenas na leitura.
- z.object({ type:z.literal("save-resource"), kind:z.enum(["course","article"]), data:z.union([courseSchema,articleSchema]), publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
- z.object({ type:z.literal("complete"), courseId:id, version:z.number().int().positive(), lessonId:id }),
- z.object({ type:z.literal("video"), courseId:id, version:z.number().int().positive(), lessonId:id, duration:z.number().positive().max(86400), position:z.number().nonnegative().max(86400).optional(), ranges:z.array(z.tuple([z.number().nonnegative(),z.number().nonnegative()])).max(2000) }),
- z.object({ type:z.literal("submit"), quizId:id.optional(), courseId:id, version:z.number().int().positive(), answers:z.record(id,z.string().max(5000)) }),
- z.object({ type:z.literal("review"), id:z.string().uuid(), score:z.number().min(0).max(100), feedback:z.string().trim().min(1).max(10000), correctTextIds:z.array(id).default([]), partialTextIds:z.array(id).optional().default([]) }),
- z.object({ type:z.literal("delete-user"), id:z.string().uuid() }),
- z.object({ type:z.literal("reject-user"), id:z.string().uuid() }),
- z.object({ type:z.literal("unlock"), id:z.string().uuid() }),
- z.object({ type:z.literal("profile"), data:personSchema }),
- z.object({ type:z.literal("invite"), temporaryPassword:newPasswordSchema.optional(), name:z.string().trim().min(2).max(120), email:z.string().email(), department:z.string().max(80), managerId:z.string(), role:z.enum(["student","manager","admin"]) }),
- z.object({ type:z.literal("preferences"), bookmarks:z.array(id).max(2000), readNotices:z.array(id).max(2000) }),
- z.object({ type:z.literal("settings"), kind:z.enum(["departments","products"]), oldName:z.string().optional(), name:z.string().trim().min(1).max(80) }),
- z.object({ type:z.literal("delete-setting"), kind:z.enum(["departments","products"]), name:z.string().trim().min(1).max(80) }),
- z.object({ type:z.literal("save-cartorio"), data:cartorioSchema, initialPassword:newPasswordSchema.optional() }),
- z.object({ type:z.literal("delete-cartorio"), id:id }),
- z.object({ type:z.literal("avatar"), avatar:z.string().url().max(2048).nullable() }),
+ z.strictObject({ type:z.literal("save-resource"), kind:z.enum(["course","article"]), data:z.union([courseSchema,articleSchema]), publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
+ z.strictObject({ type:z.literal("complete"), courseId:id, version:z.number().int().positive(), lessonId:id }),
+ z.strictObject({ type:z.literal("video"), courseId:id, version:z.number().int().positive(), lessonId:id, duration:z.number().positive().max(86400), position:z.number().nonnegative().max(86400).optional(), ranges:z.array(z.tuple([z.number().nonnegative(),z.number().nonnegative()])).max(2000) }),
+ z.strictObject({ type:z.literal("submit"), quizId:id.optional(), courseId:id, version:z.number().int().positive(), answers:z.record(id,z.string().max(5000)) }),
+ z.strictObject({ type:z.literal("review"), id:z.string().uuid(), score:z.number().min(0).max(100), feedback:z.string().trim().min(1).max(10000), correctTextIds:z.array(id).default([]), partialTextIds:z.array(id).optional().default([]) }),
+ z.strictObject({ type:z.literal("delete-user"), id:z.string().uuid() }),
+ z.strictObject({ type:z.literal("reject-user"), id:z.string().uuid() }),
+ z.strictObject({ type:z.literal("unlock"), id:z.string().uuid() }),
+ z.strictObject({ type:z.literal("profile"), data:personSchema }),
+ z.strictObject({ type:z.literal("invite"), temporaryPassword:newPasswordSchema.optional(), name:z.string().trim().min(2).max(120), email:z.string().email(), department:z.string().max(80), managerId:z.string(), role:z.enum(["student","manager","admin"]) }),
+ z.strictObject({ type:z.literal("preferences"), bookmarks:z.array(id).max(2000), readNotices:z.array(id).max(2000) }),
+ z.strictObject({ type:z.literal("quiz-notifications"), enabled:z.boolean() }),
+ z.strictObject({ type:z.literal("settings"), kind:z.enum(["departments","products"]), oldName:z.string().optional(), name:z.string().trim().min(1).max(80) }),
+ z.strictObject({ type:z.literal("delete-setting"), kind:z.enum(["departments","products"]), name:z.string().trim().min(1).max(80) }),
+ z.strictObject({ type:z.literal("save-cartorio"), data:cartorioSchema, initialPassword:newPasswordSchema.optional() }),
+ z.strictObject({ type:z.literal("delete-cartorio"), id:id }),
+ z.strictObject({ type:z.literal("avatar"), avatar:z.string().url().max(2048).nullable() }),
 ]);
 export type Command = z.infer<typeof commandSchema>;
 export function normalizeVimeoRanges(values:unknown[]):[number,number][]{
  return values.flatMap(value=>{
-  const parsed=z.union([z.tuple([z.number(),z.number()]),z.object({start:z.number(),end:z.number()})]).safeParse(value);
+  const parsed=z.union([z.tuple([z.number(),z.number()]),z.strictObject({start:z.number(),end:z.number()})]).safeParse(value);
   if(!parsed.success)return [];
   return [Array.isArray(parsed.data)?parsed.data:[parsed.data.start,parsed.data.end]] as [number,number][];
  });

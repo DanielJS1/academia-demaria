@@ -6,8 +6,10 @@ import { stateCommand, type Command } from "@/lib/pilot-contract";
 import type { AcademyState, Cartorio } from "@/lib/model";
 import { AccessScreen } from "./access-screen";
 import { EngagementTracker } from "./engagement-tracker";
+import { useQuizNotices } from "./quizzes/use-quiz-notices";
+import { mergeQuizNotices, type QuizNotices } from "@/lib/quiz-notifications";
 type Me={id:string;name:string;email:string;department?:string;role:"admin"|"manager"|"student";audience?:"internal"|"client";cartorioId?:string|null;avatar?:string|null};
-type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command,options?:{silent?:boolean})=>Promise<boolean>;refresh:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(url:string|null)=>Promise<boolean>;};
+type Context={state:AcademyState;me:Me;update:(change:(current:AcademyState)=>AcademyState)=>Promise<boolean>;mutate:(command:Command,options?:{silent?:boolean})=>Promise<boolean>;refresh:()=>Promise<void>;refreshNotices:()=>Promise<void>;ready:boolean;busy:boolean;notify:(message:string)=>void;theme:string;toggleTheme:()=>void;storageError:boolean;signOut:()=>void;activeCartorio:Cartorio|null;simulatedCartorioId:string|null;setSimulatedCartorioId:(id:string|null)=>void;isClientEnvironment:boolean;avatar:string|null;setAvatar:(url:string|null)=>Promise<boolean>;};
 const empty:AcademyState={schema:1,courses:[],courseDrafts:[],articles:[],articleDrafts:[],people:[],departments:[],products:[],completed:{},videoProgress:{},bookmarks:[],attempts:[],xpEvents:[],readNotices:[],notifications:[],recognitions:[],pdiNotes:[],teamProgress:{},cartorios:[]};
 const AcademyContext=createContext<Context|null>(null);
 export function AcademyProvider({children}:{children:ReactNode}){
@@ -17,11 +19,21 @@ export function AcademyProvider({children}:{children:ReactNode}){
  const [simulatedCartorioId, setSimulatedCartorioId] = useState<string | null>(null);
  const [avatar, setAvatarState] = useState<string | null>(null);
  const auth=browserAuth();
+ const noticesEpoch=useRef(0);
+ const applyNotices=useCallback((value:QuizNotices)=>{
+  if(identity.current!==value.userId)return;
+  const next={...current.current,quizNotifications:value.quizNotifications,readNotices:value.readNotices,notifications:mergeQuizNotices(current.current.notifications,value.notifications)};
+  current.current=next;setState(next);
+ },[]);
+ const refreshNotices=useQuizNotices({userId:me?.id??"",enabled:state.quizNotifications?.enabled??false,path,simulated:!!simulatedCartorioId,epoch:noticesEpoch,apply:applyNotices,busy:busyRef});
  const request=useCallback(async(command?:Command, silentVideo=false)=>{
+  const noticesVersion=++noticesEpoch.current;
+  const requestActor=identity.current;
   const client=browserAuth();const session=await client?.auth.getSession();const token=session?.data.session?.access_token;
-  if(!token)throw new Error("Entre na sua conta para continuar.");
+  if(!token||session?.data.session?.user.id!==requestActor||identity.current!==requestActor)throw new Error("Entre na sua conta para continuar.");
   const response=await fetch("/api/academy",{method:command?"POST":"GET",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},...(command?{body:JSON.stringify(command)}:{}),cache:"no-store",...(command?.type==="video"?{signal:AbortSignal.timeout(20000)}:{})});
-  const data=await response.json();if(!response.ok){if(response.status===401||(!command&&response.status===403)){setReady(false);setMe(null);current.current=empty;setState(empty);}throw new Error(data.error||"Não foi possível salvar.");}
+  const data=await response.json();if(identity.current!==requestActor)return;
+  if(!response.ok){if(response.status===401||(!command&&response.status===403)){setReady(false);setMe(null);current.current=empty;setState(empty);}throw new Error(data.error||"Não foi possível salvar.");}
   if(data.progress){
    if(identity.current!==data.userId)return;
    const xpEvents:AcademyState["xpEvents"]=data.xpEvents??current.current.xpEvents;
@@ -35,6 +47,10 @@ export function AcademyProvider({children}:{children:ReactNode}){
   }
   if(identity.current!==data.me.id)return;
   if(command){const earned=(data.state.xpEvents as AcademyState["xpEvents"]).filter(event=>!current.current.xpEvents.some(old=>old.id===event.id)).reduce((sum,event)=>sum+event.amount,0);if(earned>0)setToast(`+${earned} XP! Seu aprendizado está rendendo.`);}
+  if(noticesVersion!==noticesEpoch.current&&!command&&current.current.quizNotifications){
+   data.state={...data.state,quizNotifications:current.current.quizNotifications,readNotices:current.current.readNotices,
+    notifications:mergeQuizNotices(data.state.notifications,current.current.notifications.filter(item=>item.id.startsWith("quiz-published:")))};
+  }
   current.current=data.state;setState(data.state);setMe(data.me);setReady(true);setError("");
  },[]);
  const refresh=useCallback(async()=>{try{await request();}catch(err){setError(err instanceof Error?err.message:"Não foi possível carregar seus dados.");}},[request]);
@@ -115,6 +131,6 @@ export function AcademyProvider({children}:{children:ReactNode}){
   || (!simulatedCartorioId && path.startsWith("/equipe") && me.role === "student")
   || (me.audience === "client" && !simulatedCartorioId && (path.startsWith("/admin") || path.startsWith("/equipe") || path.startsWith("/conhecimento") || path.startsWith("/conquistas")));
 
- return <AcademyContext.Provider value={{state,me,update,mutate,refresh,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut,activeCartorio,simulatedCartorioId,setSimulatedCartorioId,isClientEnvironment,avatar,setAvatar}}><EngagementTracker/>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
+ return <AcademyContext.Provider value={{state,me,update,mutate,refresh,refreshNotices,ready,busy,notify:setToast,theme,toggleTheme,storageError:!!error,signOut,activeCartorio,simulatedCartorioId,setSimulatedCartorioId,isClientEnvironment,avatar,setAvatar}}><EngagementTracker/>{denied?<div className="access-page"><section className="panel access-card"><h1>Acesso restrito</h1><p>Seu perfil não possui permissão para esta área.</p><a className="button button-primary" href="/">Voltar ao aprendizado</a></section></div>:children}{busy&&<div className="save-indicator" role="status">Salvando no servidor…</div>}{toast&&<div className="toast" role="status">{toast}</div>}</AcademyContext.Provider>;
 }
 export function useAcademy(){const context=useContext(AcademyContext);if(!context)throw new Error("AcademyProvider ausente");return context;}

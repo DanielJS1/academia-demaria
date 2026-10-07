@@ -2,7 +2,7 @@ name: "Security Scan (Semgrep)"
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "codex/homologacao" ]
   pull_request:
     branches: [ "main", "dev" ]
   workflow_dispatch:
@@ -44,15 +44,24 @@ jobs:
     name: "Types, Vitest and Playwright"
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: homologacao
+    concurrency:
+      group: academy-homologacao-quality
+      cancel-in-progress: false
     defaults:
       run:
         working-directory: platform
     env:
       CI: true
       E2E_BASE_URL: http://127.0.0.1:4174
+      E2E_VIMEO_MODE: contract
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_APP_ENV: homologacao
+      E2E_ISOLATED_SUPABASE_REF: ${{ secrets.E2E_ISOLATED_SUPABASE_REF }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_COLABORADOR_EMAIL: ${{ secrets.E2E_COLABORADOR_EMAIL }}
       E2E_COLABORADOR_PASSWORD: ${{ secrets.E2E_COLABORADOR_PASSWORD }}
       E2E_GESTOR_EMAIL: ${{ secrets.E2E_GESTOR_EMAIL }}
@@ -76,6 +85,8 @@ jobs:
           cache-dependency-path: platform/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Require isolated test database
+        run: node scripts/assert-e2e-isolation.mjs
       - name: Typecheck
         run: pnpm typecheck
       - name: Vitest
