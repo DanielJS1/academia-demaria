@@ -48,6 +48,19 @@ describe("API: isolamento de dados",()=>{
   expect(state.people.find(p=>p.id===me.id)?.streak).toBe(1);
  });
  it("recusa comandos administrativos antes de acessar o banco",async()=>{
+  const {db,me}=fixture();await expect(executeCommand(db,me,{type:"course-availability",courseId:"course",availability:"inactive",expectedAvailability:"active",expectedVersion:1})).rejects.toMatchObject({status:403});
+ });
+ it.each(["inactive", "development"])("oculta cursos %s dos alunos e mantém a gestão administrativa",async availability=>{
+  const {db,me,tables}=fixture();tables.academy_resources[0].published.availability=availability;
+  expect((await readAcademy(db,me)).state.courses).toHaveLength(0);
+  expect((await readAcademy(db,{...me,role:"admin"})).state.courses).toHaveLength(1);
+  await expect(executeCommand(db,me,{type:"complete",courseId:"course",version:1,lessonId:initialState.courses[0].lessons[0].id})).rejects.toMatchObject({status:403});
+ });
+ it("exige conteúdo válido para reativar um curso",async()=>{
+  const {db,me,tables}=fixture();tables.academy_resources[0].published.lessons=[];
+  await expect(executeCommand(db,{...me,role:"admin"},{type:"course-availability",courseId:"course",availability:"active",expectedAvailability:"development",expectedVersion:1})).rejects.toThrow("Adicione ao menos uma aula");
+ });
+ it("recusa convites administrativos feitos por alunos",async()=>{
   const {db,me}=fixture();await expect(executeCommand(db,me,{type:"invite",name:"Teste",email:"test@example.test",department:"Geral",managerId:"",role:"admin"})).rejects.toMatchObject({status:403});
  });
  it("executa prova de proficiência e aprova com dispensa integral de aulas",async()=>{

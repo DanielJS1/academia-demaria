@@ -6,7 +6,7 @@ import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { CourseArt, EmptyState, PageHeading, SectionHeading } from "./shared";
 import { experience, DEMO_SEASON, tierClass } from "@/lib/gamification";
-import { courseProgress } from "@/lib/model";
+import { courseProgress, isCourseActive } from "@/lib/model";
 import { ClientDashboard } from "./client-dashboard";
 import { initials, number } from "@/lib/utils";
 import { HeroCarousel } from "./hero-carousel";
@@ -16,7 +16,7 @@ export function Dashboard() {
   if (isClientEnvironment && activeCartorio) {
     return <ClientDashboard cartorio={activeCartorio} />;
   }
-  const courses = state.courses.filter(course => course.status === "published" && course.audience !== "client");
+  const courses = state.courses.filter(course => isCourseActive(course) && course.audience !== "client");
   const continuing = courses.filter(course => !isCourseComplete(course, state, me.id)).map(course => {
     const completed = state.completed[course.id] || [];
     const paused = Object.entries(state.videoProgress[course.id] || {}).filter(([id, progress]) => progress.position > 0 && !completed.includes(id) && course.lessons.some(lesson => lesson.id === id));

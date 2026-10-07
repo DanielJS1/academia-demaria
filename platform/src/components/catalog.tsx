@@ -5,7 +5,7 @@ import { Bookmark, BookOpen, CheckCircle2, Clock3, Search, SlidersHorizontal, Sp
 import { useAcademy } from "./academy-provider";
 import { CourseCard, EmptyState, PageHeading } from "./shared";
 import { Button } from "./ui/button";
-import { courseLevels, isCourseAvailableForCartorio } from "@/lib/model";
+import { courseLevels, isCourseActive, isCourseAvailableForCartorio } from "@/lib/model";
 import { isCourseComplete } from "@/lib/rewards";
 import { normalize } from "@/lib/utils";
 
@@ -20,7 +20,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   const [pendingOnly, setPendingOnly] = useState(false);
 
   const published = state.courses.filter(course => {
-    if (course.status !== "published") return false;
+    if (!isCourseActive(course)) return false;
     if (isClientEnvironment) {
       if (!activeCartorio) return course.audience === "client" || course.audience === "both";
       return isCourseAvailableForCartorio(course, activeCartorio);
