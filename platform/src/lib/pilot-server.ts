@@ -1,7 +1,7 @@
-import { courseValidationError, normalizeCourse } from "./course-activities";
+import { courseValidationError, normalizeCourse, isChoiceAnswerCorrect } from "./course-activities";
 import { createClient } from "@supabase/supabase-js";
 import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./registration-security";
-import { courseXp } from "./rewards";
+import { courseXp, lessonXp } from "./rewards";
 import { commandSchema } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
 import { normalizeStoredCourseLevel, courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
@@ -133,7 +133,7 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");
  const command=parsed.data;
  if(command.type==="quiz-notifications"){await setQuizNotifications(db,me,command.enabled);return;}
- if(command.type==="video"||command.type==="complete"||command.type==="submit")await requireCourseAccess(db,me,command.courseId);
+ if(command.type==="video"||command.type==="complete"||command.type==="submit"||command.type==="proficiency")await requireCourseAccess(db,me,command.courseId);
  if(command.type==="avatar"){
   if(command.avatar && (!isStoredMediaUrl(command.avatar,"academy-avatars") || !new URL(command.avatar).pathname.includes(`/${me.id}/`)))throw new ApiError("URL de avatar inválida.");
   const {error}=await db.from("academy_profiles").update({avatar:command.avatar}).eq("id",me.id);
@@ -310,6 +310,157 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  if(command.type==="video"){
   const {error}=await db.rpc("academy_save_video_progress",{actor:me.id,command});
   if(error)throw new ApiError(error.message);return;
+ }
+ if(command.type==="proficiency"){
+  const resource=await db.from("academy_resources").select("id,revision,published").eq("id",command.courseId).eq("kind","course").single();
+  if(resource.error||!resource.data?.published)throw new ApiError("Curso não encontrado ou não publicado.");
+  const course=resource.data.published as Course;
+  const questions=(course.proficiencyQuestions && course.proficiencyQuestions.length>0)
+   ? course.proficiencyQuestions
+   : course.lessons.flatMap(l=>l.questions||[]);
+  if(!questions.length)throw new ApiError("Prova de proficiência sem questões configuradas.");
+
+  let correctCount=0;
+  for(const q of questions){
+   if(q.type==="choice"){
+    if(isChoiceAnswerCorrect(command.answers[q.id],q.correct,q.multiple))correctCount++;
+   }else if(q.type==="text" && (command.answers[q.id]?.trim().length??0)>=10){
+    correctCount++;
+   }
+  }
+  const score=Math.round((correctCount/questions.length)*100);
+  const passingScore=course.proficiencyScore||85;
+  const passed=score>=passingScore;
+
+  if(!passed){
+   await db.from("academy_attempts").insert({
+    user_id:me.id,
+    course_id:course.id,
+    version:resource.data.revision,
+    quiz_id:"proficiency",
+    snapshot:{...course,proficiency:true,quizId:"proficiency",title:`${course.title} · Prova de Proficiência`,questions,passingScore},
+    answers:command.answers,
+    status:"retry",
+    score,
+    feedback:`Aproveitamento de ${score}%. O mínimo para dispensa por proficiência é ${passingScore}%.`,
+    retry_allowed:true,
+    submitted_at:new Date().toISOString()
+   });
+   return;
+  }
+
+  for(const l of course.lessons){
+   const duration=(l.minutes||5)*60;
+   await db.from("academy_progress").upsert({
+    user_id:me.id,
+    course_id:course.id,
+    version:resource.data.revision,
+    lesson_id:l.id,
+    done:true,
+    ranges:[[0,duration]],
+    duration,
+    updated_at:new Date().toISOString()
+   },{onConflict:"user_id,course_id,version,lesson_id"});
+
+   if(l.type!=="quiz"){
+    const pts=lessonXp(l.minutes||5);
+    await db.rpc("academy_award_xp",{
+     learner:me.id,
+     course:course.id,
+     event:`lesson:${l.id}`,
+     points:pts,
+     description:`Aula concluída · ${l.title}`
+    });
+   }
+  }
+
+  for(const q of questions){
+   const isCorrect=q.type==="choice"
+    ? isChoiceAnswerCorrect(command.answers[q.id],q.correct,q.multiple)
+    : (command.answers[q.id]?.trim().length??0)>=10;
+   if(isCorrect){
+    await db.rpc("academy_award_xp",{
+     learner:me.id,
+     course:course.id,
+     event:`question:${q.id}`,
+     points:q.type==="choice"?5:8,
+     description:`Acerto · ${course.title}`
+    });
+   }
+  }
+
+  await db.rpc("academy_award_xp",{
+   learner:me.id,
+   course:course.id,
+   event:"approval:proficiency",
+   points:30,
+   description:`Prova de proficiência aprovada · ${course.title}`
+  });
+  await db.rpc("academy_award_xp",{
+   learner:me.id,
+   course:course.id,
+   event:"completion",
+   points:30,
+   description:`Curso concluído · ${course.title}`
+  });
+
+  await db.from("academy_attempts").insert({
+   user_id:me.id,
+   course_id:course.id,
+   version:resource.data.revision,
+   quiz_id:"proficiency",
+   snapshot:{
+    ...course,
+    proficiency:true,
+    quizId:"proficiency",
+    title:`${course.title} · Prova de Proficiência`,
+    questions,
+    passingScore,
+    xp:course.xp,
+    retryPolicy:"free",
+    lessons:course.lessons
+   },
+   answers:command.answers,
+   status:"approved",
+   score,
+   feedback:`Aprovado com ${score}% na Prova de Proficiência. Dispensa integral das aulas e certificação concedida.`,
+   reviewed_at:new Date().toISOString(),
+   reviewed_by:me.id,
+   retry_allowed:false,
+   submitted_at:new Date().toISOString()
+  });
+
+  for(const qLesson of course.lessons.filter(l=>l.type==="quiz")){
+   const existing=await db.from("academy_attempts").select("id").eq("user_id",me.id).eq("course_id",course.id).eq("quiz_id",qLesson.id).eq("status","approved").maybeSingle();
+   if(!existing.data){
+    await db.from("academy_attempts").insert({
+     user_id:me.id,
+     course_id:course.id,
+     version:resource.data.revision,
+     quiz_id:qLesson.id,
+     snapshot:{
+      ...course,
+      quizId:qLesson.id,
+      title:`${course.title} · ${qLesson.title}`,
+      questions:qLesson.questions||[],
+      passingScore:course.passingScore||60,
+      xp:30,
+      retryPolicy:"free"
+     },
+     answers:{},
+     status:"approved",
+     score:100,
+     feedback:"Dispensado por aprovação na Prova de Proficiência do curso.",
+     reviewed_at:new Date().toISOString(),
+     reviewed_by:me.id,
+     retry_allowed:false,
+     submitted_at:new Date().toISOString()
+    });
+   }
+  }
+
+  await db.from("academy_audit").insert({actor:me.id,action:"proficiency",resource:course.id});
+  return;
  }
  const {error}=await db.rpc("academy_mutate",{actor:me.id,command});if(error)throw new ApiError(error.message);
 }
