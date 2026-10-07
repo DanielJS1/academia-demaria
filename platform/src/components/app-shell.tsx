@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, BarChart3, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X } from "lucide-react";
+import { ArrowUpRight, BarChart3, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X, Zap } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { GlobalSearch } from "./global-search";
 import { Button } from "./ui/button";
@@ -12,6 +12,7 @@ import { AcademyBrand } from "./academy-brand";
 const navigation = [
   { href: "/", label: "Visão geral", icon: Home },
   { href: "/aprender", label: "Aprender", icon: BookOpen },
+  { href: "/desafios", label: "Desafios", icon: Zap },
   { href: "/conhecimento", label: "Conhecimento", icon: Sparkles, badge: "IA" },
   { href: "/conquistas", label: "Minha evolução", icon: Trophy },
 ];
@@ -23,7 +24,7 @@ const defaultNotices = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { state, me, update, theme, toggleTheme, storageError, signOut, activeCartorio, simulatedCartorioId, setSimulatedCartorioId, isClientEnvironment, avatar } = useAcademy();
+  const { state, me, update, refreshNotices, theme, toggleTheme, storageError, signOut, activeCartorio, simulatedCartorioId, setSimulatedCartorioId, isClientEnvironment, avatar } = useAcademy();
   const exp = experience(state);
   const classroomCourseId = path.match(/^\/aprender\/([^/]+)\/aula\/?$/)?.[1];
   const classroomCourse = classroomCourseId ? [...state.courses, ...state.courseDrafts].find(course => course.id === decodeURIComponent(classroomCourseId)) : undefined;
@@ -115,6 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? [
         { href: "/", label: "Visão geral", icon: Home },
         { href: "/aprender", label: "Aprender", icon: BookOpen },
+        { href: "/desafios", label: "Desafios", icon: Zap },
       ]
     : navigation;
 
@@ -126,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       text: article.updateRequest!.message,
       href: `/conhecimento/${encodeURIComponent(article.id)}/editar`,
     }));
-  const collaborationNotices = state.notifications.map(item => ({id:item.id,title:item.title,text:item.message,href:item.link}));
+  const collaborationNotices = state.notifications.filter(() => !simulatedCartorioId).map(item => ({id:item.id,title:item.title,text:item.message,href:item.link}));
   const notices = [...collaborationNotices, ...updateNotices, ...defaultNotices];
   const unread = notices.filter(item => !state.readNotices.includes(item.id)).length;
 
@@ -365,12 +367,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </select>
               </div>
             )}
-            <Link href="/sobre" className="demo-tag"><span/> {isClientEnvironment ? "Área do Cliente" : "Piloto interno"}</Link>
+            <Link href="/sobre" className="demo-tag"><span/> {process.env.NEXT_PUBLIC_APP_ENV === "homologacao" ? "Homologação" : isClientEnvironment ? "Área do Cliente" : "Piloto interno"}</Link>
             <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === "light" ? "Ativar tema escuro" : "Ativar tema claro"}>
               {theme === "light" ? <Moon size={19}/> : <Sun size={19}/>}
             </Button>
             <div className="notifications">
-              <Button variant="ghost" size="icon" aria-label="Notificações" aria-expanded={noticesOpen} onClick={() => setNoticesOpen(!noticesOpen)}>
+              <Button variant="ghost" size="icon" aria-label="Notificações" aria-expanded={noticesOpen} onClick={() => { if(!noticesOpen)void refreshNotices();setNoticesOpen(!noticesOpen); }}>
                 <Bell size={19}/>
                 {unread > 0 && <span className="notification-dot"/>}
               </Button>

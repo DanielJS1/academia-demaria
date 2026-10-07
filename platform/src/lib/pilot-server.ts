@@ -6,7 +6,10 @@ import { commandSchema } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
 import { normalizeStoredCourseLevel, courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
 import { isStoredMediaUrl } from "./storage-service";
-export class ApiError extends Error { constructor(message:string,public status=400){super(message);} }
+import { readQuizNotifications, setQuizNotifications } from "./quiz-notifications-server";
+import { mergeQuizNotices } from "./quiz-notifications";
+import { ApiError } from "./api-error";
+export { ApiError } from "./api-error";
 export function database(){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)throw new ApiError("O Supabase ainda não foi configurado no servidor.",503);
@@ -18,12 +21,12 @@ export async function authenticate(request:Request){
  if(!token)throw new ApiError("Entre na sua conta para continuar.",401);
  const db=database();const {data,error}=await db.auth.getUser(token);
  if(error||!data.user)throw new ApiError("Sua sessão expirou. Entre novamente.",401);
- let profile=await db.from("academy_profiles").select("*").eq("id",data.user.id).maybeSingle();
+ let profile=await db.from("academy_profiles").select("id,name,email,department,manager_id,role,status,audience,cartorio_id,avatar").eq("id",data.user.id).maybeSingle();
  let currentProfile: Profile | null = (profile.data as Profile) ?? null;
  if(!currentProfile){
   if(!data.user.email||!isAllowedCompanyEmail(data.user.email))throw new ApiError("Este e-mail não pertence a um domínio autorizado.",403);
   const name=(data.user.user_metadata?.name as string)||data.user.email?.split("@")[0]||"Colaborador";
-  const {data:created}=await db.from("academy_profiles").insert(pendingStudentProfile(data.user.id,name,data.user.email)).select().single();
+  const {data:created}=await db.from("academy_profiles").insert(pendingStudentProfile(data.user.id,name,data.user.email)).select("id,name,email,department,manager_id,role,status,audience,cartorio_id,avatar").single();
   currentProfile=(created as Profile)??null;
  }
  if(!currentProfile||currentProfile.status!=="active"){
@@ -54,17 +57,18 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   return {data:rows,error:null};
  }
  const results=await Promise.all([
-  all("academy_resources","*","kind","course"),all("academy_profiles","*",me.audience==="client"?"id":undefined,me.id),
-  db.from("academy_settings").select("*").single(),
+  all("academy_resources","id,kind,published,draft","kind","course"),all("academy_profiles","id,name,email,department,manager_id,role,status,audience,cartorio_id,avatar",me.audience==="client"?"id":undefined,me.id),
+  db.from("academy_settings").select("departments,products").single(),
   all("academy_progress","user_id,course_id,version,lesson_id,done,position,duration,updated_at",me.audience==="client"?"user_id":undefined,me.id),
-  all("academy_attempts","*",me.audience==="client"||me.role==="student"?"user_id":undefined,me.id),
+  all("academy_attempts","id,user_id,course_id,version,quiz_id,snapshot,answers,status,feedback,score,submitted_at,retry_allowed,correct_text_ids,partial_text_ids",me.audience==="client"||me.role==="student"?"user_id":undefined,me.id),
   all("academy_attempts","user_id,submitted_at",me.audience==="client"?"user_id":undefined,me.id),
-  all("academy_xp","*",me.audience==="client"?"user_id":undefined,me.id),db.from("academy_preferences").select("*").eq("user_id",me.id).maybeSingle(),
-  all("academy_cartorios","*",me.audience==="client"?"id":undefined,me.cartorio_id??"__none__"), all("academy_recognitions","*",me.audience==="client"?"user_id":undefined,me.id), all("academy_pdi_notes","*",me.audience==="client"?"user_id":undefined,me.id),
+  all("academy_xp","id,user_id,amount,season,label",me.audience==="client"?"user_id":undefined,me.id),db.from("academy_preferences").select("bookmarks,read_notices").eq("user_id",me.id).maybeSingle(),
+  all("academy_cartorios","id,name,city,uf,cns,modules,key_user_id,key_user_name,key_user_email,status,created_at",me.audience==="client"?"id":undefined,me.cartorio_id??"__none__"), all("academy_recognitions","id,user_id,manager_id,title,message,created_at",me.audience==="client"?"user_id":undefined,me.id), all("academy_pdi_notes","id,user_id,manager_id,content,created_at",me.audience==="client"?"user_id":undefined,me.id),
  ]);
  results.forEach(ensure);
  const [resources,profiles,settings,progress,attempts,attemptActivity,xp,preferences,cartoriosResult,recognitionsResult,pdiNotesResult]=results;
- const community=await readCommunity(db,me);
+ if(!settings.data)throw new ApiError("Configuração da academia indisponível.",503);
+ const [community,quizNotices]=await Promise.all([readCommunity(db,me),readQuizNotifications(db,me)]);
  const authoredArticles=community.articles.filter(article=>article.authorId===me.id);
  const pendingSuggestions=authoredArticles.length?await db.from("academy_article_suggestions").select("id,article_id,proposed_text,created_at").eq("status","pending").in("article_id",authoredArticles.map(article=>article.id)):null;
  if(pendingSuggestions?.error)throw new ApiError("Não foi possível consultar as sugestões da biblioteca.",503);
@@ -120,12 +124,15 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"&&me.audience!=="client"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>({...r.draft,level:normalizeStoredCourseLevel(r.draft.level)})):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:me.audience==="client"?[]:settings.data.departments,products:me.audience==="client"?[...new Set(courses.map(c=>c.product))]:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:collaborationNotices,
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
   xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
-  teamProgress,cartorios,recognitions,pdiNotes};
+  teamProgress,cartorios,recognitions,pdiNotes,quizNotifications:quizNotices.quizNotifications};
+ state.notifications=mergeQuizNotices(state.notifications,quizNotices.notifications);
+ state.readNotices=quizNotices.readNotices;
  return {state,me:{id:me.id,name:me.name,email:me.email,department:me.department,role:me.role,audience:me.audience??"internal",cartorioId:me.cartorio_id??null,avatar:me.avatar?.startsWith("https://")?me.avatar:null}};
 }
 export async function executeCommand(db:ReturnType<typeof database>,me:Profile,input:unknown){
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");
  const command=parsed.data;
+ if(command.type==="quiz-notifications"){await setQuizNotifications(db,me,command.enabled);return;}
  if(command.type==="video"||command.type==="complete"||command.type==="submit")await requireCourseAccess(db,me,command.courseId);
  if(command.type==="avatar"){
   if(command.avatar && (!isStoredMediaUrl(command.avatar,"academy-avatars") || !new URL(command.avatar).pathname.includes(`/${me.id}/`)))throw new ApiError("URL de avatar inválida.");

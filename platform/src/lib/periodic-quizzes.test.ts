@@ -9,6 +9,19 @@ let db: PGlite;
 let quizId: string;
 let questionIds: string[];
 
+function adminDraft(slug: string) {
+  return { title: "Desafio de regressão", slug, description: "Teste", category: "sistema",
+    xpReward: 70, passingScore: 70, periodType: "weekly", targetAudience: "internal", isActive: true, isFeatured: false,
+    availableFrom: new Date(Date.now() - 1000).toISOString(), expiresAt: null,
+    questions: [0, 1].map(index => ({ prompt: `Pergunta ${index + 1}`, options: [{ id: "a", text: "Correta" }, { id: "b", text: "Incorreta" }],
+      correctOptionId: "a", explanation: "Explicação de teste", imageUrl: "", imageAlt: "" })) };
+}
+
+async function saveDraft(payload: ReturnType<typeof adminDraft> & { id?: string }) {
+  const saved = await db.query<{ id: string }>("select academy_save_periodic_quiz($1,$2::jsonb) as id", [admin, JSON.stringify(payload)]);
+  return saved.rows[0].id;
+}
+
 beforeAll(async () => {
   db = new PGlite();
   await db.exec(`
@@ -23,6 +36,7 @@ beforeAll(async () => {
   await db.exec(readFileSync(new URL("../../supabase/migrations/202609240010_quiz_question_media.sql", import.meta.url), "utf8"));
   await db.exec(readFileSync(new URL("../../supabase/migrations/202609250001_periodic_quiz_admin.sql", import.meta.url), "utf8"));
   await db.exec(readFileSync(new URL("../../supabase/migrations/202609250002_periodic_quiz_delete.sql", import.meta.url), "utf8"));
+  await db.exec(readFileSync(new URL("../../supabase/migrations/20261006181438_fix_periodic_quiz_save.sql", import.meta.url), "utf8"));
   await db.query("insert into auth.users(id) values($1),($2),($3)", [learner, secondLearner, admin]);
   await db.query("insert into academy_profiles(id,status,audience) values($1,'active','internal'),($2,'active','internal')", [learner, secondLearner]);
   await db.query("insert into academy_profiles(id,status,audience,role) values($1,'active','internal','admin')", [admin]);
@@ -92,6 +106,67 @@ describe("desafios periódicos", () => {
     await db.query("select academy_set_periodic_quiz_active($1,$2,false)", [admin, id]);
     const disabled = await db.query<{ is_active: boolean }>("select is_active from academy_quizzes where id=$1", [id]);
     expect(disabled.rows[0].is_active).toBe(false);
+  });
+
+  it("edita um existente sem respostas, incluindo corte, perguntas e destaque", async () => {
+    const payload = adminDraft("regressao-update");
+    const id = await saveDraft(payload);
+    const edited = { ...payload, id, title: "Desafio atualizado", passingScore: 60, isFeatured: true,
+      questions: [...payload.questions, { ...payload.questions[0], prompt: "Terceira pergunta atualizada" }] };
+    expect(await saveDraft(edited)).toBe(id);
+    const quiz = await db.query("select title,passing_score,is_featured from academy_quizzes where id=$1", [id]);
+    expect(quiz.rows[0]).toMatchObject({ title: edited.title, passing_score: 60, is_featured: true });
+    const questions = await db.query<{ prompt: string }>("select prompt from academy_quiz_questions where quiz_id=$1 order by order_index", [id]);
+    expect(questions.rows.map(row => row.prompt)).toEqual(edited.questions.map(question => question.prompt));
+    const featured = await db.query("select id from academy_quizzes where target_audience='internal' and is_featured");
+    expect(featured.rows).toEqual([{ id }]);
+    await saveDraft({ ...edited, isFeatured: false });
+    const cleared = await db.query<{ is_featured: boolean }>("select is_featured from academy_quizzes where id=$1", [id]);
+    expect(cleared.rows[0].is_featured).toBe(false);
+  });
+
+  it("identifica inexistente, dados inválidos, duplicidade e ator não autorizado", async () => {
+    const payload = adminDraft("regressao-validacao");
+    await saveDraft(payload);
+    await expect(saveDraft({ ...payload, id: "99999999-9999-4999-8999-999999999999" }))
+      .rejects.toMatchObject({ code: "P0001", detail: "QUIZ_NOT_FOUND" });
+    await expect(saveDraft({ ...payload, passingScore: 101 })).rejects.toMatchObject({ code: "P0001", detail: "QUIZ_INVALID_DATA" });
+    await expect(saveDraft(payload)).rejects.toMatchObject({ code: "23505" });
+    await expect(db.query("select academy_save_periodic_quiz($1,$2::jsonb)", [learner, JSON.stringify(payload)]))
+      .rejects.toMatchObject({ code: "P0001", detail: "QUIZ_FORBIDDEN" });
+  });
+
+  it("mantém bloqueado todo save de desafio já respondido, sem alterar nota ou XP", async () => {
+    const before = await db.query("select passing_score from academy_quizzes where id=$1", [quizId]);
+    await expect(saveDraft({ ...adminDraft("regressao-respondido"), id: quizId, passingScore: 60 }))
+      .rejects.toMatchObject({ code: "P0001", detail: "QUIZ_ALREADY_ANSWERED" });
+    const after = await db.query("select passing_score from academy_quizzes where id=$1", [quizId]);
+    expect(after.rows).toEqual(before.rows);
+    const attempts = await db.query("select passed,xp_granted from academy_quiz_attempts where quiz_id=$1 order by user_id", [quizId]);
+    expect(attempts.rows).toEqual([{ passed: true, xp_granted: 60 }, { passed: false, xp_granted: 0 }]);
+  });
+
+  it("reverte metadados, perguntas e destaque se uma pergunta falhar durante update", async () => {
+    const previousFeatured = await saveDraft({ ...adminDraft("regressao-destaque"), isFeatured: true });
+    const payload = adminDraft("regressao-rollback");
+    const id = await saveDraft(payload);
+    const before = await db.query("select * from academy_quizzes where id=$1", [id]);
+    const questions = await db.query("select * from academy_quiz_questions where quiz_id=$1 order by order_index", [id]);
+    await expect(saveDraft({ ...payload, id, passingScore: 60, isFeatured: true,
+      questions: [payload.questions[0], { ...payload.questions[1], correctOptionId: "inexistente" }] }))
+      .rejects.toMatchObject({ code: "P0001", detail: "QUIZ_INVALID_QUESTIONS" });
+    expect((await db.query("select * from academy_quizzes where id=$1", [id])).rows).toEqual(before.rows);
+    expect((await db.query("select * from academy_quiz_questions where quiz_id=$1 order by order_index", [id])).rows).toEqual(questions.rows);
+    expect((await db.query("select id from academy_quizzes where target_audience='internal' and is_featured")).rows).toEqual([{ id: previousFeatured }]);
+  });
+
+  it("preserva SECURITY INVOKER e execução exclusiva pelo servidor", async () => {
+    const privileges = await db.query(`select
+      has_function_privilege('anon','academy_save_periodic_quiz(uuid,jsonb)','EXECUTE') as anon,
+      has_function_privilege('authenticated','academy_save_periodic_quiz(uuid,jsonb)','EXECUTE') as authenticated,
+      has_function_privilege('service_role','academy_save_periodic_quiz(uuid,jsonb)','EXECUTE') as service,
+      prosecdef from pg_proc where oid='academy_save_periodic_quiz(uuid,jsonb)'::regprocedure`);
+    expect(privileges.rows[0]).toEqual({ anon: false, authenticated: false, service: true, prosecdef: false });
   });
 
   it("exclui rascunhos e desafios ativos sem apagar tentativas ou XP", async () => {

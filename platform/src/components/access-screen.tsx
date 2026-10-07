@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, ShieldAlert, UserPlus } from "lucide-react";
 import { AcademyBrand } from "./academy-brand";
 import { browserAuth } from "@/lib/supabase-browser";
@@ -9,6 +10,11 @@ import { DEPARTMENTS } from "@/lib/departments";
 import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
 
 export function AccessScreen({ configured, signedIn }: { configured: boolean; signedIn: boolean }) {
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const turnstileContainer = useRef<HTMLDivElement>(null);
+  const turnstileWidget = useRef<string | null>(null);
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const router = useRouter();
   const [portal, setPortal] = useState<"colaborador" | "cartorio">("cartorio");
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
@@ -21,6 +27,20 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (mode !== "signup" || !turnstileSiteKey || !turnstileReady || !turnstileContainer.current) return;
+    const widget = (window as typeof window & { turnstile?: { render: (container: HTMLElement, options: Record<string, unknown>) => string; remove: (id: string) => void } }).turnstile;
+    if (!widget) return;
+    const id = widget.render(turnstileContainer.current, {
+      sitekey: turnstileSiteKey,
+      callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+    turnstileWidget.current = id;
+    return () => { widget.remove(id); turnstileWidget.current = null; setTurnstileToken(""); };
+  }, [mode, turnstileReady, turnstileSiteKey]);
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -54,6 +74,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
         setConfirmation("");
         router.replace("/");
       } else if (mode === "signup") {
+        if (turnstileSiteKey && !turnstileToken) throw new Error("Confirme a verificação de segurança.");
         if (!name.trim()) throw new Error("Informe seu nome completo.");
         if (password !== confirmation) throw new Error("As senhas digitadas não coincidem.");
         const validPassword = newPasswordSchema.safeParse(password);
@@ -67,6 +88,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
             department,
             email: email.trim(),
             password,
+            turnstileToken,
           }),
         });
 
@@ -115,6 +137,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
 
   return (
     <main className="access-page">
+      {turnstileSiteKey && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onLoad={() => setTurnstileReady(true)} />}
       <section className="access-story">
         <a className="access-brand" href="/" aria-label="Academia DeMaria — início"><AcademyBrand /></a>
         <span className="hero-eyebrow">DEMARIA · CONHECIMENTO QUE TRANSFORMA</span>
@@ -152,6 +175,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
             : "Entre com seu e-mail e senha para continuar aprendendo."}
         </p>
 
+        {process.env.NEXT_PUBLIC_APP_ENV === "homologacao" && <p className="info-note">Homologação · use as contas de teste. Dados e XP deste ambiente são separados da produção.</p>}
         {message && (
           <div
             role={message.type === "error" ? "alert" : "status"}
@@ -286,6 +310,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
               </div>
             )}
 
+            {!signedIn && mode === "signup" && turnstileSiteKey && <div ref={turnstileContainer} aria-label="Verificação de segurança" />}
             <button className="button button-primary" type="submit" disabled={busy} style={{ width: "100%", marginTop: "12px" }}>
               {busy
                 ? "Aguarde…"

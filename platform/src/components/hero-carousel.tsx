@@ -2,14 +2,13 @@
 
 import { useEffect, useMemo, useState, type TouchEvent } from "react";
 import { ArrowRight, BookOpen, ChevronLeft, ChevronRight, Clock3, Pause, Play, Sparkles, Trophy, Zap } from "lucide-react";
-import { browserAuth } from "@/lib/supabase-browser";
+import { useQuizSummary } from "./quizzes/quiz-summary-provider";
 import { AnimatedButton } from "./ui/animated-button";
 import { SonarGrid } from "./ui/sonar-grid";
 
 type Resume = { title: string; lesson: string; minutes: number; position: number; href: string };
 type Featured = { title: string; description: string; href: string };
 type Ranking = { season: string; rank: number; gap: number; xp: number };
-type Quiz = { id: string; title: string; xp_reward: number; expires_at: string | null; period_type: string; is_featured: boolean };
 type Slide = { id: string; tone: string; eyebrow: string; title: string; description: string; href: string; action: string; meta: string; icon: typeof BookOpen; badge?: string };
 
 const ROTATION_MS = 6500;
@@ -17,7 +16,9 @@ const ROTATION_MS = 6500;
 export function HeroCarousel({ resume, newCourse, ranking, article }: {
   resume?: Resume; newCourse?: Featured; ranking: Ranking; article?: Featured;
 }) {
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const { data, error, simulated } = useQuizSummary();
+  const pending = error || simulated ? [] : data?.available ?? [];
+  const quiz = pending.find(item => item.is_featured) ?? pending.find(item => item.period_type === "weekly") ?? pending[0] ?? null;
   const [active, setActive] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -26,23 +27,6 @@ export function HeroCarousel({ resume, newCourse, ranking, article }: {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    async function loadQuiz() {
-      try {
-        const session = await browserAuth()?.auth.getSession();
-        const token = session?.data.session?.access_token;
-        if (!token || controller.signal.aborted) return;
-        const response = await fetch("/api/quizzes/active", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal });
-        if (!response.ok) return;
-        const data = await response.json() as { quizzes?: Quiz[] };
-        setQuiz(data.quizzes?.find(item => item.is_featured) ?? data.quizzes?.find(item => item.period_type === "weekly") ?? data.quizzes?.[0] ?? null);
-      } catch { /* O carrossel permanece útil quando os desafios estão indisponíveis. */ }
-    }
-    void loadQuiz();
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");

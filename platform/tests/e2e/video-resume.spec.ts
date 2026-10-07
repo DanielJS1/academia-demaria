@@ -1,4 +1,8 @@
 import { test, expect, academy, login, requiredCourse } from "./fixtures";
+import { installVimeoContract } from "./vimeo-contract";
+
+const mode = process.env.E2E_VIMEO_MODE ?? "live";
+if (mode !== "live" && mode !== "contract") throw new Error("E2E_VIMEO_MODE precisa ser live ou contract.");
 
 async function vimeoValue(page: import("@playwright/test").Page, method: "getCurrentTime" | "getDuration"): Promise<number> {
   return page.evaluate(method => new Promise<number>((resolve) => {
@@ -42,8 +46,9 @@ async function vimeoCommand(page: import("@playwright/test").Page, method: strin
   }, { method, value });
 }
 
-test("Vimeo retoma do minuto salvo após fechar e reabrir pelo catálogo", async ({ browser, colaborador }) => {
+test(`Vimeo ${mode}: retoma do minuto salvo após fechar e reabrir pelo catálogo`, async ({ browser, colaborador }) => {
   test.setTimeout(180_000);
+  if (mode === "contract") await installVimeoContract(colaborador.context);
   const course = requiredCourse(colaborador.state, "E2E_VIDEO_COURSE_ID", "video");
   const lesson = course.lessons[0];
   if (lesson.type !== "video" || lesson.minutes < 2) throw new Error("E2E_VIDEO_COURSE_ID precisa começar com vídeo Vimeo de ao menos 2 minutos.");
@@ -69,6 +74,7 @@ test("Vimeo retoma do minuto salvo após fechar e reabrir pelo catálogo", async
 
   const second = await login(browser, "colaborador");
   try {
+    if (mode === "contract") await installVimeoContract(second.context);
     await second.page.goto("/aprender");
     await second.page.getByRole("tab", { name: /Todos os cursos/ }).click();
     await second.page.locator(`a[href="/aprender/${course.id}"]`).first().click();
