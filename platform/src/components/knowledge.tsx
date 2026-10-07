@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, FolderOpen, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, SectionHeading } from "./shared";
@@ -10,6 +10,7 @@ import { getAllUserNotes, exportCourseNotesTxt } from "./lesson-notepad";
 import { CommunityLibrary } from "./community/community-library";
 import { CommunityArticle } from "./community/community-article";
 import { searchArticles } from "./community/article-client";
+import { TechnicalMaterials } from "./technical-materials";
 
 const salesAssistants = [
   {
@@ -35,12 +36,12 @@ const windowsAssistants = [
   { title: "Preferências", href: "https://chatgpt.com/g/g-68b85c218248819192b205d84bf879bc-preferencias" },
 ];
 
-export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "anotacoes" | "biblioteca" | "consulta"; initialSearch?: string }) {
+export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "anotacoes" | "biblioteca" | "consulta" | "materiais"; initialSearch?: string }) {
   const { state, me, notify } = useAcademy();
   const [search, setSearch] = useState(initialSearch);
-  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : "Biblioteca");
+  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações" | "Materiais técnicos">(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : initialTab === "materiais" ? "Materiais técnicos" : "Biblioteca");
   const [matchedIds, setMatchedIds] = useState<string[] | null>(null);
-  useEffect(() => { setSearch(initialSearch); setTab(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : "Biblioteca"); }, [initialSearch, initialTab]);
+  useEffect(() => { setSearch(initialSearch); setTab(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : initialTab === "materiais" ? "Materiais técnicos" : "Biblioteca"); }, [initialSearch, initialTab]);
   useEffect(() => {
     if (tab !== "Biblioteca" || search.trim().length < 2) { setMatchedIds(null); return; }
     setMatchedIds(null);
@@ -65,39 +66,29 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
   return (
     <div className="page-enter">
       <section className="knowledge-hero">
-        <span className="knowledge-symbol"><Sparkles size={29}/></span>
         <div className="eyebrow">SABER MAIS, IR ALÉM</div>
-        <h1>Todo conhecimento começa<br/>com uma boa pergunta.</h1>
-        <p>Consulte nossos assistentes especializados de IA e encontre orientações para o seu dia a dia.</p>
+        <h1>Conhecimento para consultar e compartilhar.</h1>
+        <p>Explore artigos, materiais técnicos, assistentes e suas anotações em um só lugar.</p>
         <div className="field-search knowledge-search">
           <Search size={20}/>
           <input
-            aria-label="Pesquisar assistentes e temas"
-            placeholder="Busque por assunto, produto ou estado (ex: Vendas, SP, Escrituras)..."
+            aria-label="Pesquisar no conhecimento"
+            placeholder="Busque por assunto, produto ou título..."
             value={search}
             onChange={event => setSearch(event.target.value)}
           />
-        </div>
-        <div className="knowledge-hints">
-          {["Vendas", "DOC-Windows", "São Paulo", "Pernambuco"].map(term => (
-            <button key={term} onClick={() => setSearch(term)}>{term}</button>
-          ))}
-          {search && (
-            <button type="button" onClick={() => setSearch("")} style={{ color: "var(--primary)", fontWeight: 600 }}>
-              Limpar busca
-            </button>
-          )}
+          {search && <button type="button" aria-label="Limpar busca" onClick={() => setSearch("")}><X size={17} /></button>}
         </div>
       </section>
 
-      <div className="tabs">
+      <div className="tabs knowledge-tabs" role="group" aria-label="Áreas do conhecimento">
         <button
           type="button"
           className={tab === "Biblioteca" ? "selected" : ""}
           aria-pressed={tab === "Biblioteca"}
           onClick={() => setTab("Biblioteca")}
         >
-          <BookOpen size={16}/> Biblioteca ({published.length})
+          <BookOpen size={20}/><span><strong>Biblioteca ({published.length})</strong><small>Artigos da comunidade</small></span>
         </button>
         <button
           type="button"
@@ -105,7 +96,7 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
           aria-pressed={tab === "Consulta assistida"}
           onClick={() => setTab("Consulta assistida")}
         >
-          <Sparkles size={16}/> Consulta assistida
+          <Sparkles size={20}/><span><strong>Consulta assistida</strong><small>Assistentes especializados</small></span>
         </button>
         <button
           type="button"
@@ -113,8 +104,11 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
           aria-pressed={tab === "Anotações"}
           onClick={() => setTab("Anotações")}
         >
-          <FileText size={16}/> Minhas Anotações ({coursesWithNotes.length})
+          <FileText size={20}/><span><strong>Minhas anotações ({coursesWithNotes.length})</strong><small>Seu caderno de estudos</small></span>
         </button>
+        {me.audience !== "client" && <button type="button" className={tab === "Materiais técnicos" ? "selected" : ""} aria-pressed={tab === "Materiais técnicos"} onClick={() => setTab("Materiais técnicos")}>
+          <FolderOpen size={20}/><span><strong>Materiais técnicos</strong><small>Manuais e vídeos de consulta</small></span>
+        </button>}
       </div>
 
       {tab === "Anotações" ? (
@@ -201,6 +195,8 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
             </EmptyState>
           )}
         </section>
+      ) : tab === "Materiais técnicos" ? (
+        <TechnicalMaterials search={search} />
       ) : tab === "Biblioteca" ? (
         <CommunityLibrary search={search} matchedIds={matchedIds} clearSearch={() => setSearch("")} />
       ) : (
