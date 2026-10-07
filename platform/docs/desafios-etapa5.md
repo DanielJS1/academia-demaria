@@ -26,6 +26,8 @@ Semgrep SAST e secrets scan aprovados no GitHub Actions (`37543741836`). Build f
 
 No mesmo CI, typecheck e os 220 testes de domínio passaram; seis E2E passaram, incluindo desafios. O gate de qualidade ficou vermelho porque o iframe Vimeo não respondeu a `getDuration` no runner GitHub, inclusive no retry (retorno de timeout `-1`). A captura do runner confirmou uma página do Vimeo restringindo a conexão: “We couldn't verify the security of your connection.” O teste passou localmente contra o mesmo Supabase isolado. Não foi removido nem convertido em sucesso artificial. Validar esse gate em runner com conexão aceita pelo Vimeo antes da aprovação de produção; não contornar o bloqueio do provedor.
 
+Correção posterior: fixtures de adesão usam instante explicitamente anterior à publicação, evitando igualdade no relógio de PGlite; regressão confirma exclusão quando os timestamps são iguais. O CI valida o transporte do player por contrato mantendo SDK/Auth/API/banco reais; a integração Vimeo externa permanece em `live`, com status separado obrigatório para o SHA exato. Consulte `tests/e2e/README.md` e `scripts/verify-vimeo-live.mjs`.
+
 ## Fluxo e publicação
 
 Desafios não têm fallback local: central, resumo, tentativa, resultado e avisos dependem do servidor e do schema Supabase. Falhas devem exibir recuperação explícita, sem simular publicação, crédito ou adesão.
