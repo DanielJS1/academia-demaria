@@ -39,7 +39,7 @@ export function Evolution() {
   );
 
   const withoutQuiz = state.courses.filter(
-    (course) => !course.lessons.some((l) => l.type === "quiz") && isCourseComplete(course, state, me.id)
+    (course) => !course.lessons.some((l) => l.type === "quiz") && isCourseComplete(course, state, me.id) && !approved.some((a) => a.courseId === course.id)
   );
 
   return (
@@ -271,7 +271,9 @@ export function Evolution() {
                   <small>
                     Aprovado com {attempt.score}% · versão {attempt.courseVersion}
                     <br />
-                    Aprovação registrada · emissão de certificado em preparação
+                    {attempt.quizId === "proficiency" || (attempt as any).snapshot?.proficiency
+                      ? "Aprovação por Prova de Proficiência · dispensa integral de aulas"
+                      : "Aprovação registrada · emissão de certificado em preparação"}
                   </small>
                 </div>
               </div>

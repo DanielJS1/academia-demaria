@@ -50,4 +50,39 @@ describe("API: isolamento de dados",()=>{
  it("recusa comandos administrativos antes de acessar o banco",async()=>{
   const {db,me}=fixture();await expect(executeCommand(db,me,{type:"invite",name:"Teste",email:"test@example.test",department:"Geral",managerId:"",role:"admin"})).rejects.toMatchObject({status:403});
  });
+ it("executa prova de proficiência e aprova com dispensa integral de aulas",async()=>{
+  const {db,me,tables}=fixture();
+  const course=tables.academy_resources[0].published;
+  course.hasProficiencyTest=true;
+  course.proficiencyScore=80;
+  course.proficiencyQuestions=[
+   {id:"q1",prompt:"Q1",type:"choice",options:["A","B"],correct:"A"}
+  ];
+  const dbAny=db as any;
+  dbAny.from=(table:string)=>{
+   let rows=tables[table]??[];let single=false;
+   const chain:any={
+    select(){return chain;},
+    eq(key:string,value:unknown){rows=rows.filter(r=>r[key]===value);return chain;},
+    single(){single=true;return chain;},
+    maybeSingle(){single=true;return chain;},
+    async upsert(row:any){tables[table]=tables[table]??[];const idx=tables[table].findIndex(r=>r.lesson_id===row.lesson_id&&r.course_id===row.course_id);if(idx>=0)tables[table][idx]=row;else tables[table].push(row);return {error:null};},
+    async insert(row:any){tables[table]=tables[table]??[];tables[table].push(row);return {error:null};},
+    then(resolve:any){return Promise.resolve({data:single?rows[0]??null:rows,error:null}).then(resolve);}
+   };
+   return chain;
+  };
+  dbAny.rpc=async()=>({error:null});
+
+  await executeCommand(dbAny,me,{
+   type:"proficiency",
+   courseId:"course",
+   version:1,
+   score:100,
+   answers:{q1:"A"}
+  });
+
+  expect(tables.academy_progress.filter(p=>p.user_id===me.id&&p.done)).toHaveLength(course.lessons.length);
+  expect(tables.academy_attempts.some(a=>a.user_id===me.id&&a.status==="approved"&&a.quiz_id==="proficiency")).toBe(true);
+ });
 });
