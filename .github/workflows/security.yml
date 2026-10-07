@@ -45,6 +45,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: homologacao
+    concurrency:
+      group: academy-homologacao-quality
+      cancel-in-progress: false
     defaults:
       run:
         working-directory: platform
