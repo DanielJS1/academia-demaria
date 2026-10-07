@@ -11,13 +11,13 @@ import { ArrowLeft, ArrowRight, Award, Check, CheckCircle2, ChevronLeft, Clock3,
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, Progress } from "./shared";
-import { completeActivity, courseProgress, vimeoEmbed, youtubeEmbed, type Attempt } from "@/lib/model";
+import { completeActivity, courseProgress, isCourseActive, vimeoEmbed, youtubeEmbed, type Attempt } from "@/lib/model";
 import { LessonNotepad } from "./lesson-notepad";
 import { QuizRunner } from "./quiz-runner";
 export function Classroom({ id, initialLesson, initialPosition, preview = false }: { id: string; initialLesson?: string; initialPosition?: number; preview?: boolean }) {
   const router = useRouter();
   const { state, me, ready, update, mutate, notify, busy, activeCartorio } = useAcademy();
-  const rawCourse = (preview ? state.courseDrafts.find(item => item.id === id) : undefined) || state.courses.find(item => item.id === id && (item.status === "published" || preview));
+  const rawCourse = (preview ? state.courseDrafts.find(item => item.id === id) : undefined) || state.courses.find(item => item.id === id && (isCourseActive(item) || preview));
   const cartorioUf = activeCartorio?.uf;
   const course = rawCourse ? {
     ...rawCourse,

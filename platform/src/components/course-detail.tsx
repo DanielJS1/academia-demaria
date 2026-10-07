@@ -7,7 +7,7 @@ import { useAcademy } from "./academy-provider";
 import { CourseLevelBadge } from "./course-level-badge";
 import { CourseArt, EmptyState, CheckLabel } from "./shared";
 import { AnimatedButton } from "./ui/animated-button";
-import { minutes, courseProgress } from "@/lib/model";
+import { minutes, courseProgress, isCourseActive } from "@/lib/model";
 import { QuizRunner } from "./quiz-runner";
 import { Button } from "./ui/button";
 
@@ -15,7 +15,7 @@ export function CourseDetail({ id }: { id: string }) {
   const { state, me, ready } = useAcademy();
   const [showProficiency, setShowProficiency] = useState(false);
 
-  const course = state.courses.find(item => item.id === id && item.status === "published");
+  const course = state.courses.find(item => item.id === id && isCourseActive(item));
   if (!ready) return <div className="empty-state">Preparando sua jornada…</div>;
   if (!course) return <EmptyState title="Este curso ainda não está disponível" description="Explore os cursos publicados no catálogo." />;
 

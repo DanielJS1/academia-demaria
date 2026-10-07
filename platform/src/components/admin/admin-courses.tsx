@@ -6,9 +6,16 @@ import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { EmptyState } from "../shared";
 import { normalize } from "@/lib/utils";
+import { courseAvailabilityLabels, getCourseAvailability, type Course, type CourseAvailability } from "@/lib/model";
 
 export function AdminCourses({ search }: { search: string }) {
-  const { state } = useAcademy();
+  const { state, mutate, busy, notify } = useAcademy();
+  const changeAvailability = async (course: Course, availability: CourseAvailability) => {
+    const success = await mutate({ type: "course-availability", courseId: course.id, availability,
+      expectedAvailability: getCourseAvailability(course),
+      expectedVersion: state.courses.find(item => item.id === course.id)?.version ?? 0 });
+    if (success) notify(`${course.title}: ${courseAvailabilityLabels[availability].toLowerCase()}.`);
+  };
   const courses = [
     ...state.courses,
     ...state.courseDrafts.filter(draft => !state.courses.some(course => course.id === draft.id)),
@@ -43,9 +50,13 @@ export function AdminCourses({ search }: { search: string }) {
               </td>
               <td>{course.product}</td>
               <td>
-                <span className={`pill ${course.status === "published" ? "green" : "amber"}`}>
-                  {course.status === "published" ? "Publicado" : "Rascunho"}
-                </span>
+                <select className="select-standalone" aria-label={`Disponibilidade de ${course.title}`} value={getCourseAvailability(course)}
+                  disabled={busy} onChange={event => changeAvailability(course, event.target.value as CourseAvailability)}>
+                  {Object.entries(courseAvailabilityLabels).map(([value, label]) => (
+                    <option key={value} value={value} disabled={value === "active" && course.status !== "published"}>{label}</option>
+                  ))}
+                </select>
+                {course.status === "draft" && <small>Rascunho · publique pelo editor para ativar</small>}
                 {state.courseDrafts.some(draft => draft.id === course.id) && course.status === "published" && (
                   <small>Alterações em rascunho</small>
                 )}

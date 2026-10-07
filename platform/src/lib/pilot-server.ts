@@ -4,7 +4,7 @@ import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./
 import { courseXp, lessonXp } from "./rewards";
 import { commandSchema } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
-import { normalizeStoredCourseLevel, courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
+import { normalizeStoredCourseLevel, courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseActive, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
 import { isStoredMediaUrl } from "./storage-service";
 import { readQuizNotifications, setQuizNotifications } from "./quiz-notifications-server";
 import { mergeQuizNotices } from "./quiz-notifications";
@@ -37,7 +37,7 @@ export async function authenticate(request:Request){
 }
 function ensure(result:{error:unknown}){if(result.error)throw new ApiError("Não foi possível consultar o banco. Confira a configuração ou tente novamente.",503);}
 export async function canAccessCourse(db:ReturnType<typeof database>,me:Profile,course:Course):Promise<boolean>{
- if(course.status!=="published")return false;
+ if(!isCourseActive(course))return false;
  if(me.audience!=="client")return course.audience!=="client";
  if(!me.cartorio_id||course.audience==="internal")return false;
  const result=await db.from("academy_cartorios").select("id,modules,status,uf").eq("id",me.cartorio_id).maybeSingle();ensure(result);
@@ -75,7 +75,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const collaborationNotices=(pendingSuggestions?.data??[]).map(row=>({id:`suggestion:${row.id}`,userId:me.id,title:`Nova sugestão: ${authoredArticles.find(article=>article.id===row.article_id)?.title??"artigo"}`,message:row.proposed_text.slice(0,180),link:`/conhecimento/${encodeURIComponent(row.article_id)}/editar?proposta=${encodeURIComponent(row.id)}`,read:false,createdAt:row.created_at}));
  const published:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,level:normalizeStoredCourseLevel(r.published.level),xp:courseXp(r.published)}));
  const ownCartorio=(cartoriosResult.data??[]).find((row:any)=>row.id===me.cartorio_id);
- const courses=published.filter(course=>course.status==="published"&&(me.audience==="client"
+ const courses=published.filter(course=>course.status==="published"&&(me.role==="admin"||isCourseActive(course))&&(me.audience==="client"
   ? ownCartorio?.status==="active"&&isCourseAvailableForCartorio(course,ownCartorio as Cartorio)
   : course.audience!=="client"));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))})),proficiencyQuestions:course.proficiencyQuestions?.map(q=>({...q,correct:""}))});
@@ -174,7 +174,17 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   }
   return;
  }
- if(["save-resource","review","unlock","profile","settings","delete-setting","invite"].includes(command.type)&&me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
+ if(["course-availability","save-resource","review","unlock","profile","settings","delete-setting","invite"].includes(command.type)&&me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
+ if(command.type==="course-availability"){
+  if(command.availability==="active"){
+   const result=await db.from("academy_resources").select("published").eq("id",command.courseId).eq("kind","course").maybeSingle();ensure(result);
+   if(!result.data?.published)throw new ApiError("Publique o curso pelo editor antes de ativá-lo.");
+   const course=courseSchema.parse({...result.data.published,level:normalizeStoredCourseLevel(result.data.published.level),availability:"active"});
+   const problem=courseValidationError(course,true);if(problem)throw new ApiError(problem);
+  }
+  const {error}=await db.rpc("academy_set_course_availability",{actor:me.id,command});
+  if(error)throw new ApiError(error.message);return;
+ }
  if(command.type==="save-resource"){
   const body=command.kind==="course"?courseSchema.parse(command.data):articleSchema.parse(command.data);
   if(command.kind==="course"){

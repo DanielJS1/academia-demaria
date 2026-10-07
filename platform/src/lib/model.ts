@@ -29,9 +29,21 @@ export const lessonSchema = z.object({
   attachmentName: z.string().max(200).optional(),
   ufFilter: z.array(z.string()).optional(),
 });
+export const courseAvailabilitySchema = z.enum(["active", "inactive", "development"]);
+export type CourseAvailability = z.infer<typeof courseAvailabilitySchema>;
+export const courseAvailabilityLabels: Record<CourseAvailability, string> = {
+  active: "Ativo", inactive: "Inativo", development: "Em desenvolvimento",
+};
+export function getCourseAvailability(course: { status: string; availability?: CourseAvailability }): CourseAvailability {
+  return course.availability ?? (course.status === "published" ? "active" : "development");
+}
+export function isCourseActive(course: { status: string; availability?: CourseAvailability }) {
+  return course.status === "published" && getCourseAvailability(course) === "active";
+}
 export const courseSchema = z.object({
   id: z.string(), title: z.string().min(3).max(120), description: z.string(), product: z.string().min(1), category: z.string(), level: courseLevelSchema,
   accent: z.enum(["violet", "mint", "peach", "blue", "pink", "slate"]), status: z.enum(["draft", "published"]),
+  availability: courseAvailabilitySchema.optional(),
   xp: z.number().int().min(0).max(10000), required: z.boolean(), banner: z.string(), logoUrl: z.string().optional(), author: z.string(),
   department: z.string().optional(),
   audience: z.enum(["internal", "client", "both"]).optional().default("internal"),
