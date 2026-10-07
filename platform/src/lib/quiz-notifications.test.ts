@@ -17,6 +17,12 @@ async function save(payload: ReturnType<typeof draft> & { id?: string; expectedR
   return (await db.query<{ id: string }>("select academy_save_periodic_quiz($1,$2::jsonb) as id", [admin, JSON.stringify(payload)])).rows[0].id;
 }
 async function pref(actor = a, enabled = true) { await db.query("select academy_set_quiz_notifications($1,$2)", [actor, enabled]); }
+// Arrange a subscription strictly before publication; PGlite can stamp sequential calls
+// in the same millisecond, which correctly fails the production rule announcement > since.
+async function subscribeBeforePublication(actor: string) {
+  await pref(actor);
+  await db.query("update academy_preferences set quiz_notifications_since=clock_timestamp()-interval '1 second' where user_id=$1", [actor]);
+}
 async function read(actor = a) { return quizNoticesSchema.parse((await db.query<{ n: unknown }>("select academy_read_quiz_notifications($1) as n", [actor])).rows[0].n); }
 async function row(id: string) { return (await db.query<{ announcement_at: string | null; revision: number }>("select announcement_at::text,revision from academy_quizzes where id=$1", [id])).rows[0]; }
 async function active(id: string, enabled: boolean) { await db.query("select academy_set_periodic_quiz_active($1,$2,$3,$4)", [admin, id, enabled, (await row(id)).revision]); }
@@ -70,7 +76,7 @@ describe("preferência e publicação de desafios", () => {
     expect(commandSchema.safeParse({ type: "quiz-notifications", enabled: true, actor: b, since: "2020-01-01" }).success).toBe(false);
   });
   it("isola usuários/públicos e não expõe perguntas; lido permanece no readNotices", async () => {
-    await pref(client); const id = await save(draft()); const external = await save(draft(true, undefined, "client"));
+    await subscribeBeforePublication(client); const id = await save(draft()); const external = await save(draft(true, undefined, "client"));
     const notices = (await read()).notifications; expect(notices.some(n => n.id === `quiz-published:${id}`)).toBe(true);
     expect(notices.some(n => n.id === `quiz-published:${external}`)).toBe(false); expect((await read(b)).notifications).toEqual([]);
     expect((await read(client)).notifications.map(n => n.id)).toContain(`quiz-published:${external}`);
@@ -106,13 +112,20 @@ describe("preferência e publicação de desafios", () => {
     const next = await save(draft()); expect((await read()).notifications.some(n => n.id === `quiz-published:${next}`)).toBe(true);
   });
   it("conclusão, expiração e exclusão retiram o aviso; outro usuário continua elegível", async () => {
-    await pref(b); const payload = draft(); const id = await save(payload);
+    await subscribeBeforePublication(b); const payload = draft(); const id = await save(payload);
     await db.query("select academy_submit_periodic_quiz($1,$2,$3::jsonb,1)", [a, id, JSON.stringify(Object.fromEntries(payload.questions.map(q => [q.id, "a"])))]);
     expect((await read()).notifications.some(n => n.id === `quiz-published:${id}`)).toBe(false);
     expect((await read(b)).notifications.some(n => n.id === `quiz-published:${id}`)).toBe(true);
     await db.query("update academy_quizzes set expires_at=now() where id=$1", [id]); expect((await read(b)).notifications.some(n => n.id === `quiz-published:${id}`)).toBe(false);
     const deleted = await save(draft()); await db.query("select academy_delete_periodic_quiz($1,$2,1)", [admin, deleted]);
     expect((await read()).notifications.some(n => n.id === `quiz-published:${deleted}`)).toBe(false);
+  });
+  it("não anuncia publicação com timestamp igual à adesão", async () => {
+    const id = await save(draft());
+    await db.query("update academy_preferences set quiz_notifications_since=(select announcement_at from academy_quizzes where id=$1) where user_id=$2", [id, b]);
+    expect((await read(b)).notifications.some(n => n.id === `quiz-published:${id}`)).toBe(false);
+    await db.query("update academy_preferences set quiz_notifications_since=quiz_notifications_since-interval '1 millisecond' where user_id=$1", [b]);
+    expect((await read(b)).notifications.some(n => n.id === `quiz-published:${id}`)).toBe(true);
   });
   it("mantém RLS e RPCs inacessíveis por anon/authenticated", async () => {
     for (const role of ["anon", "authenticated"]) {

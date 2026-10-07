@@ -34,6 +34,8 @@ O Supabase de homologação é compartilhado pelas prévias das features. Migrat
 
 O job de qualidade do GitHub usa o Environment **homologacao**, com suas próprias chaves Supabase e quatro contas dedicadas: administrador, colaborador, gestor e cartório. `scripts/assert-e2e-isolation.mjs` impede execução com referência de produção ou URL divergente.
 
+O gate `Vimeo live (homologacao)` valida o provedor externo em uma conexão aceita pelo Vimeo e fica associado ao SHA testado. Execute `node scripts/verify-vimeo-live.mjs` com o servidor isolado iniciado e o checkout commitado. O CI usa o contrato de transporte do player; ambos os gates precisam passar antes de integrar em `main`. Um commit novo invalida a evidência do commit anterior.
+
 Localmente, os valores ficam em `platform/.env.homologacao.local`, ignorado pelo Git. Para executar sem substituir o `.env.local` de produção:
 
 ```powershell
