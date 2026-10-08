@@ -25,7 +25,7 @@ export function EditorToolbar({editor,disabled,label,onImage}:{editor:Editor;dis
    </div>
    <div className="kb-tool-group kb-tool-selects" role="group" aria-label="Estilo do texto">
     <select aria-label={`Estilo em ${label}`} disabled={disabled} value={state.heading} onChange={e=>{if(e.target.value==="p")editor.chain().focus().setParagraph().run();else editor.chain().focus().setHeading({level:Number(e.target.value) as 2|3|4}).run();}}><option value="p">Texto normal</option><option value="2">Título 2</option><option value="3">Título 3</option><option value="4">Título 4</option></select>
-    <select aria-label={`Tamanho em ${label}`} disabled={disabled} value={state.size} onChange={e=>editor.chain().focus().setFontSize(e.target.value).run()}>{[14,16,18,20,24].map(n=><option key={n} value={`${n}px`}>{n}</option>)}</select>
+    <select aria-label={`Tamanho em ${label}`} disabled={disabled} value={state.size} onChange={e=>editor.chain().focus().setFontSize(e.target.value).run()}>{[12,14,16,18,20,24].map(n=><option key={n} value={`${n}px`}>{n}</option>)}</select>
    </div>
    <div className="kb-tool-group" role="group" aria-label="Formatação">
     {tool("Negrito",Bold,()=>{editor.chain().focus().toggleBold().run();},state.bold)}

@@ -10,7 +10,7 @@ const id = z.string().uuid();
 const link = z.string().max(2000).refine(v => /^https:\/\/[^\s]+$/i.test(v) || /^mailto:[^\s]+$/i.test(v), "Use HTTPS ou e-mail.");
 const markSchema = z.union([
   z.object({ type: z.enum(["bold", "italic", "strike", "underline", "code", "subscript", "superscript"]) }).strict(),
-  z.object({type:z.literal("textStyle"),attrs:z.object({color:z.string().regex(/^#[0-9a-f]{6}$/i).nullable().optional(),fontSize:z.enum(["14px","16px","18px","20px","24px"]).nullable().optional()}).strict()}).strict(),
+  z.object({type:z.literal("textStyle"),attrs:z.object({color:z.string().regex(/^#[0-9a-f]{6}$/i).nullable().optional(),fontSize:z.enum(["12px","14px","16px","18px","20px","24px"]).nullable().optional()}).strict()}).strict(),
   z.object({type:z.literal("highlight"),attrs:z.object({color:z.string().regex(/^#[0-9a-f]{6}$/i).nullable().optional()}).strict()}).strict(),
   z.object({ type: z.literal("link"), attrs: z.object({ href: link, target: z.literal("_blank").nullable().optional(), rel: z.string().optional(), class: z.null().optional() }).strict() }).strict(),
 ]);
@@ -63,7 +63,7 @@ export function unifiedDocument(input:KbDocument):KbDocument{
  return {...d,templateVersion:2,sections:[{id:intro.id,key:"conteudo",content:identifyBlocks(defaults({type:"doc",content:body.length?body:[{type:"paragraph"}]}))}]};
 }
 export function withUnifiedContent(d:KbDocument,content:RichNode):KbDocument{
- const first=content.content?.find(n=>n.type==="paragraph"&&textOf(n).trim());const summary=(first?textOf(first):textOf(content)).replace(/\s+/g," ").trim().slice(0,2000);
+ const first=content.content?.find(n=>n.type==="paragraph"&&textOf(n).trim()&&!/^(Data da (publicação|última revisão):|Software a que se aplica este artigo:|Implementado na versão\/release:)/i.test(textOf(n).trim()));const summary=(first?textOf(first):textOf(content)).replace(/\s+/g," ").trim().slice(0,2000);
  return {...d,metadata:{...d.metadata,summary},sections:[{...d.sections[0],content}]};
 }
 export function mediaIds(d: KbDocument): string[] { const ids = new Set<string>(); const walk = (n: RichNode) => { if (n.type === "image") ids.add(String(n.attrs?.mediaId)); n.content?.forEach(walk); }; d.sections.forEach(s => walk(s.content)); return [...ids]; }
