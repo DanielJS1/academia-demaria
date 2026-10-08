@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
     if(!configured)return [];
     const url=new URL(configured);
     if(url.protocol!=="https:"||url.pathname!=="/"||url.username||url.password||url.search||url.hash)throw new Error("KB_PUBLIC_ORIGIN deve ser uma origem HTTPS aprovada.");
-    return [{source:"/",has:[{type:"host" as const,value:url.hostname}],destination:"/bc"}];
+    return {beforeFiles:[{source:"/",has:[{type:"host" as const,value:url.hostname}],destination:"/bc"}]};
   },
   async headers() {
     return [{
