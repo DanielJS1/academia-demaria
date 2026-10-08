@@ -17,6 +17,7 @@ export async function initializeLocal(db: PGlite) {
   await db.exec(await readFile(path.resolve("supabase/migrations/20261008125328_knowledge_base.sql"), "utf8"));
   await db.exec(await readFile(path.resolve("supabase/migrations/20261008180000_kb_unified_editor.sql"), "utf8"));
   await db.exec(await readFile(path.resolve("supabase/migrations/20261008195500_kb_template_dates.sql"), "utf8"));
+  await db.exec(await readFile(path.resolve("supabase/migrations/20261008204500_kb_editorial_workspace.sql"), "utf8"));
   for (const p of pilotProfiles) await db.query("insert into academy_profiles values($1,$2,$3,$4,$5)", [p.id,p.name,p.role,p.status,p.audience]);
 }
 const globalDb = globalThis as typeof globalThis & { kbPilotDb?: Promise<PGlite> };
@@ -28,6 +29,8 @@ export function localDatabase() {
     if (!(exists.rows[0] as { table: string | null }).table) await initializeLocal(db);
     await db.exec(await readFile(path.resolve("supabase/migrations/20261008180000_kb_unified_editor.sql"), "utf8"));
     await db.exec(await readFile(path.resolve("supabase/migrations/20261008195500_kb_template_dates.sql"), "utf8"));
+    const editorial=await db.query("select to_regprocedure('public.kb_editorial_index(text,integer,text)') as fn");
+    if(!(editorial.rows[0] as {fn:string|null}).fn)await db.exec(await readFile(path.resolve("supabase/migrations/20261008204500_kb_editorial_workspace.sql"), "utf8"));
     return db;
   })();
 }
