@@ -5,17 +5,22 @@ import { ArrowRight, BookOpen, ChevronLeft, ChevronRight, Clock3, Pause, Play, S
 import { useQuizSummary } from "./quizzes/quiz-summary-provider";
 import { AnimatedButton } from "./ui/animated-button";
 import { SonarGrid } from "./ui/sonar-grid";
+import { useLive } from "./live/live-provider";
+import { LiveBadge } from "./live/live-badge";
+import { YouTubeLivePlayer } from "./live/youtube-live-player";
+import { liveDate, liveHref, type LiveEvent } from "@/lib/live-events";
 
 type Resume = { title: string; lesson: string; minutes: number; position: number; href: string };
 type Featured = { title: string; description: string; href: string };
 type Ranking = { season: string; rank: number; gap: number; xp: number };
-type Slide = { id: string; tone: string; eyebrow: string; title: string; description: string; href: string; action: string; meta: string; icon: typeof BookOpen; badge?: string };
+type Slide = { id: string; tone: string; eyebrow: string; title: string; description: string; href: string; action: string; meta: string; icon: typeof BookOpen; badge?: string; event?: LiveEvent };
 
 const ROTATION_MS = 6500;
 
-export function HeroCarousel({ resume, newCourse, ranking, article }: {
-  resume?: Resume; newCourse?: Featured; ranking: Ranking; article?: Featured;
+export function HeroCarousel({ resume, newCourse, ranking, article, client = false }: {
+  resume?: Resume; newCourse?: Featured; ranking: Ranking; article?: Featured; client?: boolean;
 }) {
+  const { data: liveData } = useLive();
   const { data, error, simulated } = useQuizSummary();
   const pending = error || simulated ? [] : data?.available ?? [];
   const quiz = pending.find(item => item.is_featured) ?? pending.find(item => item.period_type === "weekly") ?? pending[0] ?? null;
@@ -55,16 +60,35 @@ export function HeroCarousel({ resume, newCourse, ranking, article }: {
     }
     if (newCourse) items.push({ id: "course", tone: "blue", eyebrow: "NOVO CURSO", title: newCourse.title,
       description: newCourse.description, href: newCourse.href, action: "Conhecer curso", icon: Sparkles, meta: "Disponível no catálogo", badge: "Novo" });
-    items.push({ id: "season", tone: "amber", eyebrow: `TEMPORADA ${ranking.season}`, title: ranking.rank > 0 && ranking.rank <= 5 ? "Você está no Top 5!" : "Seu lugar no Top 5 espera por você.",
+    if (!client) items.push({ id: "season", tone: "amber", eyebrow: `TEMPORADA ${ranking.season}`, title: ranking.rank > 0 && ranking.rank <= 5 ? "Você está no Top 5!" : "Seu lugar no Top 5 espera por você.",
       description: ranking.rank > 5 ? `Faltam ${ranking.gap} XP para alcançar o quinto lugar.` : "Continue aprendendo para manter sua posição na temporada.",
       href: "/conquistas#ranking", action: "Ver ranking", icon: Trophy, meta: ranking.rank ? `${ranking.rank}º lugar · ${ranking.xp} XP` : `${ranking.xp} XP na temporada` });
     if (article) items.push({ id: "article", tone: "rose", eyebrow: "BIBLIOTECA EM ALTA", title: article.title,
       description: article.description, href: article.href, action: "Ler artigo", icon: BookOpen, meta: "Da nossa equipe técnica" });
-    return items.slice(0, 5);
-  }, [resume, quiz, newCourse, ranking, article]);
+    const liveSlides: Slide[] = liveData.events.filter(event => event.status === "live").sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)).map(event => ({
+      id: `live:${event.id}`, tone: "live", eyebrow: "APRENDA COM A GENTE, AGORA", title: event.title,
+      description: event.description.slice(0, 180) || `Uma aula com ${event.host}. Entre, tire dúvidas e participe da conversa.`,
+      href: liveHref(event.id), action: "Entrar na aula ao vivo", meta: `Com ${event.host}`, icon: Play, event,
+    }));
+    const labels = { course: "CURSO EM DESTAQUE", lesson: "AULA EM DESTAQUE", quiz: "DESAFIO EM DESTAQUE", article: "LEITURA EM DESTAQUE", live: "NOSSO PRÓXIMO ENCONTRO", announcement: "FIQUE POR DENTRO" };
+    const highlights: Slide[] = liveData.highlights.map(item => ({
+      id: item.id, tone: item.kind === "quiz" ? "violet" : item.kind === "live" ? "blue" : "mint",
+      eyebrow: labels[item.kind], title: item.title, description: item.description, href: item.href,
+      action: item.kind === "live" ? "Ver encontro" : item.kind === "lesson" ? "Abrir aula" : item.kind === "quiz" ? "Encarar desafio" : "Explorar conteúdo",
+      meta: item.kind === "live" ? liveDate(liveData.events.find(event => event.id === item.targetId)?.scheduledAt || new Date().toISOString()) : "Selecionado para você",
+      icon: item.kind === "quiz" ? Zap : item.kind === "announcement" ? Sparkles : BookOpen,
+    }));
+    const featuredQuizzes: Slide[] = pending.filter(item => item.is_featured && item.id !== quiz?.id).map(item => ({
+      id: `quiz:${item.id}`, tone: "violet", eyebrow: "DESAFIO EM DESTAQUE", title: item.title, description: "Teste seus conhecimentos e avance na temporada.",
+      href: `/desafios/${item.id}`, action: "Encarar desafio", meta: "Disponível agora", icon: Zap, badge: `+${item.xp_reward} XP`,
+    }));
+    return [...liveSlides, ...highlights, ...featuredQuizzes, ...items].filter((item, index, all) => all.findIndex(other => other.href === item.href) === index).slice(0, 8);
+  }, [resume, quiz, newCourse, ranking, article, liveData, client, pending]);
 
   const selected = slides[active % slides.length];
-  const paused = hovered || focused || stopped || hidden || reducedMotion;
+  const paused = hovered || focused || stopped || hidden || reducedMotion || !!selected.event;
+  const firstLiveId = slides.find(slide => slide.event)?.id;
+  useEffect(() => { if (firstLiveId) setActive(0); }, [firstLiveId]);
 
   useEffect(() => { setActive(index => Math.min(index, slides.length - 1)); }, [slides.length]);
 
@@ -100,7 +124,8 @@ export function HeroCarousel({ resume, newCourse, ranking, article }: {
         <p>{selected.description}</p>
         <div className="hero-slide-actions"><AnimatedButton href={selected.href}>{selected.action} <ArrowRight size={17} aria-hidden="true"/></AnimatedButton><span className="hero-slide-meta"><Clock3 size={15} aria-hidden="true"/>{selected.meta}</span></div>
       </div>
-      <div className="hero-slide-art" aria-hidden="true"><div className="hero-slide-orbit"><selected.icon size={62} strokeWidth={1.5}/></div>{selected.badge && <span className="hero-slide-badge">{selected.badge}</span>}</div>
+      {selected.event ? <div className="hero-live-preview"><LiveBadge /><YouTubeLivePlayer url={selected.event.youtubeUrl} title={`Prévia ao vivo: ${selected.title}`} preview /><span>Prévia sem som · Entre na aula para participar</span></div>
+        : <div className="hero-slide-art" aria-hidden="true"><div className="hero-slide-orbit"><selected.icon size={62} strokeWidth={1.5}/></div>{selected.badge && <span className="hero-slide-badge">{selected.badge}</span>}</div>}
     </div>
     {slides.length > 1 && <div className="hero-carousel-controls">
       <div className="hero-carousel-dots" role="group" aria-label="Escolher destaque">{slides.map((slide, index) => <button key={slide.id} type="button"

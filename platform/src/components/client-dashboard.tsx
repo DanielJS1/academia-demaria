@@ -11,6 +11,7 @@ import { isCourseActive, isCourseAvailableForCartorio, courseProgress, type Cart
 import { formatModuleName } from "@/lib/cartorio-modules";
 
 import { QuizDashboardAccess } from "./quizzes/quiz-dashboard-access";
+import { HeroCarousel } from "./hero-carousel";
 
 interface ClientDashboardProps {
   cartorio: Cartorio;
@@ -65,6 +66,7 @@ export function ClientDashboard({ cartorio }: ClientDashboardProps) {
         )}
       </PageHeading>
 
+      <HeroCarousel client ranking={{ season: "", rank: 0, gap: 0, xp: 0 }} />
       <QuizDashboardAccess/>
 
       {/* Certification Status Hero */}

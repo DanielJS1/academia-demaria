@@ -8,6 +8,8 @@ import { GlobalSearch } from "./global-search";
 import { Button } from "./ui/button";
 import { experience, tierClass } from "@/lib/gamification";
 import { AcademyBrand } from "./academy-brand";
+import { useLive } from "./live/live-provider";
+import { LiveBadge } from "./live/live-badge";
 
 const navigation = [
   { href: "/", label: "Visão geral", icon: Home },
@@ -23,6 +25,8 @@ const defaultNotices = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { data: liveData } = useLive();
+  const hasLive = liveData.events.some(event => event.status === "live");
   const path = usePathname();
   const { state, me, update, refreshNotices, theme, toggleTheme, storageError, signOut, activeCartorio, simulatedCartorioId, setSimulatedCartorioId, isClientEnvironment, avatar } = useAcademy();
   const exp = experience(state);
@@ -232,14 +236,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <Link
                       href={item.href}
                       className={`sidebar-dock-item-btn ${isCurrent ? "active" : ""}`}
-                      aria-label={item.label}
+                      aria-label={item.href === "/aprender" && hasLive ? "Aprender · aula ao vivo agora" : item.label}
                       aria-current={isCurrent ? "page" : undefined}
                     >
                       <Icon size={20} />
+                      {item.href === "/aprender" && hasLive && <span className="live-nav-dot" aria-hidden="true" />}
                     </Link>
                     {hoveredNavIndex === index && (
                       <div className="sidebar-dock-tooltip" role="tooltip">
                         <span>{item.label}</span>
+                        {item.href === "/aprender" && hasLive && <LiveBadge compact />}
                         {"badge" in item && item.badge && <span className="nav-ai">{item.badge}</span>}
                       </div>
                     )}
@@ -285,6 +291,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   >
                     <Icon size={19}/>
                     <span>{label}</span>
+                    {href === "/aprender" && hasLive && <LiveBadge compact />}
                     {badge && <span className="nav-ai">{badge}</span>}
                   </Link>
                 ))}
