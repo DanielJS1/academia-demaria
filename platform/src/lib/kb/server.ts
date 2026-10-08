@@ -39,12 +39,9 @@ export async function mutate(ctx: KbContext, input: unknown) {
   if (ctx.local) return asLocal(ctx.db,ctx.actor, async tx => (await tx.query<{ id: string }>("select public.kb_mutate($1::jsonb) as id",[JSON.stringify(cmd)])).rows[0].id);
   const result = await ctx.client.rpc("kb_mutate",{cmd}); if (result.error) throw new Error(result.error.message); return result.data as string;
 }
-export async function editorialList(ctx: KbContext, page = 1, filter="mine") {
-  const offset=(page-1)*20;
-  if (ctx.local) return asLocal(ctx.db,ctx.actor, async tx => (await tx.query("select a.*, d.document->'metadata'->>'title' as title from kb_articles a join kb_drafts d on d.article_id=a.id where ($2='all' or ($2='mine' and a.owner_id=auth.uid()) or a.status=$2) order by a.updated_at desc limit 21 offset $1",[offset,filter])).rows);
-  let query=ctx.client.from("kb_articles").select("*,kb_drafts(document)");if(filter==="mine")query=query.eq("owner_id",ctx.actor);else if(filter!=="all")query=query.eq("status",filter);
-  const result = await query.order("updated_at",{ascending:false}).range(offset,offset+20); if(result.error)throw new Error(result.error.message);
-  return result.data.map(a => ({...a,title:a.kb_drafts?.[0]?.document?.metadata?.title || a.kb_drafts?.document?.metadata?.title || "Sem título",kb_drafts:undefined}));
+export async function editorialList(ctx: KbContext, page = 1, filter="all", query="") {
+  if (ctx.local) return asLocal(ctx.db,ctx.actor, async tx => (await tx.query<{result:Record<string,unknown>}>("select kb_editorial_index($1,$2,$3) as result",[filter,page,query])).rows[0].result);
+  const result=await ctx.client.rpc("kb_editorial_index",{filter,page,query});if(result.error)throw new Error(result.error.message);return result.data as Record<string,unknown>;
 }
 export async function editorialDetail(ctx: KbContext, id: string) {
   z.string().uuid().parse(id);

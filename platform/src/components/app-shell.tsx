@@ -37,10 +37,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileDrawerRef = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const [editorActive,setEditorActive]=useState(false);
+  const [editorCollapsed,setEditorCollapsed]=useState(true);
   const [theaterCollapsed, setTheaterCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
   const [noticesOpen, setNoticesOpen] = useState(false);
+  useEffect(()=>{const handle=(event:Event)=>{setEditorActive((event as CustomEvent<boolean>).detail);setEditorCollapsed(true);};window.addEventListener("academy:editor-layout",handle);return()=>window.removeEventListener("academy:editor-layout",handle);},[]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 760);
@@ -103,6 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const toggleCollapsed = () => {
+    if(editorActive){setEditorCollapsed(value=>!value);return;}
     if (/^\/aprender\/[^/]+\/aula/.test(path)) { setTheaterCollapsed(value => !value); return; }
     setCollapsed(prev => {
       const next = !prev;
@@ -113,7 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const isDocked = !isMobile && (/^\/aprender\/[^/]+\/aula/.test(path) ? theaterCollapsed : collapsed);
+  const isDocked = !isMobile && (/^\/aprender\/[^/]+\/aula/.test(path) ? theaterCollapsed : editorActive?editorCollapsed:collapsed);
   const active = (href: string) => href === "/" ? path === "/" : href === "/equipe" ? path === "/equipe" : path.startsWith(href);
 
   const currentNav = isClientEnvironment
