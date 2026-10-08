@@ -27,10 +27,11 @@ export const richSchema: z.ZodType<RichNode> = z.lazy(() => z.object({
   attrs: z.record(z.string(), z.union([z.string().max(2000), z.number(), z.null()])).optional(),
   marks: z.array(markSchema).max(8).optional(), content: z.array(richSchema).max(2000).optional(),
 }).strict()).superRefine((n, ctx) => {
-  const keys: Record<string, string[]> = { paragraph:["textAlign"], heading: ["level","textAlign"], orderedList: ["start", "type"], image: ["mediaId", "alt", "width", "height"], codeBlock: ["language"], tableCell: ["colspan", "rowspan", "colwidth"], tableHeader: ["colspan", "rowspan", "colwidth"] };
+  const keys: Record<string, string[]> = { paragraph:["textAlign"], heading: ["level","textAlign"], orderedList: ["start", "type"], image: ["mediaId", "alt", "width", "height","textAlign"], codeBlock: ["language"], tableCell: ["colspan", "rowspan", "colwidth"], tableHeader: ["colspan", "rowspan", "colwidth"] };
   if (Object.keys(n.attrs || {}).some(k => !(keys[n.type] || []).includes(k) && !(k==="blockId"&&isBlock(n)))) ctx.addIssue({ code: "custom", message: "Atributo fora do template." });
   if(n.attrs?.blockId!=null&&!id.safeParse(n.attrs.blockId).success)ctx.addIssue({code:"custom",message:"ID de bloco inválido."});
   if(n.attrs?.textAlign!=null&&!["left","center","right","justify"].includes(String(n.attrs.textAlign)))ctx.addIssue({code:"custom",message:"Alinhamento inválido."});
+  if(n.type==="image"&&n.attrs?.textAlign==="justify")ctx.addIssue({code:"custom",message:"Alinhamento de imagem inválido."});
   if (n.type === "image" && (!id.safeParse(n.attrs?.mediaId).success || typeof n.attrs?.alt !== "string")) ctx.addIssue({ code: "custom", message: "Imagem exige ID estável e descrição." });
   if (n.type === "heading" && ![2, 3, 4].includes(Number(n.attrs?.level))) ctx.addIssue({ code: "custom", message: "Nível de título inválido." });
   for (const k of ["width", "height", "colspan", "rowspan"]) if (n.attrs?.[k] != null && (!Number.isInteger(n.attrs[k]) || Number(n.attrs[k]) < 1 || Number(n.attrs[k]) > 10000)) ctx.addIssue({ code: "custom", message: "Dimensão inválida." });
@@ -39,11 +40,11 @@ export const richSchema: z.ZodType<RichNode> = z.lazy(() => z.object({
   if (n.content?.some(c => !(children[n.type] || []).includes(c.type))) ctx.addIssue({ code: "custom", message: "Estrutura rica inválida." });
 });
 export const documentSchema = z.object({
-  schemaVersion: z.literal(1), templateId: z.enum(["procedimento", "novidade", "atualizacao"]), templateVersion: z.literal(1),
+  schemaVersion: z.literal(1), templateId: z.enum(["procedimento", "novidade", "atualizacao"]), templateVersion: z.union([z.literal(1),z.literal(2)]),
   metadata: z.object({ title: z.string().max(240), summary: z.string().max(2000), product: z.string().max(120), release: z.string().max(120), category: z.string().max(120), tags: z.array(z.string().max(60)).max(20), legacyPublished: z.string().max(120).nullable(), legacyRevision: z.string().max(240).nullable() }).strict(),
   sections: z.array(z.object({ id, key: z.string(), content: richSchema }).strict()).max(8),
 }).strict().superRefine((d, ctx) => {
-  const expected = templates[d.templateId].sections;
+  const expected = d.templateVersion===2?["conteudo"]:templates[d.templateId].sections;
   if (d.sections.length !== expected.length || d.sections.some((s, i) => s.key !== expected[i] || s.content.type !== "doc") || new Set(d.sections.map(s => s.id)).size !== d.sections.length) ctx.addIssue({ code: "custom", message: "As regiões obrigatórias do template devem ser preservadas." });
 });
 export type KbDocument = z.infer<typeof documentSchema>;
@@ -51,6 +52,20 @@ export function newDocument(templateId: KbDocument["templateId"] = "procedimento
   return { schemaVersion: 1, templateId, templateVersion: 1, metadata: { title: "", summary: "", product: "", release: "", category: "", tags: [], legacyPublished: null, legacyRevision: null }, sections: templates[templateId].sections.map(key => ({ id: crypto.randomUUID(), key, content: identifyBlocks({ type: "doc", content: [{ type: "paragraph" }] }) })) };
 }
 export function textOf(n: RichNode): string { return n.text || (n.content || []).map(textOf).join(n.type === "paragraph" || n.type === "heading" ? "" : " "); }
+export function unifiedDocument(input:KbDocument):KbDocument{
+ const d=validateDocument(input);if(d.templateVersion===2)return d;
+ const body:RichNode[]=[];const intro=d.sections[0];const sameIntro=textOf(intro.content).trim()===d.metadata.summary.trim();
+ if(d.metadata.summary.trim()&&!sameIntro)body.push({type:"paragraph",content:[{type:"text",text:d.metadata.summary}]});
+ if(sameIntro&&textOf(intro.content).trim())body.push(...(intro.content.content||[]));
+ if(d.metadata.release.trim())body.push({type:"paragraph",content:[{type:"text",text:`Implementado na versão/release: ${d.metadata.release}`}]});
+ for(const s of d.sections){if(s.key==="objetivo"&&sameIntro)continue;if(!textOf(s.content).trim()&&!mediaIds({...d,sections:[s]}).length)continue;if(!(s.key==="objetivo"&&sameIntro))body.push({type:"heading",attrs:{level:2},content:[{type:"text",text:sectionLabels[s.key]}]});body.push(...(s.content.content||[]));}
+ const defaults=(n:RichNode):RichNode=>({...n,...(n.type==="paragraph"||n.type==="image"?{attrs:{...n.attrs,textAlign:n.attrs?.textAlign||(n.type==="image"?"center":"justify")}}:{}),...(n.content?{content:n.content.map(defaults)}:{})});
+ return {...d,templateVersion:2,sections:[{id:intro.id,key:"conteudo",content:identifyBlocks(defaults({type:"doc",content:body.length?body:[{type:"paragraph"}]}))}]};
+}
+export function withUnifiedContent(d:KbDocument,content:RichNode):KbDocument{
+ const first=content.content?.find(n=>n.type==="paragraph"&&textOf(n).trim());const summary=(first?textOf(first):textOf(content)).replace(/\s+/g," ").trim().slice(0,2000);
+ return {...d,metadata:{...d.metadata,summary},sections:[{...d.sections[0],content}]};
+}
 export function mediaIds(d: KbDocument): string[] { const ids = new Set<string>(); const walk = (n: RichNode) => { if (n.type === "image") ids.add(String(n.attrs?.mediaId)); n.content?.forEach(walk); }; d.sections.forEach(s => walk(s.content)); return [...ids]; }
 export function validateDocument(input: unknown, complete = false): KbDocument {
   // Limit total size and depth before recursive Zod parsing (untrusted API JSON).
@@ -58,8 +73,8 @@ export function validateDocument(input: unknown, complete = false): KbDocument {
   let depth = 0, max = 0; for (const c of json.replace(/"(?:[^"\\]|\\.)*"/g, '""')) { if (c === "{" || c === "[") max = Math.max(max, ++depth); if (c === "}" || c === "]") depth--; } if (max > 40) throw new Error("Documento muito profundo.");
   const d = documentSchema.parse(input);
   if (complete) {
-    if (!d.metadata.title.trim() || !d.metadata.product.trim() || !d.metadata.summary.trim() || (d.templateId !== "procedimento" && !d.metadata.release.trim())) throw new Error("Preencha título, resumo, produto e versão aplicável.");
-    for (const key of templates[d.templateId].required) { const text = textOf(d.sections.find(s => s.key === key)!.content).trim(); if (text.length < 8 || /^(escrito\s*\d|placeholder)/i.test(text)) throw new Error(`Preencha ${sectionLabels[key]}.`); }
+    if (!d.metadata.title.trim() || !d.metadata.product.trim() || !d.metadata.summary.trim() || (d.templateVersion===1&&d.templateId !== "procedimento" && !d.metadata.release.trim())) throw new Error("Preencha título, produto e conteúdo do artigo.");
+    for (const key of d.templateVersion===2?["conteudo"]:templates[d.templateId].required) { const text = textOf(d.sections.find(s => s.key === key)!.content).trim(); if (text.length < 8 || /^(escrito\s*\d|placeholder)/i.test(text)) throw new Error(`Preencha ${sectionLabels[key]||"o conteúdo do artigo"}.`); }
     const ids=new Set<string>();const walk = (n: RichNode) => { if(isBlock(n)){const key=String(n.attrs?.blockId||"");if(!id.safeParse(key).success||ids.has(key))throw new Error("Blocos devem ter IDs estáveis e únicos.");ids.add(key);} if (n.type === "image" && !String(n.attrs?.alt || "").trim()) throw new Error("Descreva todas as capturas antes de enviar."); n.content?.forEach(walk); }; d.sections.forEach(s => walk(s.content));
   }
   return d;
@@ -74,7 +89,7 @@ export function richHtml(n: RichNode): string {
     const tag=({bold:"strong",italic:"em",strike:"s",underline:"u",code:"code",subscript:"sub",superscript:"sup"} as Record<string,string>)[m.type];return `<${tag}>${s}</${tag}>`;
   }, e(n.text));
   const blockId=n.attrs?.blockId?` data-kb-block="${e(n.attrs.blockId)}"`:"";
-  if (n.type === "image") return `<img${blockId} data-media-id="${e(n.attrs?.mediaId)}" src="/api/kb/media/${e(n.attrs?.mediaId)}" alt="${e(n.attrs?.alt)}"${n.attrs?.width ? ` width="${e(n.attrs.width)}"` : ""}${n.attrs?.height ? ` height="${e(n.attrs.height)}"` : ""} loading="lazy">`;
+  if (n.type === "image") return `<img${blockId} data-media-id="${e(n.attrs?.mediaId)}" src="/api/kb/media/${e(n.attrs?.mediaId)}"${n.attrs?.textAlign?` data-text-align="${e(n.attrs.textAlign)}"`:""} alt="${e(n.attrs?.alt)}"${n.attrs?.width ? ` width="${e(n.attrs.width)}"` : ""}${n.attrs?.height ? ` height="${e(n.attrs.height)}"` : ""} loading="lazy">`;
   if (n.type === "hardBreak") return "<br>"; if (n.type === "horizontalRule") return `<hr${blockId}>`;
   const content = (n.content || []).map(richHtml).join(""); if (n.type === "doc") return content;
   const tag = ({ paragraph: "p", heading: `h${n.attrs?.level}`, bulletList: "ul", orderedList: "ol", listItem: "li", blockquote: "blockquote", codeBlock: "pre", table: "table", tableRow: "tr", tableCell: "td", tableHeader: "th" } as Record<string, string>)[n.type];
@@ -85,5 +100,5 @@ export function richHtml(n: RichNode): string {
 export function documentHtml(input: KbDocument): string {
  const d=validateDocument(input),e=escapeHtml;
  const fields={product:"Produto",release:"Versão/release",category:"Categoria",legacyPublished:"Publicação histórica",legacyRevision:"Revisão histórica"} as const;
- return `<article data-kb-template="${d.templateId}" data-template-version="1"><header><h1>${e(d.metadata.title)}</h1><p data-kb-field="summary">${e(d.metadata.summary)}</p><dl>${Object.entries(fields).map(([key,label])=>`<dt>${label}</dt><dd data-kb-field="${key}">${e(d.metadata[key as keyof typeof d.metadata])}</dd>`).join("")}</dl><ul data-kb-field="tags">${d.metadata.tags.map(t=>`<li>${e(t)}</li>`).join("")}</ul></header>${d.sections.map(s=>`<section data-kb-section="${s.key}" data-section-id="${s.id}"><h2>${sectionLabels[s.key]}</h2>${richHtml(s.content)}</section>`).join("")}</article>`;
+ return `<article data-kb-template="${d.templateId}" data-template-version="${d.templateVersion}"><header><h1>${e(d.metadata.title)}</h1><p data-kb-field="summary">${e(d.metadata.summary)}</p><dl>${Object.entries(fields).map(([key,label])=>`<dt>${label}</dt><dd data-kb-field="${key}">${e(d.metadata[key as keyof typeof d.metadata])}</dd>`).join("")}</dl><ul data-kb-field="tags">${d.metadata.tags.map(t=>`<li>${e(t)}</li>`).join("")}</ul></header>${d.sections.map(s=>`<section data-kb-section="${s.key}" data-section-id="${s.id}">${d.templateVersion===1?`<h2>${sectionLabels[s.key]}</h2>`:""}${richHtml(s.content)}</section>`).join("")}</article>`;
 }

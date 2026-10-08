@@ -15,6 +15,7 @@ export async function initializeLocal(db: PGlite) {
     create table public.academy_profiles(id uuid primary key,name text,role text,status text,audience text);
     create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);`);
   await db.exec(await readFile(path.resolve("supabase/migrations/20261008125328_knowledge_base.sql"), "utf8"));
+  await db.exec(await readFile(path.resolve("supabase/migrations/20261008180000_kb_unified_editor.sql"), "utf8"));
   for (const p of pilotProfiles) await db.query("insert into academy_profiles values($1,$2,$3,$4,$5)", [p.id,p.name,p.role,p.status,p.audience]);
 }
 const globalDb = globalThis as typeof globalThis & { kbPilotDb?: Promise<PGlite> };
@@ -24,6 +25,7 @@ export function localDatabase() {
     const db = new PGlite(path.resolve(".kb-pilot/database")); await db.waitReady;
     const exists = await db.query("select to_regclass('public.kb_articles') as table");
     if (!(exists.rows[0] as { table: string | null }).table) await initializeLocal(db);
+    await db.exec(await readFile(path.resolve("supabase/migrations/20261008180000_kb_unified_editor.sql"), "utf8"));
     return db;
   })();
 }

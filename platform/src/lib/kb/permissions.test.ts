@@ -1,7 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { initializeLocal, asLocal, pilotProfiles } from "./local-db";
-import { identifyBlocks,newDocument } from "./document";
+import { identifyBlocks,newDocument,unifiedDocument,withUnifiedContent } from "./document";
 
 describe("BC: PostgreSQL real, RPC e RLS", () => {
   const db = new PGlite(); const author=pilotProfiles[0].id,admin=pilotProfiles[1].id;
@@ -13,6 +13,13 @@ describe("BC: PostgreSQL real, RPC e RLS", () => {
   it("nega visitante, cliente, pendente e inativo ao criar",async()=>{
     for(const actor of [null,...pilotProfiles.slice(3).map(p=>p.id)]) await expect(rpc(actor,{action:"create",document:doc})).rejects.toThrow();
     aid=await rpc(author,{action:"create",document:doc,slug:"procedimento-piloto"});
+  });
+  it("publica conteúdo contínuo sem exigir as quatro seções e mantém a revisão exata",async()=>{
+    const free=unifiedDocument(doc);free.metadata.title="Artigo contínuo";free.sections[0].content=identifyBlocks({type:"doc",content:[{type:"paragraph",attrs:{textAlign:"justify"},content:[{type:"text",text:"Conteúdo livre para consultar e conferir selos."}]}]});
+    const ready=withUnifiedContent(free,free.sections[0].content);const id=await rpc(author,{action:"create",document:ready});await rpc(author,{action:"save",articleId:id,expectedVersion:1,document:ready,visibility:"public"});await rpc(author,{action:"submit",articleId:id,expectedVersion:2});
+    const s=(await db.query<{id:string;revision_id:string}>("select * from kb_submissions where article_id=$1 and status='pending'",[id])).rows[0];await rpc(admin,{action:"publish",articleId:id,expectedVersion:3,submissionId:s.id,revisionId:s.revision_id,visibility:"public"});
+    expect((await asLocal(db,null,async tx=>(await tx.query("select document from kb_publications where article_id=$1",[id])).rows))[0]).toEqual({document:ready});
+    await rpc(admin,{action:"unpublish",articleId:id,expectedVersion:4});
   });
   it("protege rascunho/histórico alheio e escrita direta",async()=>{
     for (const actor of [pilotProfiles[2].id,pilotProfiles[3].id]) expect(await asLocal(db,actor,async tx=>(await tx.query("select * from kb_drafts")).rows)).toHaveLength(0);

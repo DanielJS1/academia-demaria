@@ -4,12 +4,12 @@ type DOMNode = ReturnType<typeof parseDocument>["children"][number];
 type Element = Extract<DOMNode, { attribs: Record<string, string> }>;
 import { textContent } from "domutils";
 import { createHash } from "node:crypto";
-import { documentHtml, identifyBlocks, newDocument, templates, validateDocument, type KbDocument, type RichNode } from "./document";
+import { documentHtml, unifiedDocument,withUnifiedContent,identifyBlocks, newDocument, templates, validateDocument, type KbDocument, type RichNode } from "./document";
 
 export type ImportedMedia = { id: string; source: string; alt: string; width: number | null; height: number | null };
 export const cleanHtml = (html: string) => sanitize(html, {
   allowedTags: ["article", "header", "section", "div", "span", "mark", "sub", "sup", "p", "h1", "h2", "h3", "h4", "strong", "b", "em", "i", "s", "u", "a", "ul", "ol", "li", "dl", "dt", "dd", "br", "hr", "img", "table", "thead", "tbody", "tr", "th", "td", "pre", "code", "blockquote"],
-  allowedAttributes: { "*":["data-kb-block","style"],article: ["data-kb-template", "data-template-version"], section: ["data-kb-section", "data-section-id"], p:["data-kb-field"],dd:["data-kb-field"],ul:["data-kb-field"], img: ["src", "alt", "width", "height", "data-media-id"], a: ["href"], ol: ["start"], td: ["colspan", "rowspan"], th: ["colspan", "rowspan"] },
+  allowedAttributes: { "*":["data-kb-block","style"],article: ["data-kb-template", "data-template-version"], section: ["data-kb-section", "data-section-id"], p:["data-kb-field"],dd:["data-kb-field"],ul:["data-kb-field"], img: ["src", "alt", "width", "height", "data-media-id","data-text-align"], a: ["href"], ol: ["start"], td: ["colspan", "rowspan"], th: ["colspan", "rowspan"] },
   allowedStyles:{span:{color:[/^#[0-9a-f]{6}$/i],"font-size":[/^(14|16|18|20|24)px$/]},mark:{"background-color":[/^#[0-9a-f]{6}$/i]},p:{"text-align":[/^(left|center|right|justify)$/]},h2:{"text-align":[/^(left|center|right|justify)$/]},h3:{"text-align":[/^(left|center|right|justify)$/]},h4:{"text-align":[/^(left|center|right|justify)$/]}},
   allowedSchemes: ["https", "mailto"], allowedSchemesByTag: { img: ["https"] }, allowProtocolRelative: false,
 });
@@ -39,7 +39,7 @@ export function importHtml(html: string, base?: KbDocument) {
     const width = Number(n.attribs.width) || null, height = Number(n.attribs.height) || null;
     if (!stable) media.push({ id: mediaId, source, alt: n.attribs.alt || "", width, height });
     if (!n.attribs.alt) report.push(`Descrição alternativa pendente: ${source || mediaId}`);
-    return { type: "image", attrs: { mediaId, alt: n.attribs.alt || "", ...(n.attribs["data-kb-block"]?{blockId:n.attribs["data-kb-block"]}:{}),...(width ? { width } : {}), ...(height ? { height } : {}) } };
+    return { type: "image", attrs: { mediaId, alt: n.attribs.alt || "", ...(n.attribs["data-text-align"]?{textAlign:n.attribs["data-text-align"]}:{}), ...(n.attribs["data-kb-block"]?{blockId:n.attribs["data-kb-block"]}:{}),...(width ? { width } : {}), ...(height ? { height } : {}) } };
   };
   // Images inside spans/strong are lifted to adjacent block nodes, retaining reading order.
   const paragraphs = (nodes: DOMNode[]): RichNode[] => {
@@ -69,7 +69,7 @@ export function importHtml(html: string, base?: KbDocument) {
   let d: KbDocument;
   if (articles.length) {
     if (!base) throw new Error("Selecione um template para editar HTML institucional.");
-    const root = articles[0]; if (articles.length !== 1 || root.attribs["data-kb-template"] !== base.templateId || root.attribs["data-template-version"] !== "1") throw new Error("Não altere a identidade/versão do template pelo HTML.");
+    const root = articles[0]; if (articles.length !== 1 || root.attribs["data-kb-template"] !== base.templateId || root.attribs["data-template-version"] !== String(base.templateVersion)) throw new Error("Não altere a identidade/versão do template pelo HTML.");
     const sections = root.children.filter(element).filter(n => n.name === "section");
     if (sections.length !== base.sections.length || sections.some((s, i) => s.attribs["data-kb-section"] !== base.sections[i].key || s.attribs["data-section-id"] !== base.sections[i].id)) throw new Error("As regiões obrigatórias do template não podem ser removidas/reordenadas.");
     const header = root.children.filter(element).find(n => n.name === "header");
@@ -77,11 +77,11 @@ export function importHtml(html: string, base?: KbDocument) {
     if(outside.length)report.push("Há conteúdo fora das regiões do template. Ele permanece no original privado para revisão; mova-o para uma seção antes de enviar.");
     d = { ...base, metadata: { ...base.metadata, title: header?.children.filter(element).filter(n => n.name === "h1").map(textContent).join("") || base.metadata.title, summary: header?.children.filter(element).filter(n => n.name === "p").map(textContent).join("") || base.metadata.summary }, sections: sections.map((s, i) => ({ ...base.sections[i], content: { type: "doc", content: blocks(s.children.filter(n => !(element(n) && n.name === "h2" && textContent(n) === ({ objetivo: "Objetivo", requisitos: "Pré-requisitos", passos: "Passo a passo", resultado: "Resultado e verificação", mudancas: "O que mudou", impacto: "Impacto", orientacao: "Orientação de uso" } as Record<string, string>)[base.sections[i].key]))) } })) };
   } else {
-    d = newDocument(base?.templateId); const nodes = tree.children.filter(n => n.type !== "text" || n.data.trim());
+    d = base?.templateVersion===2?structuredClone(base):newDocument(base?.templateId); const nodes = tree.children.filter(n => n.type !== "text" || n.data.trim());
     const legacy=nodes.some(n=>/^Software a que se aplica este artigo:/i.test(textContent(n).trim()));
     if(!legacy){
       if(base)d.metadata={...base.metadata};
-      d.sections.find(s=>s.key==="passos"||s.key==="mudancas")!.content={type:"doc",content:blocks(nodes)};
+      (d.templateVersion===2?d.sections[0]:d.sections.find(s=>s.key==="passos"||s.key==="mudancas")!).content={type:"doc",content:blocks(nodes)};
       report.push("HTML sem cabeçalho legado inserido na região principal; preencha as demais regiões obrigatórias.");
     }else{
     // Legacy copied article bodies begin with title, publication/revision, software and release.
@@ -125,6 +125,7 @@ export function importHtml(html: string, base?: KbDocument) {
     return { ...n, content };
   };
   d.sections = d.sections.map(s => ({ ...s, content: identifyBlocks(normalize(s.content)) }));
+  if(base?.templateVersion===2)d=withUnifiedContent(unifiedDocument(d),unifiedDocument(d).sections[0].content);
   d = validateDocument(d);
   return { document: d, html: documentHtml(d), media, report: [...new Set(report)], original: html };
 }
