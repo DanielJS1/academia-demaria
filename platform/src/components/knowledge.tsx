@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { KB_PUBLIC_SITE } from "@/lib/kb/public-links";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, FolderOpen, LibraryBig, PenLine, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
@@ -83,7 +84,7 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
 
       <section className="knowledge-official-access" aria-labelledby="knowledge-official-title">
         <div className="knowledge-official-icon"><LibraryBig size={24} aria-hidden="true"/></div>
-        <div className="knowledge-official-copy"><h2 id="knowledge-official-title">Base de Conhecimento</h2><p>Procedimentos e orientações oficiais dos produtos DeMaria.</p><a className="knowledge-public-link" href="/bc" target="_blank" rel="noopener noreferrer">Site público para clientes<ExternalLink size={14} aria-hidden="true"/><span className="sr-only"> (abre em nova aba)</span></a></div>
+        <div className="knowledge-official-copy"><h2 id="knowledge-official-title">Base de Conhecimento</h2><p>Procedimentos e orientações oficiais dos produtos DeMaria.</p><a className="knowledge-public-link" href={KB_PUBLIC_SITE} target="_blank" rel="noopener noreferrer">Site público para clientes<ExternalLink size={14} aria-hidden="true"/><span className="sr-only"> (abre em nova aba)</span></a></div>
         <div className="knowledge-official-actions">
           <Link className="button button-primary" href="/conhecimento/base">Consultar artigos<ArrowRight size={16} aria-hidden="true"/></Link>
           {me.audience !== "client" && <Link className="button button-secondary" href="/conhecimento/oficial"><PenLine size={16} aria-hidden="true"/>Gerenciar artigos</Link>}
