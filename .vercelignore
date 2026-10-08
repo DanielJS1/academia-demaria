@@ -10,3 +10,6 @@ platform/tests/**
 platform/tests/
 platform/test-results/
 platform/playwright-report/
+platform/.kb-pilot/**
+platform/reports/**
+docs/references/**

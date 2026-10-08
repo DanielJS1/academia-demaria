@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const { db, me } = await authenticate(request);
     if (me.audience !== "internal") throw new ApiError("A biblioteca é exclusiva dos colaboradores.", 403);
     const value = new URL(request.url).searchParams.get("url") || "";
-    const bucket = isStoredMediaUrl(value, "academy-article-files") ? "academy-article-files" : isStoredMediaUrl(value, "academy-articles") ? "academy-articles" : null;
+    const bucket = isStoredMediaUrl(value, "academy-article-files") ? "academy-article-files" : isStoredMediaUrl(value, "academy-articles") ? "academy-articles" : isStoredMediaUrl(value,"academy-article-images") ? "academy-article-images" : null;
     if (!bucket) throw new ApiError("Anexo inválido.", 400);
     const path = decodeURIComponent(new URL(value).pathname.split(`/${bucket}/`)[1] || "");
     if (!path || path.includes("..") || path.startsWith("/")) throw new ApiError("Anexo inválido.", 400);
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
         throw new ApiError("Anexo não autorizado.", 403);
       }
     }
-    const signed = await db.storage.from(bucket).createSignedUrl(path, 600);
+    const signed = await db.storage.from(bucket).createSignedUrl(path, bucket==="academy-article-images"?60:600);
     if (signed.error) throw new ApiError("Anexo não encontrado.", 404);
     return Response.json({ url: signed.data.signedUrl }, { headers: { "Cache-Control": "no-store, private" } });
   } catch (error) {

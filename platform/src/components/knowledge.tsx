@@ -82,13 +82,15 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
       </section>
 
       <div className="tabs knowledge-tabs" role="group" aria-label="Áreas do conhecimento">
+        <a className="button" href="/conhecimento/base">Base de Conhecimento oficial</a>
+        {me.audience !== "client" && <Link className="button" href="/conhecimento/oficial">Criar / revisar artigos</Link>}
         <button
           type="button"
           className={tab === "Biblioteca" ? "selected" : ""}
           aria-pressed={tab === "Biblioteca"}
           onClick={() => setTab("Biblioteca")}
         >
-          <BookOpen size={20}/><span><strong>Biblioteca ({published.length})</strong><small>Artigos da comunidade</small></span>
+          <BookOpen size={20}/><span><strong>Fórum DeMarianos ({published.length})</strong><small>Artigos da comunidade</small></span>
         </button>
         <button
           type="button"
