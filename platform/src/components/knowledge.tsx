@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, FolderOpen, Search, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, FolderOpen, LibraryBig, PenLine, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, SectionHeading } from "./shared";
@@ -81,9 +81,16 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
         </div>
       </section>
 
+      <section className="knowledge-official-access" aria-labelledby="knowledge-official-title">
+        <div className="knowledge-official-icon"><LibraryBig size={24} aria-hidden="true"/></div>
+        <div className="knowledge-official-copy"><h2 id="knowledge-official-title">Base de Conhecimento</h2><p>Procedimentos e orientações oficiais dos produtos DeMaria.</p></div>
+        <div className="knowledge-official-actions">
+          <Link className="button button-primary" href="/conhecimento/base">Consultar artigos<ArrowRight size={16} aria-hidden="true"/></Link>
+          {me.audience !== "client" && <Link className="button button-secondary" href="/conhecimento/oficial"><PenLine size={16} aria-hidden="true"/>Gerenciar artigos</Link>}
+        </div>
+      </section>
+
       <div className="tabs knowledge-tabs" role="group" aria-label="Áreas do conhecimento">
-        <a className="button" href="/conhecimento/base">Base de Conhecimento oficial</a>
-        {me.audience !== "client" && <Link className="button" href="/conhecimento/oficial">Criar / revisar artigos</Link>}
         <button
           type="button"
           className={tab === "Biblioteca" ? "selected" : ""}

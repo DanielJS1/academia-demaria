@@ -352,6 +352,16 @@
   cursor: pointer;
 }
 
+.knowledge-official-access { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+.knowledge-official-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 12px; color: var(--primary); background: var(--lavender); }
+.knowledge-official-copy { flex: 1; min-width: 0; }
+.knowledge-official-copy h2 { margin: 0 0 4px; color: var(--ink); font-size: 18px; }
+.knowledge-official-copy p { margin: 0; color: var(--muted); font-size: 13px; }
+.knowledge-official-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.knowledge-official-actions .button { min-height: 44px; gap: 8px; white-space: nowrap; }
+@media (max-width: 1000px) { .knowledge-official-access { flex-wrap: wrap; } .knowledge-official-actions { width: 100%; padding-left: 64px; } }
+@media (max-width: 600px) { .knowledge-official-access { padding: 16px; gap: 12px; } .knowledge-official-actions { padding-left: 0; } .knowledge-official-actions .button { flex: 1 1 160px; justify-content: center; } }
+
 .knowledge-tabs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
