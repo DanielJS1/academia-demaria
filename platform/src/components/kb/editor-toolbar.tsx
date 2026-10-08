@@ -11,7 +11,7 @@ function Tool({name,icon:Icon,active,disabled,onClick}:{name:string;icon:LucideI
 }
 export function EditorToolbar({editor,disabled,label,onImage}:{editor:Editor;disabled:boolean;label:string;onImage:()=>void}){
  const [panel,setPanel]=useState<"link"|"color"|"highlight"|"table"|null>(null),[href,setHref]=useState(""),[error,setError]=useState("");
- const state=useEditorState({editor,selector:({editor:e})=>({bold:e.isActive("bold"),italic:e.isActive("italic"),underline:e.isActive("underline"),strike:e.isActive("strike"),sub:e.isActive("subscript"),sup:e.isActive("superscript"),bullet:e.isActive("bulletList"),ordered:e.isActive("orderedList"),quote:e.isActive("blockquote"),code:e.isActive("codeBlock"),link:e.isActive("link"),highlight:e.isActive("highlight"),heading:e.isActive("heading")?String(e.getAttributes("heading").level):"p",size:e.getAttributes("textStyle").fontSize||"16px",color:e.getAttributes("textStyle").color||"#1c353b",align:e.getAttributes(e.isActive("heading")?"heading":"paragraph").textAlign||"left",table:e.isActive("table"),undo:e.can().undo(),redo:e.can().redo(),indent:e.can().sinkListItem("listItem"),outdent:e.can().liftListItem("listItem")})});
+ const state=useEditorState({editor,selector:({editor:e})=>({image:e.isActive("image"),imageAlign:e.getAttributes("image").textAlign||"center",bold:e.isActive("bold"),italic:e.isActive("italic"),underline:e.isActive("underline"),strike:e.isActive("strike"),sub:e.isActive("subscript"),sup:e.isActive("superscript"),bullet:e.isActive("bulletList"),ordered:e.isActive("orderedList"),quote:e.isActive("blockquote"),code:e.isActive("codeBlock"),link:e.isActive("link"),highlight:e.isActive("highlight"),heading:e.isActive("heading")?String(e.getAttributes("heading").level):"p",size:e.getAttributes("textStyle").fontSize||"16px",color:e.getAttributes("textStyle").color||"#1c353b",align:e.getAttributes(e.isActive("heading")?"heading":"paragraph").textAlign||"justify",table:e.isActive("table"),undo:e.can().undo(),redo:e.can().redo(),indent:e.can().sinkListItem("listItem"),outdent:e.can().liftListItem("listItem")})});
  const toggle=(next:typeof panel)=>{setError("");setPanel(panel===next?null:next);};
  const tool=(name:string,icon:LucideIcon,onClick:()=>void,active?:boolean,unavailable=false)=><Tool key={name} name={name} icon={icon} active={active} disabled={disabled||unavailable} onClick={onClick}/>;
  return <div className="kb-editor-tools">
@@ -38,7 +38,7 @@ export function EditorToolbar({editor,disabled,label,onImage}:{editor:Editor;dis
     {tool("Destacar texto",Highlighter,()=>toggle("highlight"),state.highlight||panel==="highlight")}
    </div>
    <div className="kb-tool-group" role="group" aria-label="Alinhamento">
-    {([['left','Alinhar à esquerda',AlignLeft],['center','Centralizar',AlignCenter],['right','Alinhar à direita',AlignRight],['justify','Justificar',AlignJustify]] as const).map(([alignment,name,icon])=>tool(name,icon,()=>{editor.chain().focus().setTextAlign(alignment).run();},state.align===alignment))}
+    {([['left','Alinhar à esquerda',AlignLeft],['center','Centralizar',AlignCenter],['right','Alinhar à direita',AlignRight],['justify','Justificar',AlignJustify]] as const).map(([alignment,name,icon])=>tool(name,icon,()=>{if(state.image){editor.chain().focus().updateAttributes("image",{textAlign:alignment}).run();}else editor.chain().focus().setTextAlign(alignment).run();},state.image?state.imageAlign===alignment:state.align===alignment,state.image&&alignment==="justify"))}
    </div>
    <div className="kb-tool-group" role="group" aria-label="Listas e recuos">
     {tool("Lista com marcadores",List,()=>{editor.chain().focus().toggleBulletList().run();},state.bullet)}
@@ -57,6 +57,7 @@ export function EditorToolbar({editor,disabled,label,onImage}:{editor:Editor;dis
     {tool("Limpar formatação",RemoveFormatting,()=>{editor.chain().focus().unsetAllMarks().unsetTextAlign().clearNodes().run();})}
    </div>
   </div>
+  {state.image&&<p className="kb-image-selection" role="status">Imagem selecionada · use os botões de alinhamento para posicioná-la à esquerda, ao centro ou à direita.</p>}
   {panel?<div className="kb-tool-panel" role="group" aria-label={{link:"Configurar link",color:"Escolher cor",highlight:"Escolher destaque",table:"Ferramentas de tabela"}[panel]}>
    <button className="kb-tool-panel-close" type="button" aria-label="Fechar ferramentas" onClick={()=>setPanel(null)}><X size={16}/></button>
    {panel==="link"?<form className="kb-link-form" onSubmit={e=>{e.preventDefault();if(!/^(https:\/\/|mailto:)/i.test(href)){setError("Use um endereço HTTPS ou mailto.");return;}editor.chain().focus().extendMarkRange("link").setLink({href}).run();setPanel(null);}}><label>Endereço do link<input autoFocus type="url" name="href" autoComplete="off" value={href} onChange={e=>setHref(e.target.value)} placeholder="https://exemplo.com…"/></label><button type="submit" disabled={disabled}><Check size={16}/>Aplicar link</button><p role="alert">{error}</p></form>:null}

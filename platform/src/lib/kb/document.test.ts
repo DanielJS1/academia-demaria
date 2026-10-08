@@ -3,13 +3,22 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { importHtml } from "./import-html";
-import { documentHtml, identifyBlocks, mediaIds, newDocument, textOf, validateDocument } from "./document";
+import { documentHtml, identifyBlocks, mediaIds, newDocument, textOf, validateDocument,unifiedDocument,withUnifiedContent } from "./document";
 import { parseDocument } from "htmlparser2";
 import { textContent } from "domutils";
 const manifestPath=resolve("../docs/references/bc-artigos-manifesto.json");
 const referencesAvailable=existsSync(manifestPath)&&JSON.parse(readFileSync(manifestPath,"utf8")).articles.every((e:{html_path:string;pdf_path:string})=>existsSync(e.html_path)&&existsSync(e.pdf_path));
 
 describe("Contrato institucional e importação", () => {
+  it("reúne conteúdo legado sem duplicar resumo e preserva imagens, versão e formatação",()=>{
+    const old=newDocument();old.metadata={...old.metadata,title:"Selo PR",product:"DOC-Windows",summary:"Introdução do artigo.",release:"5.1"};
+    old.sections[0].content=identifyBlocks({type:"doc",content:[{type:"paragraph",content:[{type:"text",text:old.metadata.summary,marks:[{type:"bold"}]}]}]});
+    old.sections[2].content=identifyBlocks({type:"doc",content:[{type:"paragraph",content:[{type:"text",text:"Instruções para baixar selos."}]},{type:"image",attrs:{mediaId:crypto.randomUUID(),alt:"Tela de aquisição",width:800,height:450}}]});
+    const snapshot=structuredClone(old),d=unifiedDocument(old);expect(old).toEqual(snapshot);expect(d.sections).toHaveLength(1);expect(unifiedDocument(d)).toEqual(d);expect(mediaIds(d)).toEqual(mediaIds(old));expect(textOf(d.sections[0].content).match(/Introdução do artigo/g)).toHaveLength(1);expect(textOf(d.sections[0].content)).toContain("5.1");
+    const image=d.sections[0].content.content!.find(n=>n.type==="image")!;image.attrs!.textAlign="right";
+    let next=withUnifiedContent(d,d.sections[0].content);for(let i=0;i<5;i++)next=importHtml(documentHtml(next),next).document;expect(next).toEqual(d);expect(()=>validateDocument(next,true)).not.toThrow();
+    image.attrs!.textAlign="justify";expect(()=>validateDocument(d)).toThrow();
+  });
   it("preserva alinhamento, cores, tamanho, destaque e sobrescrito em cinco ciclos",()=>{
     const doc=newDocument();doc.sections[0].content=identifyBlocks({type:"doc",content:[{type:"paragraph",attrs:{textAlign:"justify"},content:[{type:"text",text:"Orientação com formatação profissional.",marks:[{type:"bold"},{type:"underline"},{type:"textStyle",attrs:{color:"#087b80",fontSize:"18px"}},{type:"highlight",attrs:{color:"#fef08a"}},{type:"superscript"}]}]}]});
     let next=doc;for(let i=0;i<5;i++)next=importHtml(documentHtml(next),next).document;expect(next).toEqual(doc);
