@@ -42,6 +42,7 @@
 [data-theme="dark"] .main-content .kb{--kb-danger:#fca5a5;--kb-danger-bg:#391b26;--kb-danger-border:#753544}
 .main-content .kb-portal,.main-content .kb-reader,.main-content .kb-management{padding:20px 0}
 .main-content .kb-hero{padding-top:8px}
+.kb-public-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;text-underline-offset:4px}
 .main-content .kb h1{font-size:clamp(1.8rem,3vw,2.6rem)}
 .main-content .kb-editor-tools{box-shadow:var(--shadow)}
 [data-theme="dark"] .main-content .kb .kb-section-editor mark{color:#1c353b}

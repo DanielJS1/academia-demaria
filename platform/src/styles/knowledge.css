@@ -357,6 +357,8 @@
 .knowledge-official-copy { flex: 1; min-width: 0; }
 .knowledge-official-copy h2 { margin: 0 0 4px; color: var(--ink); font-size: 18px; }
 .knowledge-official-copy p { margin: 0; color: var(--muted); font-size: 13px; }
+.knowledge-public-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; margin-top: 4px; color: var(--mint); font-size: 13px; text-underline-offset: 4px; }
+.knowledge-public-link:hover { text-decoration: underline; }
 .knowledge-official-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .knowledge-official-actions .button { min-height: 44px; gap: 8px; white-space: nowrap; }
 @media (max-width: 1000px) { .knowledge-official-access { flex-wrap: wrap; } .knowledge-official-actions { width: 100%; padding-left: 64px; } }
