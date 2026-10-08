@@ -10,7 +10,7 @@ const csp = [
   "form-action 'self'",
   `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://www.youtube.com https://s.ytimg.com https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
-  `connect-src 'self' ${supabaseOrigin} https://*.vimeo.com https://*.youtube.com https://*.googlevideo.com https://challenges.cloudflare.com`,
+  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace(/^https:/, "wss:")} https://*.vimeo.com https://*.youtube.com https://*.googlevideo.com https://challenges.cloudflare.com`,
   `img-src 'self' data: blob: https:`,
   `frame-src 'self' ${supabaseOrigin} https://player.vimeo.com https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com`,
   "font-src 'self' data:",

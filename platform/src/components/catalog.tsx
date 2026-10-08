@@ -8,6 +8,7 @@ import { Button } from "./ui/button";
 import { courseLevels, isCourseActive, isCourseAvailableForCartorio } from "@/lib/model";
 import { isCourseComplete } from "@/lib/rewards";
 import { normalize } from "@/lib/utils";
+import { LiveCatalog } from "./live/live-catalog";
 
 export type CatalogTab = "all" | "in_progress" | "available" | "completed" | "saved";
 
@@ -94,6 +95,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
         </span>
       </PageHeading>
 
+      <LiveCatalog />
       <div className="catalog-banner">
         <span className="mini-icon">
           <Sparkles size={22} />
