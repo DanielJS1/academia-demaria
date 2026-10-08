@@ -1,0 +1,26 @@
+"use client";
+import Link from "next/link";
+import { useEffect,useRef,useState,useId,useContext,createContext } from "react";
+import { kbFetch } from "@/lib/kb/client";
+import { sectionLabels,validateDocument,type KbDocument,type RichNode } from "@/lib/kb/document";
+const MediaBase=createContext("/api/kb/media");
+export function KbImage({node}:{node:RichNode}){
+ const base=useContext(MediaBase);
+ const [src,setSrc]=useState("");const [failed,setFailed]=useState(false);const dialog=useRef<HTMLDialogElement>(null);const button=useRef<HTMLButtonElement>(null);
+ useEffect(()=>{const abort=new AbortController();let objectUrl="";setSrc("");setFailed(false);void kbFetch(`${base}/${node.attrs?.mediaId}`,{signal:abort.signal}).then(async r=>{if(!r.ok)throw new Error();objectUrl=URL.createObjectURL(await r.blob());if(!abort.signal.aborted)setSrc(objectUrl);}).catch(()=>{if(!abort.signal.aborted)setFailed(true);});return()=>{abort.abort();if(objectUrl)URL.revokeObjectURL(objectUrl);};},[base,node.attrs?.mediaId]);
+ const alt=String(node.attrs?.alt||"Imagem do artigo");
+ return <figure className="kb-figure">{src?<><button ref={button} type="button" className="kb-image-button" onClick={()=>dialog.current?.showModal()} aria-label={`Ampliar: ${alt}`}><img src={src} alt={alt} width={Number(node.attrs?.width)||undefined} height={Number(node.attrs?.height)||undefined} loading="lazy"/></button><figcaption>{node.attrs?.alt?`${alt} · `:""}Clique para ampliar</figcaption><dialog ref={dialog} className="kb-image-dialog" onClose={()=>button.current?.focus()} onClick={e=>{if(e.target===dialog.current)dialog.current.close();}}><button autoFocus type="button" onClick={()=>dialog.current?.close()}>Fechar imagem</button><img src={src} alt={alt} width={Number(node.attrs?.width)||undefined} height={Number(node.attrs?.height)||undefined}/></dialog></>:<p role="status">{failed?"Mídia indisponível ou aguardando importação privada.":"Carregando captura…"}</p>}</figure>;
+}
+function Rich({node}:{node:RichNode}):React.ReactNode{
+ if(node.type==="text")return (node.marks||[]).reduce<React.ReactNode>((text,m)=>m.type==="bold"?<strong>{text}</strong>:m.type==="italic"?<em>{text}</em>:m.type==="strike"?<s>{text}</s>:m.type==="underline"?<u>{text}</u>:m.type==="code"?<code>{text}</code>:m.type==="subscript"?<sub>{text}</sub>:m.type==="superscript"?<sup>{text}</sup>:m.type==="textStyle"?<span style={{color:m.attrs.color||undefined,fontSize:m.attrs.fontSize||undefined}}>{text}</span>:m.type==="highlight"?<mark style={{backgroundColor:m.attrs.color||"#fef08a",color:"inherit"}}>{text}</mark>:m.type==="link"?<a href={m.attrs.href} rel="noopener noreferrer">{text}</a>:text,node.text);
+ if(node.type==="image")return <KbImage node={node}/>;if(node.type==="hardBreak")return <br/>;if(node.type==="horizontalRule")return <hr/>;
+ const alignment=node.attrs?.textAlign as "left"|"center"|"right"|"justify"|undefined;
+ const children=node.content?.map((c,i)=><Rich key={i} node={c}/>);
+ switch(node.type){case "doc":return <>{children}</>;case "paragraph":return <p style={{textAlign:alignment}}>{children}</p>;case "heading":return node.attrs?.level===2?<h2 style={{textAlign:alignment}}>{children}</h2>:node.attrs?.level===3?<h3 style={{textAlign:alignment}}>{children}</h3>:<h4 style={{textAlign:alignment}}>{children}</h4>;case "bulletList":return <ul>{children}</ul>;case "orderedList":return <ol start={Number(node.attrs?.start)||1}>{children}</ol>;case "listItem":return <li>{children}</li>;case "blockquote":return <blockquote>{children}</blockquote>;case "codeBlock":return <pre><code>{children}</code></pre>;case "table":return <div className="kb-table-wrap" role="region" aria-label="Tabela do artigo" tabIndex={0}><table><tbody>{children}</tbody></table></div>;case "tableRow":return <tr>{children}</tr>;case "tableCell":return <td colSpan={Number(node.attrs?.colspan)||1} rowSpan={Number(node.attrs?.rowspan)||1}>{children}</td>;case "tableHeader":return <th colSpan={Number(node.attrs?.colspan)||1} rowSpan={Number(node.attrs?.rowspan)||1}>{children}</th>;default:return null;}
+}
+export function KbReader({document,publishedAt,mediaBase="/api/kb/media",baseHref="/bc"}:{document:KbDocument;publishedAt?:string;mediaBase?:string;baseHref?:string}){
+ const prefix=useId();
+ const d=validateDocument(document);
+ const sections=d.sections.filter(s=>s.content.content?.some(n=>n.type!=="paragraph"||n.content?.length));
+ return <MediaBase.Provider value={mediaBase}><article className="kb-reader"><Link href={baseHref}>← Base de Conhecimento</Link><header><p className="kb-eyebrow">{d.metadata.product} {d.metadata.release&&`· ${d.metadata.release}`}</p><h1>{d.metadata.title||"Artigo sem título"}</h1><p className="kb-summary">{d.metadata.summary}</p>{publishedAt?<p>Publicado em {new Date(publishedAt).toLocaleDateString("pt-BR",{timeZone:"America/Sao_Paulo"})}</p>:null}{d.metadata.legacyPublished?<p>Publicação histórica: {d.metadata.legacyPublished}</p>:null}{d.metadata.legacyRevision?<p>Revisão histórica: {d.metadata.legacyRevision}</p>:null}</header><div className="kb-reading-layout"><div className="kb-content">{sections.map(s=><section id={`${prefix}-sec-${s.id}`} key={s.id}><h2>{sectionLabels[s.key]}</h2><Rich node={s.content}/></section>)}</div></div></article></MediaBase.Provider>;
+}

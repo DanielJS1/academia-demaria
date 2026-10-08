@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "articleId": "4aa493ac-b8db-499b-85f4-165355d8e678",
+  "checks": [
+    "API roles",
+    "409 conflict",
+    "template forgery",
+    "invalid image",
+    "exact revision",
+    "draft isolation",
+    "private/unpublished search and metadata",
+    "private/unpublished media",
+    "historical references",
+    "no-store"
+  ]
+}
