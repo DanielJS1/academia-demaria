@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-08",
+  "scope": "local; no remote Supabase migration, production deployment, DNS change or paid service",
+  "typecheck": "passed",
+  "vitest": {
+    "files": 31,
+    "passed": 281,
+    "failed": 0
+  },
+  "build": "passed",
+  "playwright": {
+    "journeys": 3,
+    "passed": 3,
+    "viewports": [
+      375,
+      768,
+      1440
+    ],
+    "source_articles": 5,
+    "cycles_per_article": 5,
+    "mobile_keyboard_zoom": "passed",
+    "internal_snapshot_requests": 0
+  },
+  "pilot_media": {
+    "files": 22,
+    "occurrences": 23,
+    "bytes": 3527847
+  },
+  "external_pending": [
+    "authorized Supabase staging migration and JWT/PostgREST/Storage checks",
+    "approved public host and sitemap/indexing",
+    "Forum bucket inventory, backup and private migration",
+    "human review of historical conclusions and image descriptions"
+  ],
+  "professional_editor": {
+    "icons": true,
+    "alignment": true,
+    "color": true,
+    "font_size": true,
+    "highlight": true,
+    "links": true,
+    "native_table_row_insertion": true,
+    "html_cycles": 5,
+    "previews": 5,
+    "production_local_preview_status": 404
+  }
+}

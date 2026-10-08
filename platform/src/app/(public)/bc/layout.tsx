@@ -1,0 +1,3 @@
+import Link from "next/link";
+import "@/styles/kb.css";
+export default function KbLayout({children}:{children:React.ReactNode}){return <div className="kb"><a className="kb-skip" href="#kb-main">Ir ao conteúdo</a><header className="kb-header"><Link href="/bc" aria-label="Base de Conhecimento DeMaria"><img src="/academia-demaria-logo-dark.png" alt="Academia DeMaria" width="180" height="52"/><span>Base de Conhecimento</span></Link><nav aria-label="Navegação da Base"><Link href="/bc">Pesquisar</Link><Link href="/conhecimento/oficial">Área editorial</Link></nav></header><main id="kb-main">{children}</main><footer className="kb-footer">DeMaria · Documentação oficial de produtos</footer></div>;}

@@ -1,0 +1,2 @@
+export function publicOrigin(){const value=process.env.KB_PUBLIC_ORIGIN;if(!value)return null;try{const u=new URL(value);return u.protocol==="https:"&&u.pathname==="/"&&!u.username&&!u.password&&!u.search&&!u.hash?u.origin:null;}catch{return null;}}
+export const kbRobots=(host:string|null)=>{const origin=publicOrigin();const approved=!!origin&&host===new URL(origin).host;return {index:approved,follow:approved};};

@@ -17,8 +17,16 @@ const csp = [
   "upgrade-insecure-requests",
 ].join("; ");
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["@electric-sql/pglite"],
   poweredByHeader: false,
   devIndicators: false,
+  async rewrites() {
+    const configured=process.env.KB_PUBLIC_ORIGIN;
+    if(!configured)return [];
+    const url=new URL(configured);
+    if(url.protocol!=="https:"||url.pathname!=="/"||url.username||url.password||url.search||url.hash)throw new Error("KB_PUBLIC_ORIGIN deve ser uma origem HTTPS aprovada.");
+    return [{source:"/",has:[{type:"host" as const,value:url.hostname}],destination:"/bc"}];
+  },
   async headers() {
     return [{
       source: "/:path*",
