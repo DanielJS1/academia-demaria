@@ -18,6 +18,7 @@ const csp = [
 ].join("; ");
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite"],
+  outputFileTracingIncludes: { "/api/kb/template": ["./public/demaria-logo.png"] },
   poweredByHeader: false,
   devIndicators: false,
   async rewrites() {

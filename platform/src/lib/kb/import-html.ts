@@ -10,7 +10,7 @@ export type ImportedMedia = { id: string; source: string; alt: string; width: nu
 export const cleanHtml = (html: string) => sanitize(html, {
   allowedTags: ["article", "header", "section", "div", "span", "mark", "sub", "sup", "p", "h1", "h2", "h3", "h4", "strong", "b", "em", "i", "s", "u", "a", "ul", "ol", "li", "dl", "dt", "dd", "br", "hr", "img", "table", "thead", "tbody", "tr", "th", "td", "pre", "code", "blockquote"],
   allowedAttributes: { "*":["data-kb-block","style"],article: ["data-kb-template", "data-template-version"], section: ["data-kb-section", "data-section-id"], p:["data-kb-field"],dd:["data-kb-field"],ul:["data-kb-field"], img: ["src", "alt", "width", "height", "data-media-id","data-text-align"], a: ["href"], ol: ["start"], td: ["colspan", "rowspan"], th: ["colspan", "rowspan"] },
-  allowedStyles:{span:{color:[/^#[0-9a-f]{6}$/i],"font-size":[/^(14|16|18|20|24)px$/]},mark:{"background-color":[/^#[0-9a-f]{6}$/i]},p:{"text-align":[/^(left|center|right|justify)$/]},h2:{"text-align":[/^(left|center|right|justify)$/]},h3:{"text-align":[/^(left|center|right|justify)$/]},h4:{"text-align":[/^(left|center|right|justify)$/]}},
+  allowedStyles:{span:{color:[/^#[0-9a-f]{6}$/i],"font-size":[/^(12|14|16|18|20|24)px$/]},mark:{"background-color":[/^#[0-9a-f]{6}$/i]},p:{"text-align":[/^(left|center|right|justify)$/]},h2:{"text-align":[/^(left|center|right|justify)$/]},h3:{"text-align":[/^(left|center|right|justify)$/]},h4:{"text-align":[/^(left|center|right|justify)$/]}},
   allowedSchemes: ["https", "mailto"], allowedSchemesByTag: { img: ["https"] }, allowProtocolRelative: false,
 });
 const element = (n: DOMNode): n is Element => n.type === "tag";

@@ -2,6 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { initializeLocal, asLocal, pilotProfiles } from "./local-db";
 import { identifyBlocks,newDocument,unifiedDocument,withUnifiedContent } from "./document";
+import { institutionalTemplate } from "./institutional-template";
 
 describe("BC: PostgreSQL real, RPC e RLS", () => {
   const db = new PGlite(); const author=pilotProfiles[0].id,admin=pilotProfiles[1].id;
@@ -10,6 +11,13 @@ describe("BC: PostgreSQL real, RPC e RLS", () => {
   let aid:string, version=1, sid:string,rid:string;
   const rpc=async(actor:string|null,cmd:object)=>asLocal(db,actor,async tx=>(await tx.query<{id:string}>("select kb_mutate($1::jsonb) id",[JSON.stringify(cmd)])).rows[0].id);
   beforeAll(async()=>{await initializeLocal(db);},30000); afterAll(async()=>{await db.close();});
+  it("saves the version 5 institutional template with 12px dates through the SQL validator",async()=>{
+    const model=institutionalTemplate();model.metadata.title="Modelo institucional atualizado";
+    const id=await rpc(author,{action:"create",document:model});
+    await rpc(author,{action:"save",articleId:id,expectedVersion:1,document:model,visibility:"private"});
+    const saved=(await db.query<{document:unknown}>("select document from kb_drafts where article_id=$1",[id])).rows[0].document;
+    expect(saved).toEqual(model);
+  });
   it("nega visitante, cliente, pendente e inativo ao criar",async()=>{
     for(const actor of [null,...pilotProfiles.slice(3).map(p=>p.id)]) await expect(rpc(actor,{action:"create",document:doc})).rejects.toThrow();
     aid=await rpc(author,{action:"create",document:doc,slug:"procedimento-piloto"});

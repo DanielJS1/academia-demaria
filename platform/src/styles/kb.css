@@ -66,6 +66,13 @@
 .kb .kb-header img{width:100px;height:91px;object-fit:contain}
 .kb .kb-header{padding-block:12px}
 .kb-content p,.kb-summary,.kb-section-editor .tiptap p{text-align:justify}
+.kb-content,.kb-section-editor .tiptap{font-family:Calibri,Arial,Helvetica,sans-serif;font-size:16px}
+.kb-content::after,.kb-section-editor .tiptap::after{content:"";display:block;clear:both}
+.kb-template-logo{float:right;width:108px;margin:0 0 20px 24px}
+.kb-template-logo figcaption{display:none}
+.kb-template-logo-editor{float:right;width:150px;margin:0 0 20px 24px}
+.kb-template-logo-editor .kb-template-logo{float:none;margin:0 0 12px auto}
+.kb-template-logo-editor:not(.kb-selected-image)>label{display:none}
 .kb-selected-image{outline:2px solid var(--kb-teal);outline-offset:4px;border-radius:8px}
 .kb-image-selection{font-size:13px;color:var(--kb-muted);padding:8px 12px;background:var(--kb-surface-soft)}
 @media(max-width:600px){.kb-brand-search{padding:30px 16px;border-radius:18px;margin-top:16px}.kb-portal>.kb-brand-search{width:calc(100% - 32px)}.kb-brand-search-form>div{flex-direction:column;gap:8px}.kb .kb-brand-search input,.kb .kb-brand-search button{border-radius:4px}.kb-portal>.kb-results{padding:0 16px}.kb .kb-header nav{gap:12px;flex-wrap:wrap;font-size:14px}}
