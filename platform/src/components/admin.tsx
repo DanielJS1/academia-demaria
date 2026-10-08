@@ -13,6 +13,9 @@ import { AdminReviews } from "./admin/admin-reviews";
 import { AdminConfig, ConfigList } from "./admin/admin-config";
 import { AdminCartorios } from "./admin/admin-cartorios";
 import { AdminQuizzes } from "./admin/admin-quizzes";
+import { AdminLive } from "./admin/admin-live";
+import { AdminHighlights } from "./admin/admin-highlights";
+import { Radio, Sparkles } from "lucide-react";
 
 export { AdminCourses } from "./admin/admin-courses";
 export { AdminPeople } from "./admin/admin-people";
@@ -24,6 +27,8 @@ export { AdminCartorios } from "./admin/admin-cartorios";
 const tabs = [
   { id: "cursos", label: "Cursos", icon: BookOpen },
   { id: "desafios", label: "Desafios", icon: ListChecks },
+  { id: "ao-vivo", label: "Ao vivo", icon: Radio },
+  { id: "destaques", label: "Destaques", icon: Sparkles },
   { id: "cartorios", label: "Cartórios & Clientes", icon: Building2 },
   { id: "pessoas", label: "Pessoas", icon: Users },
   { id: "conhecimento", label: "Conhecimento", icon: FileText },
@@ -135,6 +140,8 @@ export function Admin({ initialTab = "cursos" }: { initialTab?: string }) {
 
       {tab === "cursos" && <AdminCourses search={search} />}
       {tab === "desafios" && <AdminQuizzes />}
+      {tab === "ao-vivo" && <AdminLive />}
+      {tab === "destaques" && <AdminHighlights />}
       {tab === "cartorios" && <AdminCartorios />}
       {tab === "pessoas" && <AdminPeople search={search} />}
       {tab === "conhecimento" && <AdminArticles search={search} />}
