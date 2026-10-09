@@ -5,11 +5,11 @@ import sharp from "sharp";
 import { z } from "zod";
 import { database } from "../pilot-server";
 import { ApiError } from "../api-error";
-import { asLocal } from "./local-db";
+import { asLocal, localPilotRoot } from "./local-db";
 import { editorialDetail,type KbContext } from "./server";
 export interface MediaStorage { put(key:string,bytes:Buffer,mime:string):Promise<void>; read(key:string):Promise<Buffer>; remove(key:string):Promise<void>; }
 function storage(ctx:KbContext):MediaStorage{
- if(ctx.local){const root=path.resolve(".kb-pilot/media"); const file=(key:string)=>{if(!/^[a-f0-9-]+\/[a-f0-9-]+$/.test(key))throw new Error("Chave inválida.");return path.join(root,key);}; return {put:async(key,bytes)=>{const f=file(key);await mkdir(path.dirname(f),{recursive:true});await writeFile(f,bytes,{flag:"wx"});},read:key=>readFile(file(key)),remove:key=>unlink(file(key))};}
+ if(ctx.local){const root=path.join(localPilotRoot(),"media"); const file=(key:string)=>{if(!/^[a-f0-9-]+\/[a-f0-9-]+$/.test(key))throw new Error("Chave inválida.");return path.join(root,key);}; return {put:async(key,bytes)=>{const f=file(key);await mkdir(path.dirname(f),{recursive:true});await writeFile(f,bytes,{flag:"wx"});},read:key=>readFile(file(key)),remove:key=>unlink(file(key))};}
  const db=database();return {put:async(key,bytes,mime)=>{const r=await db.storage.from("academy-kb").upload(key,bytes,{contentType:mime,upsert:false});if(r.error)throw new Error(r.error.message);},read:async key=>{const r=await db.storage.from("academy-kb").createSignedUrl(key,60);if(r.error)throw new Error(r.error.message);const response=await fetch(r.data.signedUrl,{cache:"no-store"});if(!response.ok)throw new ApiError("Mídia indisponível.",404);return Buffer.from(await response.arrayBuffer());},remove:async key=>{const r=await db.storage.from("academy-kb").remove([key]);if(r.error)throw new Error(r.error.message);}};
 }
 export async function upload(ctx:KbContext,articleId:string,file:File){

@@ -22,7 +22,7 @@ async function authorized(path: string, init: RequestInit = {}) {
   return data;
 }
 
-export function TechnicalMaterials({ search }: { search: string }) {
+export function TechnicalMaterials({ search, clearSearch }: { search: string; clearSearch?: () => void }) {
   const { me } = useAcademy();
   const canEdit = me.audience !== "client" && (me.role === "admin" || me.role === "manager");
   const [materials, setMaterials] = useState<TechnicalMaterial[]>([]);
@@ -52,12 +52,31 @@ export function TechnicalMaterials({ search }: { search: string }) {
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível carregar os materiais."); }
     finally { setLoading(false); }
   }, []);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (me.audience !== "client") {
+      void load();
+    }
+  }, [load, me.audience]);
+
+  const counts = useMemo(() => ({
+    all: materials.length,
+    manual: materials.filter(item => item.kind === "manual").length,
+    video: materials.filter(item => item.kind === "video").length,
+  }), [materials]);
 
   const visible = useMemo(() => materials.filter(item =>
     (filter === "all" || item.kind === filter) && normalize(`${item.title} ${item.description} ${item.topic}`).includes(normalize(search))
   ), [materials, filter, search]);
   const topics = useMemo(() => [...new Set(visible.map(item => item.topic))].sort((a, b) => a.localeCompare(b, "pt-BR")), [visible]);
+
+  if (me.audience === "client") {
+    return (
+      <div className="technical-empty panel">
+        <h3>Acesso restrito</h3>
+        <p>Os materiais técnicos são exclusivos para a equipe interna da DeMaria.</p>
+      </div>
+    );
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,8 +146,15 @@ export function TechnicalMaterials({ search }: { search: string }) {
     </form>}
     {error && <p className="form-error" role="alert">{error}</p>}
     <div className="technical-filters" role="group" aria-label="Filtrar materiais">
-      {([ ["all", "Todos"], ["manual", "Manuais"], ["video", "Vídeos"] ] as const).map(([value, label]) => <button key={value} type="button" className={filter === value ? "active" : ""} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}
+      {([
+        ["all", `Todos (${counts.all})`],
+        ["manual", `Manuais (${counts.manual})`],
+        ["video", `Vídeos (${counts.video})`],
+      ] as const).map(([value, label]) => (
+        <button key={value} type="button" className={filter === value ? "active" : ""} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>
+      ))}
     </div>
+    {search && <p className="community-result-count" role="status">{visible.length} {visible.length === 1 ? "material encontrado" : "materiais encontrados"} para “{search}”</p>}
     {loading ? <p role="status">Carregando materiais…</p> : topics.length ? topics.map(topic => <div className="technical-topic" key={topic}>
       <h3><FolderOpen size={18} /> {topic}</h3>
       <div className="technical-grid">{visible.filter(item => item.topic === topic).map(item => <article className="technical-card panel" key={item.id}>
@@ -138,10 +164,36 @@ export function TechnicalMaterials({ search }: { search: string }) {
         <div className="technical-card-actions"><Button type="button" variant="secondary" size="sm" onClick={() => void openMaterial(item)}>{item.kind === "manual" ? "Visualizar PDF" : "Assistir vídeo"}</Button>
           {canEdit && <button type="button" className="technical-delete" disabled={busy} aria-label={`Excluir ${item.title}`} title="Excluir material" onClick={() => void remove(item)}><Trash2 size={17} /></button>}</div>
       </article>)}</div>
-    </div>) : <div className="technical-empty panel"><Search size={26} /><h3>{search ? "Nenhum material encontrado" : "O acervo técnico está pronto"}</h3><p>{search ? "Tente outro termo de busca." : "Os manuais e vídeos publicados aparecerão aqui, organizados por assunto."}</p></div>}
+    </div>) : <div className="technical-empty panel">
+      <Search size={26} />
+      <h3>{search ? "Nenhum material encontrado" : "O acervo técnico está pronto"}</h3>
+      <p>{search ? `Não encontramos nenhum material para “${search}”.` : "Os manuais e vídeos publicados aparecerão aqui, organizados por assunto."}</p>
+      {search && clearSearch && (
+        <div style={{ marginTop: 14 }}>
+          <Button variant="secondary" size="sm" onClick={clearSearch}>Limpar busca</Button>
+        </div>
+      )}
+    </div>}
     {open && <div className="technical-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setOpen(null); }}>
       <div className="technical-viewer" role="dialog" aria-modal="true" aria-label={open.title}>
-        <div className="technical-viewer-bar"><strong>{open.title}</strong><button ref={closeViewer} type="button" aria-label="Fechar visualização" onClick={() => setOpen(null)}><X size={20} /></button></div>
+        <div className="technical-viewer-bar">
+          <strong>{open.title}</strong>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {open.kind === "manual" && (
+              <a
+                href={open.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="button button-secondary button-sm"
+                style={{ fontSize: 11, padding: "5px 12px", height: "auto" }}
+                title="Abrir PDF em nova guia"
+              >
+                Abrir em nova guia
+              </a>
+            )}
+            <button ref={closeViewer} type="button" aria-label="Fechar visualização" onClick={() => setOpen(null)}><X size={20} /></button>
+          </div>
+        </div>
         <iframe src={open.url} title={open.title} allow={open.kind === "video" ? "autoplay; fullscreen; picture-in-picture" : undefined} allowFullScreen />
       </div>
     </div>}

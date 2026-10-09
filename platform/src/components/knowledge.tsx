@@ -40,9 +40,14 @@ const windowsAssistants = [
 export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "anotacoes" | "biblioteca" | "consulta" | "materiais"; initialSearch?: string }) {
   const { state, me, notify } = useAcademy();
   const [search, setSearch] = useState(initialSearch);
-  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações" | "Materiais técnicos">(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : initialTab === "materiais" ? "Materiais técnicos" : "Biblioteca");
+  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações" | "Materiais técnicos">(
+    initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : (initialTab === "materiais" && me.audience !== "client") ? "Materiais técnicos" : "Biblioteca"
+  );
   const [matchedIds, setMatchedIds] = useState<string[] | null>(null);
-  useEffect(() => { setSearch(initialSearch); setTab(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : initialTab === "materiais" ? "Materiais técnicos" : "Biblioteca"); }, [initialSearch, initialTab]);
+  useEffect(() => {
+    setSearch(initialSearch);
+    setTab(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : (initialTab === "materiais" && me.audience !== "client") ? "Materiais técnicos" : "Biblioteca");
+  }, [initialSearch, initialTab, me.audience]);
   useEffect(() => {
     if (tab !== "Biblioteca" || search.trim().length < 2) { setMatchedIds(null); return; }
     setMatchedIds(null);
@@ -205,8 +210,8 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
             </EmptyState>
           )}
         </section>
-      ) : tab === "Materiais técnicos" ? (
-        <TechnicalMaterials search={search} />
+      ) : tab === "Materiais técnicos" && me.audience !== "client" ? (
+        <TechnicalMaterials search={search} clearSearch={() => setSearch("")} />
       ) : tab === "Biblioteca" ? (
         <CommunityLibrary search={search} matchedIds={matchedIds} clearSearch={() => setSearch("")} />
       ) : (
