@@ -36,7 +36,7 @@ export function KbManagement({pilot=false}:{pilot?:boolean}){
    <div className="kb-index-tools"><div className="kb-index-filters" role="group" aria-label="Filtrar artigos">{Object.entries(filters).map(([key,label])=><button key={key} aria-pressed={filter===key} disabled={busy} onClick={()=>{setFilter(key);setPage(1);setMessage("");}}>{label}<span>{counts[key]??0}</span></button>)}</div>
     <form className="kb-index-search" onSubmit={e=>{e.preventDefault();setQuery(search.trim());setPage(1);}}><label htmlFor="kb-editorial-query" className="sr-only">Buscar por título ou autor</label><input id="kb-editorial-query" type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Título ou autor"/><button type="submit" aria-label="Buscar artigos" disabled={busy}><Search size={18}/></button></form>
    </div>
-   <div className="kb-index-summary"><p role="status">{loading?"Carregando artigos…":`${total} ${total===1?"artigo":"artigos"}`}</p><p>Mais recentes primeiro · ordem de criação</p></div>
+   <div className="kb-index-summary"><p role="status">{loading?"Carregando artigos…":`${total} ${total===1?"artigo":"artigos"}`}</p><p>Mais recentes primeiro · data de criação original</p></div>
    <section aria-busy={loading}><EditorialTable rows={rows} busy={busy||loading} onOpen={id=>void open(id)} onTrash={(r,restore)=>void trash(r,restore)}/></section>
    <nav className="kb-pagination" aria-label="Páginas dos artigos"><button disabled={page===1||busy||loading} onClick={()=>setPage(p=>p-1)}>Anterior</button><span>Página {page} de {Math.max(1,Math.ceil(total/20))}</span><button disabled={page*20>=total||busy||loading} onClick={()=>setPage(p=>p+1)}>Próxima</button></nav>
   </>:!loading?<p>Entre com uma conta interna aprovada.</p>:null}

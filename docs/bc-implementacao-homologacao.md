@@ -1,6 +1,6 @@
 # Base de Conhecimento 2.0 — implementação e homologação local
 
-Implementação em 08/10/2026. Nenhuma migração remota, publicação em produção, contratação, alteração de DNS ou substituição do WordPress foi realizada.
+Registro da homologação local em 08/10/2026, seguido da publicação autorizada descrita abaixo. Não houve contratação, alteração de DNS ou substituição do WordPress.
 
 ## Entrega
 
@@ -98,3 +98,20 @@ Antes de mudar o bucket: inventariar `article_images`/referências JSON e objeto
 Resumos dos cards limitados a três linhas com reticências. Removidos os sumários laterais da leitura da BC e do editor do Fórum, mantendo os títulos do conteúdo. A pesquisa pública usa apenas o termo e a página; parâmetros antigos de filtros não restringem silenciosamente os resultados. `/bc/previas` também pesquisa os cinco originais por título, conteúdo e tags, exclusivamente no piloto local.
 
 Verificação: typecheck, 14 testes de PostgreSQL/permissões e renderização do Fórum, e navegador em 1440 e 375 px (clamp real, pesquisa por selo, alinhamento do corpo, ausência de sumário e de overflow).
+
+## Publicação autorizada em produção — 08/10/2026
+
+PR #30 integrado à main, commit `d712b1ebb839ef9d3f4c32cdad31e78a038cf60d`, deploy `dpl_7wupk2pEm43qr7TuwAcT7t868pEG` READY. Portal: https://academia-demaria.vercel.app/bc. Leitura interna: /conhecimento/base; autoria/revisão: /conhecimento/oficial.
+
+Migration `20261008125328_knowledge_base` aplicada e histórico remoto alinhado ao arquivo versionado. Os cinco artigos foram publicados por revisão exata, com autorização de Daniel José, descrições contextuais de imagens e orientação de verificação baseada no conteúdo original. Os originais permanecem no relatório privado. O bucket academy-kb é privado, com 22 objetos; a leitura entrega apenas mídia autorizada. WordPress permanece disponível.
+
+Validação: 281 testes locais, TypeScript, build do commit isolado, três jornadas Playwright da BC, CI completo/Semgrep/Vercel e gate Vimeo real em Supabase de homologação isolado passaram. Navegador de produção conferiu os cinco artigos, marcadores de listas, centralização de imagens, busca FUNARPEN no corpo, zoom mobile, ausência de snapshot da Academia na leitura pública, bloqueio do editorial anônimo, rotas de piloto 404 e navegação autenticada real pela Academia até leitura e área editorial. Sessão temporária de teste encerrada após a validação, sem envio de e-mail.
+
+As pendências de configuração acima registram o estado anterior à autorização. A migration e publicação já foram executadas. Origem exclusiva/indexação, migração do bucket do Fórum e ensaio remoto de recuperação continuam fora desta implantação. Evidências e recibo em `.kb-pilot/production`, fora do Git.
+## Migração ampliada para produção
+
+Em 09/10/2026 (UTC), o administrador autorizou a implantação de todas as alterações de código e a migração do lote WordPress. Foram migrados 423 artigos, reutilizando os cinco links já publicados: 221 públicos para clientes, 177 publicados com acesso privado interno e 25 rascunhos por mídias/anexos pendentes. Foram preservados autoria, criação/edição de origem, revisão declarada e 343.489 visualizações históricas (um artigo sem contador conhecido). Os artigos com produto ausente identificam expressamente essa ausência, sem atribuir um software fictício.
+
+O helper temporário de importação exige credencial de servidor e perfil administrativo ativo, publica por revisão exata usando `kb_mutate`, guarda identidade/hash de origem para retomada e é removido após a migração. As imagens ficam no bucket privado `academy-kb`; o proxy mantém autorização por artigo/publicação. Backup e checkpoints ficam em `.kb-pilot/wordpress-100/release`, fora do Git e da Vercel. Foram verificados os 423 documentos em banco isolado, retomada sem duplicação, ausência de mídia pendente em publicações e bloqueio de privados/rascunhos para visitantes.
+
+Validação de código: 302 testes Vitest, oito testes Node dos scripts, TypeScript e build de produção. Relatórios privados de auditoria, credenciais e temporários não fazem parte da implantação.
