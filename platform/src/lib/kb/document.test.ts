@@ -10,6 +10,12 @@ const manifestPath=resolve("../docs/references/bc-artigos-manifesto.json");
 const referencesAvailable=existsSync(manifestPath)&&JSON.parse(readFileSync(manifestPath,"utf8")).articles.every((e:{html_path:string;pdf_path:string})=>existsSync(e.html_path)&&existsSync(e.pdf_path));
 
 describe("Contrato institucional e importação", () => {
+  it("não confunde corpo encapsulado iniciado pelo produto com cabeçalho legado",()=>{
+    const content="Conteúdo técnico preservado. ".repeat(20);
+    const result=importHtml(`<div><p>Software a que se aplica este artigo: DOC-Windows</p><p>${content}</p></div>`);
+    expect(textOf(result.document.sections.find(s=>s.key==="passos")!.content)).toContain(content.trim());
+    expect(result.document.metadata.title).toBe("");
+  });
   it("reúne conteúdo legado sem duplicar resumo e preserva imagens, versão e formatação",()=>{
     const old=newDocument();old.metadata={...old.metadata,title:"Selo PR",product:"DOC-Windows",summary:"Introdução do artigo.",release:"5.1"};
     old.sections[0].content=identifyBlocks({type:"doc",content:[{type:"paragraph",content:[{type:"text",text:old.metadata.summary,marks:[{type:"bold"}]}]}]});
