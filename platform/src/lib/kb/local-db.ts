@@ -19,9 +19,10 @@ export async function initializeLocal(db: PGlite) {
   await db.exec(await readFile(path.resolve("supabase/migrations/20261008195500_kb_template_dates.sql"), "utf8"));
   await db.exec(await readFile(path.resolve("supabase/migrations/20261008204500_kb_editorial_workspace.sql"), "utf8"));
   await db.exec(await readFile(path.resolve("supabase/migrations/20261009090000_kb_origin_views.sql"),"utf8"));
+  await db.exec(await readFile(path.resolve("supabase/migrations/20261009123758_kb_gif_media.sql"),"utf8"));
   for (const p of pilotProfiles) await db.query("insert into academy_profiles values($1,$2,$3,$4,$5)", [p.id,p.name,p.role,p.status,p.audience]);
 }
-const globalDb = globalThis as typeof globalThis & { kbPilotDb?: Promise<PGlite>; kbOriginReadyV2?: Promise<void> };
+const globalDb = globalThis as typeof globalThis & { kbPilotDb?: Promise<PGlite>; kbOriginReadyV2?: Promise<void>; kbGifReady?: Promise<void> };
 export function localPilotRoot() {
   const name = process.env.KB_PILOT_NAMESPACE || "";
   if (name && !/^[a-z0-9-]+$/.test(name)) throw new Error("Namespace local inválido.");
@@ -41,6 +42,7 @@ export async function localDatabase() {
   })();
   const db=await ready;
   await (globalDb.kbOriginReadyV2 ??= db.exec(await readFile(path.resolve("supabase/migrations/20261009090000_kb_origin_views.sql"),"utf8")).then(()=>undefined));
+  await (globalDb.kbGifReady ??= db.exec(await readFile(path.resolve("supabase/migrations/20261009123758_kb_gif_media.sql"),"utf8")).then(()=>undefined));
   return db;
 }
 export function localRequest(request: Request) { return process.env.KB_LOCAL_PILOT === "1" && process.env.NODE_ENV !== "production" && ["127.0.0.1", "localhost", "[::1]"].includes(new URL(request.url).hostname); }

@@ -1,7 +1,8 @@
 import { createHash,randomUUID } from "node:crypto";
 import { mkdir,readFile,writeFile,unlink } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
+import { inspectKbImage,KB_MEDIA_MAX_BYTES } from "./media-validation";
+import {signMediaTicket,readMediaTicket} from "./media-ticket";
 import { z } from "zod";
 import { database } from "../pilot-server";
 import { ApiError } from "../api-error";
@@ -14,10 +15,8 @@ function storage(ctx:KbContext):MediaStorage{
 }
 export async function upload(ctx:KbContext,articleId:string,file:File){
  z.string().uuid().parse(articleId);await editorialDetail(ctx,articleId);
- if(file.size>5*1024*1024||file.size===0)throw new ApiError("Envie uma imagem de até 5 MB.",413);
- const bytes=Buffer.from(await file.arrayBuffer());const info=await sharp(bytes,{limitInputPixels:40000000}).metadata().catch(()=>{throw new ApiError("Arquivo de imagem inválido.");});
- const mime=({png:"image/png",jpeg:"image/jpeg",webp:"image/webp"} as Record<string,string>)[info.format||""];
- if(!mime||!info.width||!info.height||info.pages&&info.pages>1)throw new ApiError("Use PNG, JPEG ou WebP estático.");
+ if(file.size>KB_MEDIA_MAX_BYTES||file.size===0)throw new ApiError("Envie uma imagem ou GIF de até 5 MB.",413);
+ const bytes=Buffer.from(await file.arrayBuffer());const info=await inspectKbImage(bytes),mime=info.mime;
  const id=randomUUID(),key=`${articleId}/${id}`,checksum=createHash("sha256").update(bytes).digest("hex"),name=file.name.slice(0,200);
  await storage(ctx).put(key,bytes,mime);
  try{
@@ -26,10 +25,48 @@ export async function upload(ctx:KbContext,articleId:string,file:File){
  }catch(e){await storage(ctx).remove(key);throw e;}
  return {id,name,mime,bytes:bytes.length,width:info.width,height:info.height};
 }
-export async function readMedia(ctx:KbContext,id:string){
+export async function prepareDirectUpload(ctx:KbContext,input:unknown){
+ const data=z.strictObject({articleId:z.string().uuid(),name:z.string().min(1).max(200),size:z.number().int().min(1).max(KB_MEDIA_MAX_BYTES)}).parse(input);
+ await editorialDetail(ctx,data.articleId);
+ if(ctx.local)return {local:true};
+ if(!ctx.actor)throw new ApiError("Operação não autorizada.",403);
+ const id=randomUUID(),key=`${data.articleId}/${id}`;
+ const signed=await database().storage.from("academy-kb").createSignedUploadUrl(key);
+ if(signed.error)throw new ApiError("Não foi possível preparar o envio.",503);
+ return {path:key,token:signed.data.token,ticket:signMediaTicket({...data,id,actor:ctx.actor,expires:Date.now()+15*60*1000})};
+}
+export async function completeDirectUpload(ctx:KbContext,ticket:string){
+ if(ctx.local)throw new ApiError("Use o envio local.");
+ const data=readMediaTicket(ticket,ctx.actor);await editorialDetail(ctx,data.articleId);
+ const db=database(),key=`${data.articleId}/${data.id}`;
+ // A retry must never remove a previously validated object.
+ const existing=await db.from("kb_media").select("id,name,mime,bytes,width,height").eq("id",data.id).maybeSingle();
+ if(existing.error)throw new Error(existing.error.message);if(existing.data)return existing.data;
+ const bytes=await storage(ctx).read(key);
+ let info:Awaited<ReturnType<typeof inspectKbImage>>;
+ try{if(bytes.length!==data.size)throw new ApiError("O tamanho da mídia mudou durante o envio.");info=await inspectKbImage(bytes);}catch(e){await storage(ctx).remove(key);throw e;}
+ const media={id:data.id,name:data.name,mime:info.mime,bytes:bytes.length,width:info.width,height:info.height};
+ const result=await db.from("kb_media").insert({...media,article_id:data.articleId,owner_id:ctx.actor,provider:"supabase",storage_key:key,checksum:createHash("sha256").update(bytes).digest("hex"),ready:true});
+ if(result.error)throw new Error(result.error.message);
+ return media;
+}
+async function mediaAccess(ctx:KbContext,id:string){
  z.string().uuid().parse(id);
  const row=ctx.local?await asLocal(ctx.db,ctx.actor,async tx=>(await tx.query<{storage_key:string;provider:string;mime:string}>("select * from kb_media_access($1)",[id])).rows[0]):await (async()=>{const r=await ctx.client.rpc("kb_media_access",{mid:id});if(r.error)throw new Error(r.error.message);return r.data?.[0] as {storage_key:string;provider:string;mime:string}|undefined;})();
  if(!row)throw new ApiError("Mídia não encontrada.",404);
+ return row;
+}
+export async function mediaRedirect(ctx:KbContext,id:string){
+ if(ctx.local)return null;
+ const row=await mediaAccess(ctx,id),db=database();
+ // Authorize first; deliver original bytes through a short-lived private URL.
+ // This also avoids the Vercel response-size limit for 5 MiB GIFs.
+ const signed=await db.storage.from("academy-kb").createSignedUrl(row.storage_key,60);
+ if(signed.error)throw new ApiError("Mídia indisponível.",404);
+ return signed.data.signedUrl;
+}
+export async function readMedia(ctx:KbContext,id:string){
+ const row=await mediaAccess(ctx,id);
  return {bytes:await storage(ctx).read(row.storage_key),mime:row.mime};
 }
 export async function listMedia(ctx:KbContext,articleId:string){
