@@ -159,7 +159,7 @@ export function vimeoEmbed(url: string): string | null {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" || !["vimeo.com", "www.vimeo.com", "player.vimeo.com"].includes(parsed.hostname)) return null;
-    const match = parsed.pathname.match(/^\/(?:video\/)?(\d+)(?:\/([a-zA-Z0-9]+))?\/?$/);
+    const match = parsed.pathname.match(/^\/(?:(?:manage\/)?videos?\/)?(\d+)(?:\/([a-zA-Z0-9]+))?\/?$/);
     if (!match) return null;
     const hash = match[2] || parsed.searchParams.get("h");
     return `https://player.vimeo.com/video/${match[1]}${hash ? `?h=${encodeURIComponent(hash)}` : ""}`;

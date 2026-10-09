@@ -78,7 +78,7 @@ export function importHtml(html: string, base?: KbDocument) {
     d = { ...base, metadata: { ...base.metadata, title: header?.children.filter(element).filter(n => n.name === "h1").map(textContent).join("") || base.metadata.title, summary: header?.children.filter(element).filter(n => n.name === "p").map(textContent).join("") || base.metadata.summary }, sections: sections.map((s, i) => ({ ...base.sections[i], content: { type: "doc", content: blocks(s.children.filter(n => !(element(n) && n.name === "h2" && textContent(n) === ({ objetivo: "Objetivo", requisitos: "Pré-requisitos", passos: "Passo a passo", resultado: "Resultado e verificação", mudancas: "O que mudou", impacto: "Impacto", orientacao: "Orientação de uso" } as Record<string, string>)[base.sections[i].key]))) } })) };
   } else {
     d = base?.templateVersion===2?structuredClone(base):newDocument(base?.templateId); const nodes = tree.children.filter(n => n.type !== "text" || n.data.trim());
-    const legacy=nodes.some(n=>/^Software a que se aplica este artigo:/i.test(textContent(n).trim()));
+    const legacy=nodes.some(n=>element(n)&&!["div","section","article"].includes(n.name)&&/^Software a que se aplica este artigo:/i.test(textContent(n).trim()));
     if(!legacy){
       if(base)d.metadata={...base.metadata};
       (d.templateVersion===2?d.sections[0]:d.sections.find(s=>s.key==="passos"||s.key==="mudancas")!).content={type:"doc",content:blocks(nodes)};
