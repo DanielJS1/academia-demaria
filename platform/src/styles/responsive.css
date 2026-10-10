@@ -189,26 +189,24 @@
   .metric-strip {
     grid-template-columns: 1fr;
     gap: 12px;
-    padding: 16px;
+    padding: 0;
     margin-bottom: 24px;
   }
-  .metric-strip > div {
+  .metric-strip > div,
+  .metric-strip > div:last-child {
     flex-direction: row;
     align-items: center;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding: 0 0 12px 0;
+    min-width: 0;
+    border: 1px solid var(--line);
+    padding: 18px;
     gap: 12px;
   }
-  .metric-strip > div:last-child {
-    border-bottom: 0;
-    padding-bottom: 0;
-  }
+  .metric-strip > div > span:not(.metric-icon) { min-width: 0; }
   .metric-strip strong { font-size: 15px; }
   .metric-strip strong em { font-size: 10px; }
   .metric-strip small { font-size: 9px; }
   .metric-strip a { display: none; }
-  .metric-icon { height: 22px; width: 22px; }
+  .metric-icon { height: 44px; width: 44px; flex-shrink: 0; }
   .player-grid, .player-grid.focus-mode { grid-template-columns: 1fr !important; gap: 16px; }
   .curriculum-dock { display: none !important; }
   .dashboard-bottom { grid-template-columns: 1fr; margin-top: 26px; }
@@ -222,6 +220,7 @@
   .ranking-xp { font-size: 12px; }
   .ranking-subtitle { font-size: 9px; }
   .ranking-card h2 { font-size: 16px; }
+  .section-heading { align-items: flex-start; flex-wrap: wrap; }
   .section-heading h2 { font-size: 16px; }
   .section-heading p { font-size: 10px; }
   .text-link { font-size: 9px; }
