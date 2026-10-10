@@ -335,9 +335,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
               {isMobile && (
                 <div className="mobile-drawer-account">
-                  <Link href="/conquistas" className="nav-item" onClick={closeMobileMenu}>
-                    <Trophy size={18} /> <span>Minha evolução</span>
-                  </Link>
+                  {!currentNav.some(item => item.href === "/conquistas") && (
+                    <Link href="/conquistas" className="nav-item" onClick={closeMobileMenu}>
+                      <Trophy size={18} /> <span>Minha evolução</span>
+                    </Link>
+                  )}
                   <button type="button" className="mobile-signout-btn" onClick={signOut}>
                     Sair da conta
                   </button>
