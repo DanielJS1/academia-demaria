@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isCourseComplete } from "@/lib/rewards";
 import Link from "next/link";
 import { ArrowRight, Award, Camera, ChevronLeft, ChevronRight, Flame, Gem, KeyRound, Medal, Shield, Sparkles, Trash2, Trophy } from "lucide-react";
@@ -19,6 +19,8 @@ export function Evolution() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [rankingExpanded, setRankingExpanded] = useState(false);
   const [rankingPage, setRankingPage] = useState(1);
+  const [achievementsExpanded, setAchievementsExpanded] = useState(false);
+  const achievementsRef = useRef<HTMLDivElement>(null);
 
   const people = state.people
     .filter((person) => person.status === "active" && person.audience !== "client")
@@ -28,7 +30,7 @@ export function Evolution() {
   const currentPage = Math.min(rankingPage, rankingPages);
   const visiblePeople = rankingExpanded ? people.slice((currentPage - 1) * 10, currentPage * 10) : people.slice(0, 5);
 
-  const approved = state.attempts.filter(
+  const approved = [...state.attempts].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)).filter(
     (attempt, index, attempts) =>
       attempt.status === "approved" &&
       attempt.userId === me.id &&
@@ -41,6 +43,38 @@ export function Evolution() {
   const withoutQuiz = state.courses.filter(
     (course) => !course.lessons.some((l) => l.type === "quiz") && isCourseComplete(course, state, me.id) && !approved.some((a) => a.courseId === course.id)
   );
+  const completedAt = (courseId: string) => state.xpEvents.find(event => event.courseId === courseId && (event.eventKey === "completion" || event.eventKey === "legacy"))?.createdAt ?? "";
+  const achievements = [
+    ...state.recognitions.filter(item => item.userId === me.id).map(item => ({
+      id: `recognition:${item.id}`, title: item.title, date: item.createdAt, recognition: true,
+      subtitle: `Reconhecimento de liderança · ${new Date(item.createdAt).toLocaleDateString("pt-BR")} · Concedido por ${item.managerName}`,
+      detail: item.message,
+    })),
+    ...withoutQuiz.map(course => ({
+      id: `course:${course.id}`, title: course.title, date: completedAt(course.id), recognition: false,
+      subtitle: `Curso concluído · sem avaliação · versão ${course.version}`, detail: "",
+    })),
+    ...approved.map(attempt => ({
+      id: `attempt:${attempt.id}`, title: attempt.courseTitle, date: completedAt(attempt.courseId) || attempt.submittedAt, recognition: false,
+      subtitle: `Aprovado com ${attempt.score}% · versão ${attempt.courseVersion}`,
+      detail: attempt.quizId === "proficiency" || (attempt as any).snapshot?.proficiency
+        ? "Aprovação por Prova de Proficiência · dispensa integral de aulas"
+        : "Aprovação registrada · emissão de certificado em preparação",
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+  const visibleAchievements = achievementsExpanded ? achievements : achievements.slice(0, 5);
+  useEffect(() => {
+    const list = achievementsRef.current;
+    if (!list || !achievementsExpanded) return;
+    const rows = Array.from(list.children).slice(0, 10) as HTMLElement[];
+    const measure = () => {
+      if (rows.length) list.style.setProperty("--achievements-max-height", `${rows[rows.length - 1].offsetTop + rows[rows.length - 1].offsetHeight - rows[0].offsetTop}px`);
+    };
+    const observer = new ResizeObserver(measure);
+    rows.forEach(row => observer.observe(row));
+    measure();
+    return () => observer.disconnect();
+  }, [achievementsExpanded, achievements.length]);
 
   return (
     <div className="page-enter">
@@ -235,50 +269,26 @@ export function Evolution() {
       </div>
 
       <div className="dashboard-bottom">
-        <section>
+        <section className="panel ranking-card achievements-card">
           <SectionHeading
             title="Aprendizados que viram conquistas"
             description="Seus cursos concluídos, com ou sem avaliação."
           />
-          {state.recognitions.filter(item => item.userId === me.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(item => (
-            <article className="certificate-row leadership-recognition" key={item.id}>
-              <Medal size={30} aria-hidden="true" />
-              <div>
-                <strong>{item.title}</strong>
-                <small>Reconhecimento de liderança · {new Date(item.createdAt).toLocaleDateString("pt-BR")} · Concedido por {item.managerName}</small>
-                <p>{item.message}</p>
-              </div>
-              <span className="recognition-xp">+100 XP</span>
-            </article>
-          ))}
-          {withoutQuiz.map((course) => (
-            <div className="certificate-row" key={course.id}>
-              <Award size={30} />
-              <div>
-                <strong>{course.title}</strong>
-                <small>
-                  Curso concluído · sem avaliação · versão {course.version}
-                </small>
-              </div>
-            </div>
-          ))}
-          {approved.length ? (
-            approved.map((attempt) => (
-              <div className="certificate-row" key={attempt.id}>
-                <Award size={30} />
+          <div ref={achievementsRef} id="achievements-list" className={`achievements-list ${achievementsExpanded ? "is-expanded" : ""}`} tabIndex={achievementsExpanded && achievements.length > 10 ? 0 : undefined} role="region" aria-label="Histórico de conquistas">
+            {visibleAchievements.map(item => (
+              <article className={`certificate-row ${item.recognition ? "leadership-recognition" : ""}`} key={item.id}>
+                {item.recognition ? <Medal size={30} aria-hidden="true" /> : <Award size={30} aria-hidden="true" />}
                 <div>
-                  <strong>{attempt.courseTitle}</strong>
-                  <small>
-                    Aprovado com {attempt.score}% · versão {attempt.courseVersion}
-                    <br />
-                    {attempt.quizId === "proficiency" || (attempt as any).snapshot?.proficiency
-                      ? "Aprovação por Prova de Proficiência · dispensa integral de aulas"
-                      : "Aprovação registrada · emissão de certificado em preparação"}
-                  </small>
+                  <strong>{item.title}</strong>
+                  <small>{item.subtitle}</small>
+                  {item.detail && (item.recognition ? <p>{item.detail}</p> : <small>{item.detail}</small>)}
                 </div>
-              </div>
-            ))
-          ) : withoutQuiz.length || state.recognitions.some(item => item.userId === me.id) ? null : (
+                {item.recognition && <span className="recognition-xp">+100 XP</span>}
+              </article>
+            ))}
+          </div>
+          {achievements.length > 5 && <div className="ranking-actions"><Button type="button" variant="secondary" aria-expanded={achievementsExpanded} aria-controls="achievements-list" onClick={() => { setAchievementsExpanded(value => !value); if (achievementsRef.current) achievementsRef.current.scrollTop = 0; }}>{achievementsExpanded ? "Mostrar últimas 5" : `Ver todas as conquistas (${achievements.length})`}</Button></div>}
+          {!achievements.length && (
             <EmptyState
               icon={<Award size={30} />}
               title="Sua primeira conquista está por vir."
