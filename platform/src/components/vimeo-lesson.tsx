@@ -7,6 +7,7 @@ import { useAcademy } from "./academy-provider";
 import { vimeoEmbed, type Course, type Lesson } from "@/lib/model";
 import { isVideoNearEnd } from "@/lib/video-completion";
 import { mergeWatched } from "@/lib/pilot-contract";
+import { LessonCompletionOverlay } from "./lesson-completion-overlay";
 
 export function VimeoLesson({course,lesson,preview,initialPosition=0,nextTitle,onNext}:{course:Course;lesson:Lesson;preview:boolean;initialPosition?:number;nextTitle?:string;onNext?:()=>void}){
  const ref=useRef<HTMLIFrameElement>(null);
@@ -87,5 +88,5 @@ export function VimeoLesson({course,lesson,preview,initialPosition=0,nextTitle,o
  },[course.id,course.version,lesson.id,mutate,preview,initialPosition]);
  const embed = vimeoEmbed(lesson.videoUrl)!;
  const playerUrl = `${embed}${embed.includes("?") ? "&" : "?"}transparent=0`;
- return <><div className="video-frame"><iframe key={lesson.id} ref={ref} src={playerUrl} title={lesson.title} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/></div>{(nearEnd||completed)&&<div className="video-next-action" aria-live="polite"><div><strong>{preview?"Final da prévia":completed?"Aula concluída!":"Final do vídeo"}</strong><p>{!preview&&!completed?"Para concluir, assista a pelo menos 50% da aula e chegue ao final. Administradores precisam apenas chegar ao final.":nextTitle?`A seguir: ${nextTitle}`:"Você chegou à última aula deste curso."}</p></div>{onNext&&<button className="button button-primary" disabled={!preview&&!completed} onClick={onNext}>Próxima aula →</button>}</div>}{error&&<div className="form-error" role="alert">{error}<button className="button button-secondary" onClick={()=>retrySave.current()}>Tentar salvar novamente</button></div>}</>;
+ return <><div className="video-frame"><iframe key={lesson.id} ref={ref} src={playerUrl} title={lesson.title} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/><LessonCompletionOverlay key={lesson.id} visible={nearEnd||completed} preview={preview} completed={completed} nextTitle={nextTitle} onNext={onNext}/></div>{error&&<div className="form-error" role="alert">{error}<button className="button button-secondary" onClick={()=>retrySave.current()}>Tentar salvar novamente</button></div>}</>;
 }
