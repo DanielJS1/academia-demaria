@@ -1077,7 +1077,6 @@
 
 .achievements-card { align-self: start; min-width: 0; }
 .achievements-list { position: relative; display: grid; gap: 12px; }
-.achievements-list.is-expanded { max-height: var(--achievements-max-height, 1080px); overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; }
 .achievements-list .certificate-row { margin-bottom: 0; min-height: 84px; }
 .achievements-list .certificate-row > svg { flex-shrink: 0; }
 .achievements-list .certificate-row > div { min-width: 0; overflow-wrap: anywhere; }
