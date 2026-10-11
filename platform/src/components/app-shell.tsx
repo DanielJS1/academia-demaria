@@ -148,6 +148,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ...(me.role === "admin" ? [{ href: "/admin", label: "Administração", icon: Settings2 }] : []),
       ];
 
+  const dockNavItems = [...allNavItems, { href: "/sobre", label: "Sobre a plataforma", icon: CircleHelp }];
+
   return (
     <div className="app">
       <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -203,7 +205,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {isDocked ? (
           <>
             <nav className="sidebar-dock-items" aria-label="Atalhos principais">
-              {allNavItems.map((item, index) => {
+              {dockNavItems.map((item, index) => {
                 const isCurrent = active(item.href);
                 const Icon = item.icon;
                 const dist = hoveredNavIndex === null ? null : Math.abs(hoveredNavIndex - index);
@@ -229,7 +231,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 return (
                   <div
                     key={item.href}
-                    className="sidebar-dock-item-wrap"
+                    className={`sidebar-dock-item-wrap ${item.href === "/sobre" ? "sidebar-dock-bottom" : ""}`}
                     style={{
                       transform: `scale(${scale}) translateX(${transX}px)`,
                       zIndex,
@@ -257,17 +259,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
-            <div className="sidebar-dock-bottom">
-              <Link
-                href="/sobre"
-                className={`sidebar-dock-item-btn ${active("/sobre") ? "active" : ""}`}
-                aria-label="Sobre a plataforma"
-                aria-current={active("/sobre") ? "page" : undefined}
-                title="Sobre a plataforma"
-              >
-                <CircleHelp size={18} />
-              </Link>
-            </div>
           </>
         ) : (
           <>

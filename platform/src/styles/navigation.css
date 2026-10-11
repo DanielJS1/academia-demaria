@@ -613,6 +613,7 @@ body:has(.challenge-page), body:has(.quiz-center) { overflow-x: clip; }
   width: 100%;
   padding: 8px 0;
   overflow: visible;
+  flex: 1;
 }
 
 .sidebar-dock-bottom {
@@ -620,7 +621,7 @@ body:has(.challenge-page), body:has(.quiz-center) { overflow-x: clip; }
   padding-top: 10px;
   display: flex;
   justify-content: center;
-  width: 100%;
+  flex-shrink: 0;
 }
 
 .sidebar-dock-item-wrap {
@@ -648,13 +649,13 @@ body:has(.challenge-page), body:has(.quiz-center) { overflow-x: clip; }
 }
 
 .sidebar-dock-item-btn:hover {
-  background: var(--lavender, rgba(128, 84, 217, 0.18));
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface));
   color: var(--primary, #8054d9);
   border-color: var(--primary, #8054d9);
 }
 
 .sidebar-dock-item-btn.active {
-  background: var(--lavender, rgba(128, 84, 217, 0.22));
+  background: color-mix(in srgb, var(--primary) 22%, var(--surface));
   color: var(--primary, #8054d9);
   border-color: var(--primary, #8054d9);
   box-shadow: 0 0 0 2px var(--primary, #8054d9);
@@ -941,12 +942,12 @@ body:has(.challenge-page), body:has(.quiz-center) { overflow-x: clip; }
 .nav-item:hover { background: var(--cyan-soft); color: var(--ink); transform: translateX(2px); }
 .nav-item.active { background: linear-gradient(100deg, var(--cyan-soft), var(--purple-soft)); color: var(--primary); font-weight: 700; box-shadow: inset 3px 0 0 var(--brand-cyan), 0 8px 20px -16px var(--academy-purple); }
 .nav-item.active svg { color: var(--academy-purple); }
-.topbar { background: color-mix(in srgb, var(--surface) 94%, transparent); }
+.topbar { background: var(--surface); }
 .global-search-field { border-radius: 13px; }
 .global-search-field:hover { border-color: color-mix(in srgb, var(--brand-cyan) 45%, var(--line)); }
 .profile { transition: background-color .2s ease, transform .2s ease; }
 .profile:hover { background: var(--purple-soft); transform: translateY(-1px); }
-.sidebar-dock-item-btn.active { background: linear-gradient(135deg, var(--cyan-soft), var(--purple-soft)); color: var(--primary); }
+.sidebar-dock-item-btn.active { background: linear-gradient(135deg, color-mix(in srgb, var(--brand-cyan) 18%, var(--surface)), color-mix(in srgb, var(--academy-purple) 18%, var(--surface))); color: var(--primary); }
 
 @keyframes modalFadeIn {
   from { opacity: 0; }
