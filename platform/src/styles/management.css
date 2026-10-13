@@ -1,0 +1,48 @@
+.management-page { display:grid; gap:20px; min-width:0; }
+.management-page .page-heading { margin:0; }
+.management-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.management-metrics a { color:inherit; text-decoration:none; border-radius:12px; }
+.management-metrics .metric-card { height:100%; }
+.management-metrics a:hover .metric-card { border-color:var(--primary); }
+.management-population { display:flex; gap:10px; flex-wrap:wrap; }
+.management-page :is(input,select),.management-sheet :is(input,textarea) { color:var(--ink); background:var(--surface); font:inherit; font-size:16px; width:100%; min-height:44px; border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+.management-search { display:grid; gap:6px; font-size:14px; }
+.management-help,.management-presence { color:var(--muted); font-size:14px; line-height:1.6; margin:0; }
+.management-list { padding:20px; min-width:0; container-type:inline-size; }
+.management-list>p { font-size:14px; margin:0 0 16px; }
+.management-table-scroll { overflow:auto; border:1px solid var(--line); border-radius:10px; }
+.management-table-scroll table { border-collapse:collapse; width:100%; min-width:680px; font-size:14px; }
+.management-table-scroll :is(th,td) { padding:12px 16px; text-align:left; border-bottom:1px solid var(--line); line-height:1.5; }
+.management-table-scroll th { background:var(--surface2); }
+.management-table-scroll small { display:block; color:var(--muted); margin-top:4px; font-size:13px; }
+.management-pagination { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:16px; font-size:14px; }
+.management-sheet { margin:auto; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:14px; width:min(840px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:24px; }
+.management-sheet::backdrop { background:rgb(0 0 0 / .6); }
+.management-sheet header { display:flex; justify-content:space-between; gap:16px; align-items:start; margin-bottom:18px; }
+.management-sheet h2 { font-size:24px; margin:0; }
+.management-sheet h3 { font-size:20px; margin:0 0 8px; }
+.management-sheet h4 { margin:0 0 6px; font-size:16px; }
+.management-sheet p { font-size:16px; line-height:1.5; margin:8px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.management-sheet header p { font-size:14px; color:var(--muted); }
+.management-sheet nav,.management-sheet footer { display:flex; gap:10px; flex-wrap:wrap; margin:16px 0; }
+.management-forms { display:grid; gap:22px; }
+.management-forms form { display:grid; gap:10px; padding:18px; background:var(--surface2); border-radius:10px; }
+.management-forms form .button { justify-self:start; }
+.management-forms article { padding:14px 0; border-bottom:1px solid var(--line); }
+.management-forms small { color:var(--muted); }
+.management-assignment-list { display:grid; gap:12px; list-style:none; padding:0; }
+.management-assignment-list li { padding:16px; border:1px solid var(--line); border-radius:10px; }
+:is(.management-page,.management-sheet) :is(button,a,input,textarea,select):focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+@container (max-width:700px) {
+ .management-table-scroll table { display:block; min-width:0; }
+ .management-table-scroll thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+ .management-table-scroll tbody { display:block; }
+ .management-table-scroll tr { display:grid; grid-template-columns:minmax(0,1fr) auto; padding:14px; gap:10px; border-bottom:1px solid var(--line); }
+ .management-table-scroll td { display:block; border:0; padding:0; white-space:normal; overflow-wrap:anywhere; }
+ .management-table-scroll td:first-child { grid-column:1; grid-row:1; }
+ .management-table-scroll td:last-child { grid-column:2; grid-row:1; }
+ .management-table-scroll td:nth-child(2),.management-table-scroll td:nth-child(3) { grid-column:1 / -1; }
+ .management-table-scroll td:nth-child(2)::before { content:"Acompanhamento"; display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+ .management-table-scroll td:nth-child(3)::before { content:"Último acesso conhecido"; display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+}
+@media(max-width:700px) { .management-metrics { grid-template-columns:1fr; } .management-sheet { padding:18px; } .management-sheet h2 { font-size:21px; } .management-pagination { justify-content:space-between; } .management-list { padding:16px; } }

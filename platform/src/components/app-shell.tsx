@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, BarChart3, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X, Zap } from "lucide-react";
+import { ArrowUpRight, BarChart3, Bell, BookOpen, ChevronLeft, ChevronRight, CircleHelp, GraduationCap, Home, Menu, Moon, Route, Settings2, ShieldCheck, Sparkles, Sun, Trophy, Users, X, Zap } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { GlobalSearch } from "./global-search";
 import { Button } from "./ui/button";
@@ -10,10 +10,12 @@ import { experience, tierClass } from "@/lib/gamification";
 import { AcademyBrand } from "./academy-brand";
 import { useLive } from "./live/live-provider";
 import { LiveBadge } from "./live/live-badge";
+import { useTrails } from "./trails/trails-provider";
 
 const navigation = [
   { href: "/", label: "Visão geral", icon: Home },
   { href: "/aprender", label: "Aprender", icon: BookOpen },
+  { href: "/aprender/trilhas", label: "Minhas trilhas", icon: Route },
   { href: "/desafios", label: "Desafios", icon: Zap },
   { href: "/conhecimento", label: "Conhecimento", icon: Sparkles, badge: "IA" },
   { href: "/conquistas", label: "Minha evolução", icon: Trophy },
@@ -25,6 +27,7 @@ const defaultNotices = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { data: trails, command: trailCommand } = useTrails();
   const { data: liveData } = useLive();
   const hasLive = liveData.events.some(event => event.status === "live");
   const path = usePathname();
@@ -118,7 +121,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const isDocked = !isMobile && (/^\/aprender\/[^/]+\/aula/.test(path) ? theaterCollapsed : editorActive?editorCollapsed:collapsed);
-  const active = (href: string) => href === "/" ? path === "/" : href === "/equipe" ? path === "/equipe" : path.startsWith(href);
+  const active = (href: string) => href === "/" ? path === "/" : href === "/equipe" ? path === "/equipe" : href === "/aprender" ? path.startsWith(href) && !path.startsWith("/aprender/trilhas") : path.startsWith(href);
 
   const currentNav = isClientEnvironment
     ? [
@@ -137,8 +140,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       href: `/conhecimento/${encodeURIComponent(article.id)}/editar`,
     }));
   const collaborationNotices = state.notifications.filter(() => !simulatedCartorioId).map(item => ({id:item.id,title:item.title,text:item.message,href:item.link}));
-  const notices = [...collaborationNotices, ...updateNotices, ...defaultNotices];
-  const unread = notices.filter(item => !state.readNotices.includes(item.id)).length;
+  const learningNotices = !isClientEnvironment ? (trails?.notices ?? []).filter(n => n.userId === me.id && !n.resolvedAt).map(n => ({ id:n.id,title:n.title,text:n.message,href:n.link,seenAt:n.seenAt })) : [];
+  const notices = [...learningNotices, ...collaborationNotices, ...updateNotices, ...defaultNotices];
+  const noticeRead = (id: string) => state.readNotices.includes(id) || !!learningNotices.find(n => n.id === id)?.seenAt;
+  const unread = notices.filter(item => !noticeRead(item.id)).length;
 
   const allNavItems = isClientEnvironment
     ? currentNav
@@ -147,6 +152,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ...(me.role !== "student" ? [{ href: "/equipe", label: "Minha gestão", icon: Users }, { href: "/equipe/relatorios", label: "Relatórios", icon: BarChart3 }] : []),
         ...(me.role === "admin" ? [{ href: "/admin", label: "Administração", icon: Settings2 }] : []),
       ];
+  const dockNavItems = [...allNavItems, { href: "/sobre", label: "Sobre a plataforma", icon: CircleHelp }];
 
   return (
     <div className="app">
@@ -203,7 +209,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {isDocked ? (
           <>
             <nav className="sidebar-dock-items" aria-label="Atalhos principais">
-              {allNavItems.map((item, index) => {
+              {dockNavItems.map((item, index) => {
                 const isCurrent = active(item.href);
                 const Icon = item.icon;
                 const dist = hoveredNavIndex === null ? null : Math.abs(hoveredNavIndex - index);
@@ -229,7 +235,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 return (
                   <div
                     key={item.href}
-                    className="sidebar-dock-item-wrap"
+                    className={`sidebar-dock-item-wrap ${item.href === "/sobre" ? "sidebar-dock-bottom" : ""}`}
                     style={{
                       transform: `scale(${scale}) translateX(${transX}px)`,
                       zIndex,
@@ -257,17 +263,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
-            <div className="sidebar-dock-bottom">
-              <Link
-                href="/sobre"
-                className={`sidebar-dock-item-btn ${active("/sobre") ? "active" : ""}`}
-                aria-label="Sobre a plataforma"
-                aria-current={active("/sobre") ? "page" : undefined}
-                title="Sobre a plataforma"
-              >
-                <CircleHelp size={18} />
-              </Link>
-            </div>
           </>
         ) : (
           <>
@@ -402,6 +397,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       href={item.href}
                       key={item.id}
                       onClick={() => {
+                        if (learningNotices.some(n => n.id === item.id)) void trailCommand({type:"ack",id:item.id});
                         update(current => ({
                           ...current,
                           readNotices: Array.from(new Set([...current.readNotices, item.id])),
@@ -411,7 +407,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     >
                       <span className="notification-symbol"><Sparkles size={16}/></span>
                       <span><strong>{item.title}</strong><small>{item.text}</small></span>
-                      {!state.readNotices.includes(item.id) && <i/>}
+                      {!noticeRead(item.id) && <i/>}
                     </Link>
                   ))}
                 </section>
