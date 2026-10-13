@@ -1,0 +1,19 @@
+"use client";
+import { useId, useRef, useState } from "react";
+import type { Person } from "@/lib/model";
+import { formatReportDate } from "@/lib/reports/presentation";
+import { useAcademy } from "../academy-provider";
+import { Button } from "../ui/button";
+export function ManagementForms({ person, kind }: { person: Person; kind: "pdi" | "conquista" }) {
+  const { state, mutate, busy, notify } = useAcademy();
+  const [title, setTitle] = useState(""), [message, setMessage] = useState(""), [note, setNote] = useState("");
+  const [error, setError] = useState(""); const requestId = useRef<string | null>(null), saving = useRef(false);
+  const titleId = useId(), messageId = useId(), noteId = useId();
+  const recognitions = state.recognitions.filter(item => item.userId === person.id).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+  const notes = state.pdiNotes.filter(item => item.userId === person.id).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+  const history = kind === "pdi" ? <section aria-label="Histórico de PDI"><h3>Anotações anteriores</h3>{notes.length ? notes.map(item => <article key={item.id}><small>{formatReportDate(item.createdAt)} · {item.managerName}</small><p>{item.content}</p></article>) : <p>Nenhuma anotação registrada.</p>}</section> : <section aria-label="Histórico de conquistas"><h3>Conquistas concedidas</h3>{recognitions.length ? recognitions.map(item => <article key={item.id}><h4>{item.title} · +100 XP</h4><small>{formatReportDate(item.createdAt)} · {item.managerName}</small><p>{item.message}</p></article>) : <p>Nenhuma conquista concedida.</p>}</section>;
+  return <div className="management-forms">{kind === "pdi" ? <form onSubmit={async event => { event.preventDefault(); if (saving.current || busy) return; saving.current = true; setError(""); try { if (await mutate({ type: "add-pdi-note", userId: person.id, content: note.trim() })) { setNote(""); notify("Anotação de PDI registrada."); } else setError("Não foi possível registrar. A anotação foi preservada para tentar novamente."); } finally { saving.current = false; } }}><h3>Acompanhamento e PDI</h3><p>Registre combinados, evolução e próximos passos. Visível aos gestores autorizados e administradores.</p><label htmlFor={noteId}>Nova anotação</label><textarea disabled={busy} id={noteId} value={note} onChange={event => setNote(event.target.value)} minLength={3} maxLength={2000} required rows={4} /><Button disabled={busy || note.trim().length < 3}>Registrar anotação</Button></form> :
+    <form onSubmit={async event => { event.preventDefault(); if (saving.current || busy) return; saving.current = true; setError(""); requestId.current ??= crypto.randomUUID(); try { if (await mutate({ type: "grant-recognition", requestId: requestId.current, userId: person.id, title: title.trim(), message: message.trim() })) { requestId.current = null; setTitle(""); setMessage(""); notify("Conquista concedida: +100 XP na temporada."); } else setError("Não foi possível confirmar. Tente novamente com os mesmos dados."); } finally { saving.current = false; } }}><h3>Conceder conquista</h3><p>Reconheça uma entrega ou atitude excepcional. A conquista concede +100 XP.</p><label htmlFor={titleId}>Título da conquista</label><input disabled={busy} id={titleId} value={title} required minLength={3} maxLength={120} onChange={event => { requestId.current = null; setTitle(event.target.value); }} /><label htmlFor={messageId}>Justificativa do gestor</label><textarea disabled={busy} id={messageId} value={message} required minLength={5} maxLength={2000} rows={4} onChange={event => { requestId.current = null; setMessage(event.target.value); }} /><Button disabled={busy || title.trim().length < 3 || message.trim().length < 5}>Conceder conquista · +100 XP</Button></form>}
+    {error && <p role="alert">{error}</p>}{history}
+  </div>;
+}

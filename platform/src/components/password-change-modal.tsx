@@ -6,6 +6,7 @@ import { browserAuth } from "@/lib/supabase-browser";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
+import { useModalFocus } from "./layout/use-modal-focus";
 
 interface PasswordChangeModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface PasswordChangeModalProps {
 }
 
 export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProps) {
+  const dialogRef = useModalFocus(isOpen);
   const { notify } = useAcademy();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -101,6 +103,8 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
       className="profile-photo-overlay"
       onClick={onClose}
       role="dialog"
+      ref={dialogRef}
+      tabIndex={-1}
       aria-modal="true"
       aria-labelledby="password-modal-title"
     >

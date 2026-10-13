@@ -57,7 +57,8 @@ const clientUser = {
 function createMockDb() {
   const mockFrom = vi.fn().mockReturnValue({
     select: vi.fn().mockReturnThis(),
-    order: vi.fn().mockResolvedValue({
+    order: vi.fn().mockReturnThis(),
+    range: vi.fn().mockResolvedValue({
       data: [
         {
           id: "11111111-1111-4111-8111-111111111111",

@@ -17,18 +17,18 @@ export function Evolution() {
   const xp = experience(state);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [rankingExpanded, setRankingExpanded] = useState(false);
   const [rankingPage, setRankingPage] = useState(1);
+  const [achievementsPage, setAchievementsPage] = useState(1);
 
   const people = state.people
     .filter((person) => person.status === "active" && person.audience !== "client")
     .map((person) => (person.id === me.id ? { ...person, xp: xp.annual } : person))
     .sort((a, b) => b.xp - a.xp);
-  const rankingPages = Math.max(1, Math.ceil(people.length / 10));
+  const rankingPages = Math.max(1, Math.ceil(people.length / 5));
   const currentPage = Math.min(rankingPage, rankingPages);
-  const visiblePeople = rankingExpanded ? people.slice((currentPage - 1) * 10, currentPage * 10) : people.slice(0, 5);
+  const visiblePeople = people.slice((currentPage - 1) * 5, currentPage * 5);
 
-  const approved = state.attempts.filter(
+  const approved = [...state.attempts].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)).filter(
     (attempt, index, attempts) =>
       attempt.status === "approved" &&
       attempt.userId === me.id &&
@@ -41,10 +41,34 @@ export function Evolution() {
   const withoutQuiz = state.courses.filter(
     (course) => !course.lessons.some((l) => l.type === "quiz") && isCourseComplete(course, state, me.id) && !approved.some((a) => a.courseId === course.id)
   );
+  const completedAt = (courseId: string) => state.xpEvents.find(event => event.courseId === courseId && (event.eventKey === "completion" || event.eventKey === "legacy"))?.createdAt ?? "";
+  const achievements = [
+    ...state.recognitions.filter(item => item.userId === me.id).map(item => ({
+      id: `recognition:${item.id}`, title: item.title, date: item.createdAt, recognition: true,
+      subtitle: `Reconhecimento de liderança · ${new Date(item.createdAt).toLocaleDateString("pt-BR")} · Concedido por ${item.managerName}`,
+      detail: item.message,
+    })),
+    ...withoutQuiz.map(course => ({
+      id: `course:${course.id}`, title: course.title, date: completedAt(course.id), recognition: false,
+      subtitle: `Curso concluído · sem avaliação · versão ${course.version}`, detail: "",
+    })),
+    ...approved.map(attempt => ({
+      id: `attempt:${attempt.id}`, title: attempt.courseTitle, date: completedAt(attempt.courseId) || attempt.submittedAt, recognition: false,
+      subtitle: `Aprovado com ${attempt.score}% · versão ${attempt.courseVersion}`,
+      detail: attempt.quizId === "proficiency" || (attempt as any).snapshot?.proficiency
+        ? "Aprovação por Prova de Proficiência · dispensa integral de aulas"
+        : "Aprovação registrada · emissão de certificado em preparação",
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+  const achievementsPages = Math.max(1, Math.ceil(achievements.length / 5));
+  const currentAchievementsPage = Math.min(achievementsPage, achievementsPages);
+  const visibleAchievements = achievements.slice((currentAchievementsPage - 1) * 5, currentAchievementsPage * 5);
 
   return (
-    <div className="page-enter">
+    <div className="page-enter evolution-page">
+      <div className="evolution-top">
       <PageHeading
+        variant="compact"
         eyebrow="SEU CONHECIMENTO DEIXA MARCAS"
         title="Toda evolução conta."
         description="Celebre seu caminho e descubra o que vem depois."
@@ -114,21 +138,6 @@ export function Evolution() {
         </div>
 
         <div className="profile-card-right">
-          <div className="profile-card-stats">
-            <div className="profile-stat-box">
-              <span className="stat-label">Nível</span>
-              <strong className="stat-value level-stat">
-                <Gem size={15} /> Nível {xp.level}
-              </strong>
-            </div>
-            <div className="profile-stat-box">
-              <span className="stat-label">Experiência</span>
-              <strong className="stat-value xp-stat">
-                {number(xp.total)} <small>XP</small>
-              </strong>
-            </div>
-          </div>
-
           <div className="profile-card-security">
             <Button
               type="button"
@@ -143,6 +152,7 @@ export function Evolution() {
           </div>
         </div>
       </section>
+      </div>
 
       {/* Hero de Trajetória da Gamificação */}
       <section className="evolution-hero">
@@ -154,7 +164,7 @@ export function Evolution() {
           <h2>Nível {xp.level} · Explorador</h2>
           <p>Um passo de cada vez. Um novo mundo a descobrir.</p>
           <Progress value={xp.levelProgress} label="Progresso para o próximo nível" />
-          <p style={{ marginTop: 8, fontSize: 9 }}>{400 - (xp.total % 400)} XP para o próximo nível</p>
+          <p className="evolution-next-level">{400 - (xp.total % 400)} XP para o próximo nível</p>
         </div>
         <div className="evolution-xp">
           <strong>
@@ -194,7 +204,6 @@ export function Evolution() {
         className="evolution-rules-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
           gap: 18,
           marginBottom: 28,
         }}
@@ -235,50 +244,26 @@ export function Evolution() {
       </div>
 
       <div className="dashboard-bottom">
-        <section>
+        <section className="panel ranking-card achievements-card">
           <SectionHeading
             title="Aprendizados que viram conquistas"
             description="Seus cursos concluídos, com ou sem avaliação."
           />
-          {state.recognitions.filter(item => item.userId === me.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(item => (
-            <article className="certificate-row leadership-recognition" key={item.id}>
-              <Medal size={30} aria-hidden="true" />
-              <div>
-                <strong>{item.title}</strong>
-                <small>Reconhecimento de liderança · {new Date(item.createdAt).toLocaleDateString("pt-BR")} · Concedido por {item.managerName}</small>
-                <p>{item.message}</p>
-              </div>
-              <span className="recognition-xp">+100 XP</span>
-            </article>
-          ))}
-          {withoutQuiz.map((course) => (
-            <div className="certificate-row" key={course.id}>
-              <Award size={30} />
-              <div>
-                <strong>{course.title}</strong>
-                <small>
-                  Curso concluído · sem avaliação · versão {course.version}
-                </small>
-              </div>
-            </div>
-          ))}
-          {approved.length ? (
-            approved.map((attempt) => (
-              <div className="certificate-row" key={attempt.id}>
-                <Award size={30} />
+          <div id="achievements-list" className="achievements-list" role="region" aria-label="Histórico de conquistas">
+            {visibleAchievements.map(item => (
+              <article className={`certificate-row ${item.recognition ? "leadership-recognition" : ""}`} key={item.id}>
+                {item.recognition ? <Medal size={30} aria-hidden="true" /> : <Award size={30} aria-hidden="true" />}
                 <div>
-                  <strong>{attempt.courseTitle}</strong>
-                  <small>
-                    Aprovado com {attempt.score}% · versão {attempt.courseVersion}
-                    <br />
-                    {attempt.quizId === "proficiency" || (attempt as any).snapshot?.proficiency
-                      ? "Aprovação por Prova de Proficiência · dispensa integral de aulas"
-                      : "Aprovação registrada · emissão de certificado em preparação"}
-                  </small>
+                  <strong>{item.title}</strong>
+                  <small>{item.subtitle}</small>
+                  {item.detail && (item.recognition ? <p>{item.detail}</p> : <small>{item.detail}</small>)}
                 </div>
-              </div>
-            ))
-          ) : withoutQuiz.length || state.recognitions.some(item => item.userId === me.id) ? null : (
+                {item.recognition && <span className="recognition-xp">+100 XP</span>}
+              </article>
+            ))}
+          </div>
+          {achievementsPages > 1 && <nav className="ranking-pagination" aria-label="Páginas das conquistas"><Button type="button" variant="secondary" size="sm" disabled={currentAchievementsPage === 1} onClick={() => setAchievementsPage(currentAchievementsPage - 1)} aria-label="Página anterior"><ChevronLeft size={16} /></Button><span aria-live="polite">Página {currentAchievementsPage} de {achievementsPages}</span><Button type="button" variant="secondary" size="sm" disabled={currentAchievementsPage === achievementsPages} onClick={() => setAchievementsPage(currentAchievementsPage + 1)} aria-label="Próxima página"><ChevronRight size={16} /></Button></nav>}
+          {!achievements.length && (
             <EmptyState
               icon={<Award size={30} />}
               title="Sua primeira conquista está por vir."
@@ -298,7 +283,7 @@ export function Evolution() {
             description="Ranking anual · XP de aulas, acertos e conclusões"
           />
           {visiblePeople.map((person, index) => {
-            const rank = rankingExpanded ? (currentPage - 1) * 10 + index + 1 : index + 1;
+            const rank = (currentPage - 1) * 5 + index + 1;
             return (
             <div
               className="ranking-row"
@@ -330,8 +315,7 @@ export function Evolution() {
               </span>
             </div>
           );})}
-          {people.length > 5 && <div className="ranking-actions"><Button type="button" variant="secondary" onClick={() => { setRankingExpanded(value => !value); setRankingPage(1); }}>{rankingExpanded ? "Mostrar apenas Top 5" : `Ver ranking completo (${people.length})`}</Button></div>}
-          {rankingExpanded && rankingPages > 1 && <nav className="ranking-pagination" aria-label="Páginas do ranking"><Button type="button" variant="secondary" size="sm" disabled={currentPage === 1} onClick={() => setRankingPage(currentPage - 1)} aria-label="Página anterior"><ChevronLeft size={16} /></Button><span aria-live="polite">Página {currentPage} de {rankingPages}</span><Button type="button" variant="secondary" size="sm" disabled={currentPage === rankingPages} onClick={() => setRankingPage(currentPage + 1)} aria-label="Próxima página"><ChevronRight size={16} /></Button></nav>}
+          {rankingPages > 1 && <nav className="ranking-pagination" aria-label="Páginas do ranking"><Button type="button" variant="secondary" size="sm" disabled={currentPage === 1} onClick={() => setRankingPage(currentPage - 1)} aria-label="Página anterior"><ChevronLeft size={16} /></Button><span aria-live="polite">Página {currentPage} de {rankingPages}</span><Button type="button" variant="secondary" size="sm" disabled={currentPage === rankingPages} onClick={() => setRankingPage(currentPage + 1)} aria-label="Próxima página"><ChevronRight size={16} /></Button></nav>}
         </section>
       </div>
 

@@ -122,7 +122,7 @@ export const stateSchema = z.object({
   courseDrafts: z.array(courseSchema).default([]), articleDrafts: z.array(articleSchema).default([]),
   departments: z.array(z.string()), products: z.array(z.string()), completed: z.record(z.string(), z.array(z.string())),
   videoProgress: z.record(z.string(), z.record(z.string(), z.object({ position: z.number(), duration: z.number(), updatedAt: z.string() }))).default({}),
-  bookmarks: z.array(z.string()), attempts: z.array(attemptSchema), xpEvents: z.array(z.object({ id: z.string(), amount: z.number(), season: z.string(), label: z.string() })),
+  bookmarks: z.array(z.string()), attempts: z.array(attemptSchema), xpEvents: z.array(z.object({ id: z.string(), amount: z.number(), season: z.string(), label: z.string(), courseId: z.string().optional(), eventKey: z.string().optional(), createdAt: z.string().optional() })),
   readNotices: z.array(z.string()),
   notifications: z.array(notificationSchema).default([]),
   quizNotifications: quizNotificationPreferenceSchema.optional(),
