@@ -1,0 +1,74 @@
+import { createHash } from 'node:crypto';
+import { courseSchema, articleSchema } from '../src/lib/model.ts';
+export const DEMO_NAMESPACE = 'academy-presentation-2026';
+export const HOMOLOGACAO_REF = 'attnodzrjlhqydhrgqtr';
+export const departments = ['Suporte', 'Desenvolvimento', 'Comercial', 'Recursos Humanos', 'Financeiro', 'Operações'];
+const firstNames = ['Ana', 'Bruno', 'Camila', 'Diego', 'Elisa', 'Felipe', 'Gabriela', 'Henrique', 'Isabela', 'João', 'Larissa', 'Marcos', 'Natália', 'Otávio', 'Paula', 'Rafael', 'Sofia', 'Tiago', 'Valéria', 'William', 'Yasmin', 'André', 'Beatriz', 'Carlos'];
+const surnames = ['Almeida', 'Barbosa', 'Costa', 'Duarte', 'Esteves', 'Ferreira'];
+export const demoId = key => { const hash = createHash('sha256').update(DEMO_NAMESPACE + ':' + key).digest('hex'); return `${hash.slice(0,8)}-${hash.slice(8,12)}-4${hash.slice(13,16)}-8${hash.slice(17,20)}-${hash.slice(20,32)}`; };
+export function assertIsolated(config) {
+  if (config.E2E_ISOLATED_SUPABASE_REF !== HOMOLOGACAO_REF || new URL(config.NEXT_PUBLIC_SUPABASE_URL).hostname !== `${HOMOLOGACAO_REF}.supabase.co`) throw new Error('Demo seed is restricted to the dedicated homologacao database.');
+}
+export function accountPlan() {
+  return [{ key:'admin', name:'Administrador da apresentação (Demo)', email:'demo.apresentacao.admin@demaria.com.br', role:'admin', status:'active', department:'Diretoria' }, ...departments.flatMap((department, sector) => [
+    { key:`manager-${sector}`, name:`${firstNames[sector]} ${surnames[sector]} — Gestor (Demo)`, email:`demo.gestor.${sector+1}@demaria.com.br`, role:'manager', status:'active', department },
+    ...Array.from({length:24},(_,index)=>({key:`person-${sector}-${index}`,name:`${firstNames[index]} ${surnames[sector]} (Demo)`,email:`demo.colaborador.${sector+1}.${index+1}@demaria.com.br`,role:'student',status:index>=22?'pending':index>=20?'inactive':'active',department,managerKey:`manager-${sector}`,sector,index})),
+  ])];
+}
+export function presentationData(accounts, now = new Date()) {
+  const byKey = new Map(accounts.map(account=>[account.key,account]));
+  const date = (days,hour=14) => {const d=new Date(now);d.setUTCDate(d.getUTCDate()+days);d.setUTCHours(hour,0,0,0);return d.toISOString();};
+  const day = days=>date(days).slice(0,10);
+  const data = Object.fromEntries(['academy_profiles','academy_resources','academy_progress','academy_attempts','academy_xp','academy_presence','academy_engagement_daily','academy_trails','academy_trail_assignments','academy_trail_policies','academy_pdi_notes','academy_recognitions','academy_quizzes','academy_quiz_questions','academy_quiz_attempts','academy_community_articles','academy_community_comments','academy_community_reactions','academy_report_publications','academy_report_reactions','academy_report_completions','academy_lesson_notes'].map(table=>[table,[]]));
+  const emit=(table,row)=>data[table].push(row), admin=byKey.get('admin');
+  for(const a of accounts)emit('academy_profiles',{id:a.id,name:a.name,email:a.email,role:a.role,status:a.status,audience:'internal',department:a.department,manager_id:a.managerKey?byKey.get(a.managerKey).id:null,created_at:date(-95-(a.index??0))});
+  const courses=departments.flatMap((department,sector)=>Array.from({length:3},(_,index)=>{
+    const id=`demo-apresentacao-curso-${sector}-${index}`;
+    const questions=[{id:'q1',type:'choice',prompt:'Qual é a primeira ação ao receber uma solicitação?',options:['Registrar o contexto e confirmar a necessidade','Encerrar sem registrar'],correct:'Registrar o contexto e confirmar a necessidade'}, {id:'q2',type:'choice',prompt:'Quais práticas melhoram o atendimento?',options:['Documentar','Validar com o solicitante','Ignorar evidências'],correct:'["Documentar","Validar com o solicitante"]',multiple:true}, {id:'q3',type:'text',prompt:'Descreva como compartilhar uma solução com a equipe.',options:[],correct:'Registrar contexto, passos e resultado na base de conhecimento.'}];
+    const course=courseSchema.parse({id,title:`${['Integração e boas práticas','Rotina e melhoria contínua','Qualidade e resolução de problemas'][index]} · ${department}`,description:'Conteúdo fictício de demonstração: desenvolva habilidades, pratique situações e acompanhe sua evolução.',product:'Academia DeMaria',category:index?'processos':'integração',level:index?'recomendado':'essencial',accent:['violet','mint','peach','blue','pink','slate'][sector],status:'published',availability:'active',xp:90,required:index===0,banner:'',author:'Equipe de capacitação (Demo)',department,audience:'internal',lessons:[
+      {id:id+'-1',title:'Contexto e responsabilidades',module:'01 · Fundamentos',minutes:8,type:'reading',content:'<h2>Aprender para melhorar</h2><p>Este conteúdo é fictício. Observe o contexto, combine expectativas e registre as evidências. O objetivo é experimentar a plataforma durante a apresentação.</p>',videoUrl:''},
+      {id:id+'-2',title:'Prática e comunicação',module:'02 · Na prática',minutes:12,type:'reading',content:'<h2>Um caso da rotina</h2><p>Uma pessoa solicita apoio. Descreva o problema, confira as informações e compartilhe a solução de forma clara com sua equipe.</p>',videoUrl:''},
+      {id:id+'-quiz',title:'Avaliação de aprendizagem',module:'03 · Confira o aprendizado',minutes:6,type:'quiz',content:'',videoUrl:'',questions},
+    ],questions,passingScore:70,retryPolicy:'free',version:1,hasProficiencyTest:index===2,proficiencyScore:85,proficiencyQuestions:questions});
+    emit('academy_resources',{id,kind:'course',published:course,draft:null,revision:1});return course;
+  }));
+  for(let sector=0;sector<departments.length;sector++){
+    const manager=byKey.get(`manager-${sector}`), own=courses.slice(sector*3,sector*3+3);
+    emit('academy_trail_policies',{owner_id:manager.id,revision:1,data:{popup:true,email:false,discord:false,discordWeekdays:[1,2,3,4,5],learnerDays:7,managerDays:2,repeatDays:7,inactivityDays:7,lowAccessEnabled:true,lowAccessWindow:30,lowAccessMinDays:3,inactivityEnabled:true,resumeEnabled:true}});
+    for(let t=0;t<2;t++){const id=demoId(`trail-${sector}-${t}`);emit('academy_trails',{id,owner_id:manager.id,revision:1,data:{id,title:`${t?'Desenvolvimento contínuo':'Integração da equipe'} · ${departments[sector]}`,description:'Trilha fictícia para acompanhamento na apresentação.',purpose:t?'development':'onboarding',department:departments[sector],courseIds:t?[own[1].id,own[2].id]:[own[0].id,own[1].id],active:true}});}
+  }
+  const quizTitles=['Processos e qualidade','Atendimento e colaboração','Segurança da informação','Boas práticas da Academia'];
+  const quizzes=quizTitles.map((title,q)=>{
+    const id=demoId(`quiz-${q}`),questions=Array.from({length:5},(_,i)=>({id:demoId(`quiz-${q}-question-${i}`),prompt:`${title}: situação prática ${i+1}. Qual atitude é recomendada?`,options:[{id:'a',text:'Registrar e validar as informações'},{id:'b',text:'Ignorar o contexto'}],correct_option_id:'a',explanation:'Registrar e validar dá segurança ao processo.',image_url:null,image_alt:null}));
+    emit('academy_quizzes',{id,title:`${title} (Demo)`,slug:`demo-apresentacao-desafio-${q}`,description:'Edição fictícia para demonstração. Uma tentativa oficial por edição.',category:q===2?'suporte':'sistema',xp_reward:70,passing_score:70,period_type:'monthly',is_active:q===3,available_from:date(-30),expires_at:q===3?date(60):date(-1),target_audience:'internal',revision:1,is_featured:false,announcement_at:null});
+    for(const [i,question]of questions.entries())emit('academy_quiz_questions',{...question,quiz_id:id,order_index:i,image_url:null,image_alt:null});return {id,title:`${title} (Demo)`,description:'Edição fictícia para demonstração. Uma tentativa oficial por edição.',category:q===2?'suporte':'sistema',revision:1,target_audience:'internal',passing_score:70,xp_reward:70,questions};
+  });
+  for(const a of accounts.filter(account=>account.role==='student'&&account.status!=='pending')){
+    const manager=byKey.get(a.managerKey),own=courses.slice(a.sector*3,a.sector*3+3),activity=a.index%6;
+    for(let t=0;t<2;t++)emit('academy_trail_assignments',{id:demoId(`assignment-${a.key}-${t}`),trail_id:demoId(`trail-${a.sector}-${t}`),user_id:a.id,assigned_by:manager.id,title:`${t?'Desenvolvimento contínuo':'Integração da equipe'} · ${a.department}`,course_ids:t?[own[1].id,own[2].id]:[own[0].id,own[1].id],due_date:day(a.index%4===0?-10:14+t*10),learner_days:7,manager_days:2,active:a.status==='active',revision:1,created_at:date(-35)});
+    for(const [c,course]of own.entries()){
+      const scenario=(activity+c)%6,fullyRead=[0,1,4,5].includes(scenario);
+      for(const [l,lesson]of course.lessons.slice(0,2).entries())if(fullyRead||(scenario===2&&l===0))emit('academy_progress',{user_id:a.id,course_id:course.id,version:1,lesson_id:lesson.id,done:true,updated_at:date(-3-a.index%18)});
+      if([0,4,5].includes(scenario)){
+        const passed=scenario!==5,proficiency=scenario===4&&c===2,score=passed?(proficiency?95:75+a.index%5*5):50;
+        emit('academy_attempts',{id:demoId(`attempt-${a.key}-${c}`),user_id:a.id,course_id:course.id,version:1,quiz_id:proficiency?'proficiency':course.id+'-quiz',snapshot:{...course,proficiency},answers:{q1:course.questions[0].correct,q2:'["Validar com o solicitante","Documentar"]',q3:'Registrar passos e compartilhar a solução.'},status:passed?'approved':'retry',score,feedback:passed?'Boa aplicação dos conceitos. Continue compartilhando suas práticas.':'Revise o contexto e tente novamente.',correct_text_ids:passed?['q3']:[],partial_text_ids:passed?[]:['q3'],submitted_at:date(-2-a.index%14),reviewed_at:date(-1-a.index%14),reviewed_by:manager.id});
+        if(passed)emit('academy_report_completions',{user_id:a.id,course_id:course.id,version:1,completed_at:date(-1-a.index%14)});
+      }else if(scenario===1&&a.index%2===0)emit('academy_attempts',{id:demoId(`attempt-${a.key}-${c}`),user_id:a.id,course_id:course.id,version:1,quiz_id:course.id+'-quiz',snapshot:course,answers:{q1:course.questions[0].correct,q2:'["Documentar"]',q3:'Minha reflexão sobre o caso.'},status:'pending',score:null,feedback:'',correct_text_ids:[],partial_text_ids:[],submitted_at:date(-2)});
+    }
+    for(let d=0;d<45;d++)if((a.status==='active'?d%((a.index%4)+2)!==0:d>25&&d%4===0)&&!(activity===3&&d<12))emit('academy_engagement_daily',{user_id:a.id,day:day(-d),active_seconds:d%11===0?0:300+((a.index*137+d*79)%2700)});
+    emit('academy_presence',{user_id:a.id,session_id:demoId('presence-'+a.key),last_heartbeat:date(-90),active:false,last_access_at:date(a.status==='inactive'?-45:activity===3?-16:-a.index%4,10+a.index%8)});
+    for(let x=0;x<12;x++)emit('academy_xp',{id:demoId(`xp-${a.key}-${x}`),user_id:a.id,course_id:null,amount:35+(a.index%10)*45+x*3,season:String(now.getUTCFullYear()),label:'Participação e aprendizagem (Demo)',event_key:'legacy',created_at:date(-x*3)});
+    emit('academy_xp',{id:demoId(`xp-prior-${a.key}`),user_id:a.id,course_id:null,amount:400+a.index*20,season:String(now.getUTCFullYear()-1),label:'Histórico fictício da temporada anterior (Demo)',event_key:'legacy',created_at:new Date(Date.UTC(now.getUTCFullYear()-1,10,10,14)).toISOString()});
+    for(let q=0;q<3;q++)if((a.index+q)%4!==0){const quiz=quizzes[q],correct=2+(a.index+q)%4,passed=correct>=4;emit('academy_quiz_attempts',{id:demoId(`challenge-${a.key}-${q}`),user_id:a.id,quiz_id:quiz.id,score_percentage:correct*20,answers:Object.fromEntries(quiz.questions.map((question,i)=>[question.id,i<correct?'a':'b'])),passed,xp_granted:passed?70:0,completed_at:date(-3-q*7),snapshot:quiz,question_count:5,correct_count:correct,passing_score_snapshot:70,xp_reward_snapshot:70,quiz_revision:1,scoring_version:1,snapshot_status:'complete'});}
+    if(a.status==='active')emit('academy_pdi_notes',{id:demoId(`pdi-${a.key}`),user_id:a.id,manager_id:manager.id,content:`PDI fictício: praticar comunicação e concluir a trilha de ${a.department}. Próximo acompanhamento combinado para a semana seguinte.`,created_at:date(-5)});
+    if(a.index%5===0){const xp=demoId(`recognition-xp-${a.key}`);emit('academy_xp',{id:xp,user_id:a.id,amount:100,season:String(now.getUTCFullYear()),label:'Reconhecimento da liderança (Demo)',event_key:'legacy',created_at:date(-4)});emit('academy_recognitions',{id:demoId(`recognition-${a.key}`),user_id:a.id,manager_id:manager.id,title:'Colaboração que faz diferença (Demo)',message:'Reconhecimento fictício por apoiar a equipe e documentar uma solução com clareza.',xp_id:xp,request_id:demoId(`recognition-request-${a.key}`),created_at:date(-4)});}
+    emit('academy_lesson_notes',{user_id:a.id,course_id:own[0].id,lesson_id:own[0].lessons[0].id,content:'Anotação fictícia: registrar contexto, combinar expectativas e compartilhar aprendizados.',updated_at:date(-2)});
+  }
+  const writers=accounts.filter(a=>a.role==='student'&&a.status==='active'&&a.index<3);
+  for(const [i,a]of writers.entries()){
+    const id=`demo-apresentacao-artigo-${i}`,article=articleSchema.parse({id,title:`${['Como organizar um atendimento','Checklist para validar uma solicitação','Como compartilhar uma solução'][i%3]} · ${a.department}`,product:'Academia DeMaria',category:'Práticas da equipe',content:i===0?'Em um caso fictício, uma DLL estava ausente. Confira a versão, registre evidências e valide a solução antes de orientar o colega.':'Conteúdo fictício: descreva o contexto, organize os passos de forma clara e confirme o resultado com o solicitante.',summary:'Artigo fictício de compartilhamento entre colaboradores.',tags:['demonstração','colaboração'],status:'published',revision:1,updatedAt:date(-i%10),author:a.name,authorId:a.id,community:true});
+    emit('academy_resources',{id,kind:'article',published:article,draft:null,revision:1});emit('academy_community_articles',{article_id:id,author_id:a.id,created_at:date(-20+i%12)});emit('academy_report_publications',{article_id:id,author_id:a.id,first_published_at:date(-20+i%12),origin:'prospective'});
+    for(let n=0;n<6;n++){const reader=writers[(i+n+1)%writers.length];emit('academy_community_comments',{id:demoId(`comment-${i}-${n}`),article_id:id,user_id:reader.id,author:reader.name,content:'Comentário fictício: obrigada por compartilhar! Vou aplicar esse checklist na próxima atividade.',created_at:date(-n-1)});for(const reaction of ['like','hype']){emit('academy_community_reactions',{article_id:id,user_id:reader.id,reaction,active:true,created_at:date(-n-1)});emit('academy_report_reactions',{id:demoId(`reaction-${i}-${n}-${reaction}`),article_id:id,user_id:reader.id,author_id:a.id,reaction,active:true,occurred_at:date(-n-1)});}}
+  }
+  return {tables:data,collectionStart:date(-60),counts:Object.fromEntries(Object.entries(data).map(([table,rows])=>[table,rows.length])),accounts:accounts.map(({id,key,email,role,status,department})=>({id,key,email,role,status,department})),namespace:DEMO_NAMESPACE};
+}
