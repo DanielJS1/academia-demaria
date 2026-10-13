@@ -33,4 +33,8 @@ Uma implantação de produção sem atribuição de domínio permite verificar o
 
 ## Estado
 
-Banco preparado; build aprovado; publicação da aplicação em andamento. Registrar o commit, PR, implantação final e verificações de produção ao concluir.
+Publicação concluída em 13/10/2026 pela PR #47 (`https://github.com/DanielJS1/academia-demaria/pull/47`), integrada no commit `bdd0f0806a5522c0d39593547dc25a1eaeaf37a1`. Checks de CI, segurança, Vercel e Vimeo real aprovados antes da integração.
+
+Build validado `dpl_BLGEZEZw8hWJQDUcztJwFTUUFa9q` promovido; a integração de main gerou a implantação automática `dpl_4RZoUFZ4LUicmpfyXCvu27X7kxQj`, READY, no mesmo código. Aplicação `/acesso` e BC pública responderam 200; relatórios e rotina de lembretes sem autenticação responderam 401. Fluxos autenticados e persistência foram validados no banco isolado de homologação.
+
+O projeto separado de homologação também acompanha main; detalhes e roteiro em `HOMOLOGACAO-APRESENTACAO.md`.
