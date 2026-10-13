@@ -4,7 +4,7 @@ import { courseProgress, type AcademyState, type Course } from "./model";
 export const COURSE_BONUS = 30;
 export const APPROVAL_BONUS = 30;
 export const RETRY_BONUS = 10;
-export const isCourseComplete = (course: Course, state: AcademyState, userId: string) =>
+export const isCourseComplete = (course: Course, state: Pick<AcademyState, "completed" | "attempts">, userId: string) =>
   courseProgress(course,state.completed[course.id]||[])===100 && (
     state.attempts.some(a=>a.courseId===course.id&&a.userId===userId&&a.status==="approved"&&(a.quizId==="proficiency"||(a as any).snapshot?.proficiency))
     || course.lessons.filter(l=>l.type==="quiz").every(l=>state.attempts.some(a=>a.courseId===course.id&&a.courseVersion===course.version&&a.userId===userId&&a.status==="approved"&&(a.quizId===l.id||(!a.quizId&&course.lessons.find(x=>x.type==="quiz")?.id===l.id))))

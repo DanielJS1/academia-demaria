@@ -5,6 +5,7 @@ import { browserAuth } from "@/lib/supabase-browser";
 import { youtubeEmbed, type Course, type Lesson } from "@/lib/model";
 import { isVideoNearEnd } from "@/lib/video-completion";
 import { mergeWatched } from "@/lib/pilot-contract";
+import { LessonCompletionOverlay } from "./lesson-completion-overlay";
 
 declare global {
   interface Window {
@@ -237,23 +238,8 @@ export function YouTubeLesson({
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
         />
+        <LessonCompletionOverlay key={`completion:${lesson.id}`} visible={nearEnd || completed} preview={preview} completed={completed} nextTitle={nextTitle} onNext={onNext} />
       </div>
-
-      {(nearEnd || completed) && (
-        <div className="video-next-action" aria-live="polite">
-          <div>
-            <strong>
-              {preview ? "Final da prévia" : completed ? "Aula concluída!" : "Final do vídeo"}
-            </strong>
-            <p>{!preview && !completed ? "Para concluir, assista a pelo menos 50% da aula e chegue ao final. Administradores precisam apenas chegar ao final." : nextTitle ? `A seguir: ${nextTitle}` : "Você chegou à última aula deste curso."}</p>
-          </div>
-          {onNext && (
-            <button className="button button-primary" disabled={!preview && !completed} onClick={onNext}>
-              Próxima aula →
-            </button>
-          )}
-        </div>
-      )}
 
       {error && (
         <div className="form-error" role="alert">

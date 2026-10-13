@@ -22,7 +22,7 @@ async function authorized(path: string, init: RequestInit = {}) {
   return data;
 }
 
-export function TechnicalMaterials({ search, clearSearch }: { search: string; clearSearch?: () => void }) {
+export function TechnicalMaterials({ search, clearSearch, initialMaterialId }: { search: string; clearSearch?: () => void; initialMaterialId?: string }) {
   const { me } = useAcademy();
   const canEdit = me.audience !== "client" && (me.role === "admin" || me.role === "manager");
   const [materials, setMaterials] = useState<TechnicalMaterial[]>([]);
@@ -35,6 +35,7 @@ export function TechnicalMaterials({ search, clearSearch }: { search: string; cl
   const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState<{ title: string; url: string; kind: "manual" | "video" } | null>(null);
   const closeViewer = useRef<HTMLButtonElement>(null);
+  const openedFromLink = useRef<string | null>(null);
   useEffect(() => {
     if (!open) return;
     closeViewer.current?.focus();
@@ -69,15 +70,6 @@ export function TechnicalMaterials({ search, clearSearch }: { search: string; cl
   ), [materials, filter, search]);
   const topics = useMemo(() => [...new Set(visible.map(item => item.topic))].sort((a, b) => a.localeCompare(b, "pt-BR")), [visible]);
 
-  if (me.audience === "client") {
-    return (
-      <div className="technical-empty panel">
-        <h3>Acesso restrito</h3>
-        <p>Os materiais técnicos são exclusivos para a equipe interna da DeMaria.</p>
-      </div>
-    );
-  }
-
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -105,13 +97,29 @@ export function TechnicalMaterials({ search, clearSearch }: { search: string; cl
     finally { setBusy(false); }
   }
 
-  async function openMaterial(item: TechnicalMaterial) {
+  const openMaterial = useCallback(async (item: TechnicalMaterial) => {
     try {
       setError("");
       const data = await authorized(`/api/technical-materials?open=${encodeURIComponent(item.id)}`);
       if (!data.url) throw new Error("Material indisponível.");
       setOpen({ title: item.title, url: data.url, kind: item.kind });
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível abrir o material."); }
+  }, []);
+  useEffect(() => {
+    if (!initialMaterialId || loading || me.audience === "client" || openedFromLink.current === initialMaterialId) return;
+    const item = materials.find(material => material.id === initialMaterialId);
+    openedFromLink.current = initialMaterialId;
+    if (item) void openMaterial(item);
+    else if (!error) setError("Material não encontrado ou indisponível.");
+  }, [initialMaterialId, materials, loading, me.audience, error, openMaterial]);
+
+  if (me.audience === "client") {
+    return (
+      <div className="technical-empty panel">
+        <h3>Acesso restrito</h3>
+        <p>Os materiais técnicos são exclusivos para a equipe interna da DeMaria.</p>
+      </div>
+    );
   }
 
   async function remove(item: TechnicalMaterial) {

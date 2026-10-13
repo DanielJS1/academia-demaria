@@ -696,8 +696,8 @@
 .hero-carousel-buttons button:hover { background: rgba(255,255,255,.2); }
 .hero-carousel-dot::before { content: ""; grid-area: 1 / 1; width: 31px; height: 4px; border-radius: 999px; background: rgba(255,255,255,.4); }
 .hero-carousel-dot-fill { grid-area: 1 / 1; width: 31px; height: 4px; border-radius: 999px; background: #fff; transform-origin: left; transform: scaleX(0); }
-.hero-carousel-dot.is-active .hero-carousel-dot-fill { animation: hero-progress linear forwards; }
-@keyframes hero-progress { to { transform: scaleX(1); } }
+.hero-carousel-dot.is-active .hero-carousel-dot-fill { transform: scaleX(.08); animation: hero-progress linear forwards; }
+@keyframes hero-progress { from { transform: scaleX(.08); } to { transform: scaleX(1); } }
 @media (max-width: 1200px) and (min-width: 701px) {
   .hero-slide-copy { width: 88%; }
   .hero-carousel h2 { font-size: 26px; }

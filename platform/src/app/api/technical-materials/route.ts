@@ -1,6 +1,8 @@
 import { ApiError, authenticate } from "@/lib/pilot-server";
 import { technicalMaterialInput } from "@/lib/technical-material";
 import { vimeoEmbed } from "@/lib/model";
+import { searchMaterialMetadata } from "@/lib/knowledge/material-search.server";
+import { knowledgePageNumber } from "@/lib/knowledge/search";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +24,11 @@ export async function GET(request: Request) {
   try {
     const { db, me } = await authenticate(request);
     internal(me.audience);
-    const id = new URL(request.url).searchParams.get("open");
+    const params = new URL(request.url).searchParams;
+    if (params.has("q")) {
+      return Response.json(await searchMaterialMetadata(db, (params.get("q") ?? "").trim().slice(0, 120), knowledgePageNumber(params.get("pagina"))), { headers });
+    }
+    const id = params.get("open");
     if (id) {
       if (!/^[a-f0-9-]{36}$/.test(id)) throw new ApiError("Material inválido.", 400);
       const result = await db.from("academy_technical_materials").select("kind,pdf_path,video_url").eq("id", id).maybeSingle();
@@ -32,9 +38,14 @@ export async function GET(request: Request) {
       if (signed.error) throw new ApiError("Não foi possível abrir o PDF.", 503);
       return Response.json({ url: signed.data.signedUrl }, { headers });
     }
-    const result = await db.from("academy_technical_materials").select("id,title,description,topic,kind,pdf_path,video_url,created_by,created_at").order("created_at", { ascending: false });
-    if (result.error) throw new ApiError("Não foi possível carregar os materiais técnicos.", 503);
-    return Response.json({ materials: result.data.map(item => ({ id: item.id, title: item.title, description: item.description, topic: item.topic, kind: item.kind, pdfPath: item.pdf_path, videoUrl: item.video_url, createdBy: item.created_by, createdAt: item.created_at })) }, { headers });
+    const materials = [];
+    for (let offset = 0; ; offset += 500) {
+      const result = await db.from("academy_technical_materials").select("id,title,description,topic,kind,pdf_path,video_url,created_by,created_at").order("created_at", { ascending: false }).order("id").range(offset, offset + 499);
+      if (result.error) throw new ApiError("Não foi possível carregar os materiais técnicos.", 503);
+      materials.push(...(result.data ?? []).map(item => ({ id: item.id, title: item.title, description: item.description, topic: item.topic, kind: item.kind, pdfPath: item.pdf_path, videoUrl: item.video_url, createdBy: item.created_by, createdAt: item.created_at })));
+      if ((result.data?.length ?? 0) < 500) break;
+    }
+    return Response.json({ materials }, { headers });
   } catch (error) { return failure(error); }
 }
 

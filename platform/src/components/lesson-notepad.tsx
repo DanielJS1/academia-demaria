@@ -13,11 +13,23 @@ export function getUserNotesStorageKey(userId: string): string {
 
 export function getAllUserNotes(userId: string): Record<string, Record<string, string>> {
   try {
-    const raw = localStorage.getItem(getUserNotesStorageKey(userId));
-    return raw ? JSON.parse(raw) : {};
+    return readUserNotes(userId);
   } catch {
     return {};
   }
+}
+
+/** Search distinguishes a failed/private browser storage read from an empty notebook. */
+export function readUserNotes(userId: string): Record<string, Record<string, string>> {
+  if (!userId) throw new Error("Entre novamente para consultar suas anotações.");
+  const raw = localStorage.getItem(getUserNotesStorageKey(userId));
+  if (!raw) return {};
+  const parsed: unknown = JSON.parse(raw);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Não foi possível ler suas anotações neste navegador.");
+  for (const notes of Object.values(parsed)) {
+    if (!notes || typeof notes !== "object" || Array.isArray(notes) || Object.values(notes).some(value => typeof value !== "string")) throw new Error("Não foi possível ler suas anotações neste navegador.");
+  }
+  return parsed as Record<string, Record<string, string>>;
 }
 
 export function getCourseNotes(userId: string, courseId: string): Record<string, string> {
@@ -36,6 +48,7 @@ export function saveUserLessonNote(userId: string, courseId: string, lessonId: s
       all[courseId][lessonId] = text;
     }
     localStorage.setItem(getUserNotesStorageKey(userId), JSON.stringify(all));
+    window.dispatchEvent(new CustomEvent("academy:notes-changed", { detail: { userId } }));
   } catch {}
 }
 

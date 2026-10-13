@@ -1,0 +1,91 @@
+.trails-page { display: grid; gap: 24px; }
+.trail-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,340px),1fr)); gap: 20px; }
+.trail-card,.trail-form,.trail-table { padding: 24px; }
+.trail-card { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+.trail-card h2,.trail-form h2,.trail-table h2 { font-size: 22px; margin: 0; }
+.trail-card p { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); }
+.trail-card-heading,.trail-section-heading,.trail-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.trail-actions { justify-content: flex-start; }
+.trail-section-heading p { flex: 1 1 280px; min-width: 0; }
+.trail-status { color: var(--primary); background: var(--accent-subtle); border-radius: 20px; padding: 5px 12px; font-size: 13px; font-weight: 650; }
+.trail-status.late { color: var(--danger-foreground,#b42318); background: var(--surface2); }
+.trail-form { display: grid; gap: 18px; }
+.trail-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.trail-form label,.trail-table label { display: grid; gap: 8px; font-size: 16px; font-weight: 550; }
+.trail-form input:not([type=checkbox]),.trail-form select,.trail-form textarea,.trail-table input { width: 100%; min-height: 44px; padding: 10px 12px; background: var(--surface); color: var(--foreground); border: 1px solid var(--line); border-radius: 10px; }
+.trail-form textarea { min-height: 90px; resize: vertical; }
+.trail-form .trail-check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 450; }
+.trail-check input { accent-color: var(--primary); width: 18px; height: 18px; flex: 0 0 auto; }
+.trail-course-picker { max-height: 300px; overflow: auto; padding: 8px 12px; background: var(--surface2); border-radius: 12px; }
+.trail-member-picker { display: grid; gap: 18px; min-width: 0; margin: 0; border: 1px solid var(--line); padding: 22px 18px 18px; border-radius: 12px; }
+.trail-member-picker legend { padding: 0 8px; font-weight: 650; }
+.trail-help { color: var(--muted); font-size: 14px; line-height: 1.6; }
+.trail-picker-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.trail-member-row { padding: 10px 8px; border-radius: 8px; }
+.trail-member-row.is-selected { background: var(--accent-subtle); outline: 1px solid var(--primary); outline-offset: -1px; }
+.trail-selection-summary { display: grid; gap: 10px; border: 1px solid var(--line); background: var(--surface2); padding: 18px; border-radius: 12px; }
+.trail-selection-summary ol { margin: 0; padding-left: 22px; }
+.trail-selected-names { display: flex; gap: 10px; flex-wrap: wrap; }
+.trail-selected-names .button { white-space: normal; height: auto; text-align: left; }
+.trail-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.trail-metrics > div { display: grid; gap: 8px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.trail-metrics svg { color: var(--primary); }
+.trail-metrics strong { font-size: 28px; }
+.trail-metrics span { font-size: 15px; }
+.trail-success { padding: 18px; background: var(--mint-subtle); color: var(--success-foreground); border-radius: 12px; }
+.trail-reminders { padding: 18px; border: 1px solid var(--line); border-radius: 12px; }
+.trail-reminders summary { min-height: 44px; cursor: pointer; font-size: 16px; font-weight: 600; }
+.trail-reminders[open] .trail-form-grid { margin-top: 16px; }
+.trail-review-members { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.trail-review-members li { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; }
+.trail-review-members svg { color: var(--success-foreground); flex-shrink: 0; }
+.trail-review-members small { display: block; color: var(--muted); margin-top: 4px; }
+.trail-assignment-cards { display: grid; gap: 18px; margin-top: 18px; }
+.trail-assignment-card { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; }
+.trail-assignment-card h3 { font-size: 18px; }
+.trail-assignment-card small { color: var(--muted); }
+.trail-assignment-editor { padding: 18px; background: var(--surface2); border-radius: 12px; }
+.trail-table .trail-form-grid { margin-top: 18px; }
+.trail-table select { width: 100%; min-height: 44px; padding: 10px 12px; background: var(--surface); color: var(--foreground); border: 1px solid var(--line); border-radius: 10px; }
+.trails-page h3 { font-size: 18px; }
+.trails-page .button { min-height: 44px; }
+@media(max-width:760px) { .trail-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .trail-picker-toolbar { align-items: stretch; flex-direction: column; } }
+.trail-course-list { margin: 0; padding-left: 24px; }
+.trail-course-list li { padding: 12px 0; border-top: 1px solid var(--line); }
+.trail-course-list li > span { margin-right: 8px; }
+.trail-course-list li a { display: inline-flex; vertical-align: middle; padding: 10px; }
+.trails-page progress { width: 100%; height: 8px; accent-color: var(--primary); }
+.trail-table-scroll { overflow-x: auto; margin-top: 18px; }
+.trail-table table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.trail-table th,.trail-table td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.trail-table td small,.trail-check small { display: block; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+.trail-table th { font-size: 13px; color: var(--muted); }
+.learning-dialog { background: var(--surface); color: var(--foreground); border: 1px solid var(--line); border-radius: 24px; padding: 32px; width: min(560px,calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow: auto; margin: auto; box-shadow: 0 24px 80px #0004; }
+.learning-dialog::backdrop { background: #050b20a8; backdrop-filter: blur(5px); }
+.learning-dialog h2 { font-size: 26px; margin: 12px 0; }
+.learning-dialog p { color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+.trails-page :focus-visible,.learning-dialog :focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+@media(max-width:640px) { .trail-form-grid { grid-template-columns: 1fr; } .trail-card,.trail-form,.trail-table { padding: 18px; } .learning-dialog { padding: 24px; } }
+.discord-connection { padding: 24px; display: grid; gap: 16px; min-width: 0; }
+.discord-connection p { margin: 0; line-height: 1.6; }
+.discord-connection-header { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+.discord-connection-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; color: var(--primary); background: var(--accent-subtle); flex-shrink: 0; }
+.discord-connection-copy { flex: 1 1 240px; min-width: 0; }
+.discord-connection h2 { font-size: 20px; font-weight: 700; line-height: 1.35; margin: 0 0 4px; }
+.discord-connection-copy p,.discord-connection-main p { color: var(--muted); font-size: 14px; }
+.discord-connection-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 13px; font-weight: 600; border-radius: 20px; color: var(--muted); background: var(--surface2); }
+.discord-connection-status.connected { color: var(--primary); background: var(--accent-subtle); }
+.discord-connection-main { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.discord-connection-main strong { color: var(--foreground); overflow-wrap: anywhere; }
+.discord-connection-main button { min-height: 44px; flex-shrink: 0; }
+.discord-connection-details { border-top: 1px solid var(--line); }
+.discord-connection-details summary { cursor: pointer; padding: 12px 0; min-height: 44px; font-size: 14px; font-weight: 550; color: var(--muted); }
+.discord-connection-details summary:hover { color: var(--primary); }
+.discord-connection-details > p { margin-bottom: 12px; font-size: 14px; color: var(--muted); }
+.discord-connection-feedback { padding: 12px 16px; border-radius: 12px; background: var(--surface2); font-size: 14px; }
+.discord-connection-help { border-top: 1px solid var(--line); padding-top: 14px; }
+.discord-link-code { display: grid; gap: .75rem; padding: 1rem; background: var(--surface2); border: 1px solid var(--line); border-radius: 12px; }
+.discord-link-code label { display: grid; gap: 8px; font-size: 14px; }
+.discord-link-code input { min-height: 44px; padding: 10px 12px; background: var(--surface); color: var(--foreground); border: 1px solid var(--line); border-radius: 10px; }
+.discord-link-code input { width: 100%; font-family: monospace; }
+@media(max-width:640px) { .discord-connection { padding: 18px; } .discord-connection-copy { flex-basis: calc(100% - 58px); } .discord-connection-main { align-items: stretch; } .discord-connection-main button { width: 100%; } }

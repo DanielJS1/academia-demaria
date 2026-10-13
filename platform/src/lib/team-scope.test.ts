@@ -24,4 +24,11 @@ describe("managedPeople", () => {
   it("shows the internal organization to an administrator without inactive or client profiles", () => {
     expect(managedPeople(people, { id: "admin", role: "admin" }).map(item => item.id)).toEqual(["manager", "direct", "sector", "assigned-elsewhere", "other-sector"]);
   });
+
+  it("keeps pending profiles explicit in operations and out of report defaults", () => {
+    const pending = person("pending", "Comercial", "", "pending");
+    expect(managedPeople([pending], { id: "manager", role: "manager", department: "Comercial" })).toEqual([]);
+    expect(managedPeople([pending], { id: "manager", role: "manager", department: "Comercial" }, "operational")).toEqual([pending]);
+    expect(managedPeople([pending], { id: "manager", role: "student", department: "Comercial" }, "operational")).toEqual([]);
+  });
 });

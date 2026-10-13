@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Bookmark, BookOpen, CheckCircle2, Clock3, PlayCircle, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { CourseCard, EmptyState, PageHeading } from "./shared";
@@ -79,8 +80,9 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   });
 
   return (
-    <div className="page-enter">
+    <div className="page-enter catalog-page">
       <PageHeading
+        variant="compact"
         eyebrow={
           isClientEnvironment
             ? `CAPACITAÇÃO DE CLIENTES · ${activeCartorio?.uf || "DEMARIA"}`
@@ -90,36 +92,16 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
         description={
           isClientEnvironment
             ? "Cursos oficiais liberados conforme a contratação de módulos da sua serventia."
-            : "Cursos e experiências para transformar conhecimento em possibilidades."
+            : "Uma jornada para cada descoberta. Explore os produtos DeMaria e desenvolva novas habilidades."
         }
       >
-        <span className="round-heading-icon">
-          <BookOpen size={26} />
+        <span className="catalog-summary">
+          {published.length} {published.length === 1 ? "curso no catálogo" : "cursos no catálogo"}
+          {isClientEnvironment && <small>{activeCartorio?.name || "Cartório Parceiro"} · módulos ativos</small>}
         </span>
       </PageHeading>
 
       <LiveCatalog />
-      <div className="catalog-banner">
-        <span className="mini-icon">
-          <Sparkles size={22} />
-        </span>
-        <div>
-          <strong>
-            {isClientEnvironment
-              ? `Capacitação · ${activeCartorio?.name || "Cartório Parceiro"}`
-              : "Uma jornada para cada descoberta."}
-          </strong>
-          <p>
-            {isClientEnvironment
-              ? `${published.length} curso(s) habilitado(s) para os módulos ativos.`
-              : "Explore os produtos DeMaria e desenvolva novas habilidades."}
-          </p>
-        </div>
-        <span className="catalog-count">
-          {published.length}
-          <small>cursos disponíveis</small>
-        </span>
-      </div>
 
       <div className="tabs" role="tablist" aria-label="Categorias do catálogo de aprendizado">
         {tabs.map(item => {

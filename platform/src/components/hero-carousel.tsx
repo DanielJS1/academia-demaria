@@ -25,6 +25,7 @@ export function HeroCarousel({ resume, newCourse, ranking, article, client = fal
   const pending = error || simulated ? [] : data?.available ?? [];
   const quiz = pending.find(item => item.is_featured) ?? pending.find(item => item.period_type === "weekly") ?? pending[0] ?? null;
   const [active, setActive] = useState(0);
+  const [rotationKey, setRotationKey] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [stopped, setStopped] = useState(false);
@@ -92,15 +93,10 @@ export function HeroCarousel({ resume, newCourse, ranking, article, client = fal
 
   useEffect(() => { setActive(index => Math.min(index, slides.length - 1)); }, [slides.length]);
 
-  useEffect(() => {
-    if (paused || slides.length < 2) return;
-    const timer = window.setTimeout(() => setActive(index => (index + 1) % slides.length), ROTATION_MS);
-    return () => window.clearTimeout(timer);
-  }, [active, paused, slides.length]);
-
   function navigate(index: number) {
     const next = (index + slides.length) % slides.length;
     setActive(next);
+    setRotationKey(value => value + 1);
     setAnnouncement(`Destaque ${next + 1} de ${slides.length}: ${slides[next].title}`);
   }
 
@@ -130,7 +126,7 @@ export function HeroCarousel({ resume, newCourse, ranking, article, client = fal
     {slides.length > 1 && <div className="hero-carousel-controls">
       <div className="hero-carousel-dots" role="group" aria-label="Escolher destaque">{slides.map((slide, index) => <button key={slide.id} type="button"
         className={`hero-carousel-dot${index === active ? " is-active" : ""}`} onClick={() => navigate(index)}
-        aria-label={`Mostrar destaque ${index + 1}: ${slide.eyebrow}`} aria-current={index === active ? "true" : undefined}><span className="hero-carousel-dot-fill" style={{ animationDuration: `${ROTATION_MS}ms`, animationPlayState: paused ? "paused" : "running" }}/></button>)}</div>
+        aria-label={`Mostrar destaque ${index + 1}: ${slide.eyebrow}`} aria-current={index === active ? "true" : undefined}><span key={`${slide.id}:${rotationKey}`} className="hero-carousel-dot-fill" style={{ animationDuration: `${ROTATION_MS}ms`, animationPlayState: paused ? "paused" : "running" }} onAnimationEnd={() => { if (index === active && !paused) setActive(current => (current + 1) % slides.length); }}/></button>)}</div>
       <div className="hero-carousel-buttons"><button type="button" onClick={() => setStopped(value => !value)} aria-label={stopped ? "Retomar rotação automática" : "Pausar rotação automática"}>{stopped ? <Play size={16} aria-hidden="true"/> : <Pause size={16} aria-hidden="true"/>}</button>
         <button type="button" onClick={() => navigate(active - 1)} aria-label="Destaque anterior"><ChevronLeft size={18} aria-hidden="true"/></button>
         <button type="button" onClick={() => navigate(active + 1)} aria-label="Próximo destaque"><ChevronRight size={18} aria-hidden="true"/></button></div>
