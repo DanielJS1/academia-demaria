@@ -8,6 +8,8 @@ Supabase exclusivo: `attnodzrjlhqydhrgqtr`. As 40 tabelas `academy_*` existem no
 
 ## Massa fictícia
 
+A conferência detalhada também detectou a rotina legada de reconhecimento em produção. A migração de idempotência que já existia em homologação foi aplicada em produção. Após essa correção, as definições de colunas e as 41 rotinas `academy_*` foram comparadas, desconsiderando espaços em seus corpos. O contrato de reconhecimento agora é o mesmo nos dois ambientes.
+
 151 contas novas: administrador, seis gestores e 144 colaboradores. São 127 contas ativas no total, 12 inativas e 12 pendentes. Quatro contas E2E preexistentes foram preservadas, totalizando 155 perfis. Setores: Suporte, Desenvolvimento, Comercial, Recursos Humanos, Financeiro e Operações; administrador em Diretoria.
 
 As contas usam nomes marcados com `(Demo)` e endereços `demo.*@demaria.com.br`, criados diretamente pelo administrador Auth sem convites ou emails. Estes endereços são fictícios e não pressupõem caixas de correio reais.
@@ -51,3 +53,5 @@ node platform/scripts/seed-presentation-data.mjs --apply
 Sem `--apply`, apenas gera contagens em memória. A aplicação exige `.env.homologacao.local`, ref de isolamento correto e URL do Supabase de homologação; rejeita produção e destinos divergentes. IDs determinísticos permitem reaplicar a massa sem duplicar suas contas/fontes. A senha é salva antes da criação das contas para retomada após interrupção. Reaplicar restaura os cenários demo e desloca suas datas; faça isso antes da apresentação, não durante uma sessão. Não apaga perfis E2E nem recursos fora do namespace demo.
 
 Manifesto e evidências locais: `output/homologacao-presentation/`. Os três testes do gerador passaram, incluindo bloqueio de produção. No domínio remoto, login de administrador/gestor/colaborador e as seis fontes de relatório foram consultados com sucesso; a equipe do gestor permaneceu no setor Suporte. Evidências de navegador cobrem Minha Gestão, Relatórios, Conhecimento, catálogo, Trilhas, desafios e Conquistas, incluindo viewport móvel.
+
+Conferência visual adicional: seis visões de relatório efetivamente carregadas, com gráficos/tabelas e exportação habilitada; dois desafios históricos do colaborador responderam 200, e o acesso desse colaborador à API de relatórios foi recusado com 403. O gate Vimeo real também passou após a inclusão das ferramentas de apresentação.

@@ -19,6 +19,8 @@ Verificação posterior: cinco tabelas analíticas com RLS e sem SELECT para o p
 
 A migração registra eventos prospectivos e preserva datas legadas desconhecidas. Não modifica concessão de XP, notas ou conclusão do produto. Não foram realizados comandos de teste com colaboradores reais em produção.
 
+A comparação de paridade com homologação identificou uma migração antiga efetivamente ausente em produção: `202609240007_recognition_idempotency.sql`. Ela foi aplicada em 13/10/2026 para disponibilizar o contrato de reconhecimento com `request_id`, impedir concessão duplicada de XP e preservar registros legados. A rotina de cinco argumentos foi confirmada: EXECUTE somente pelo servidor `service_role`, sem acesso do navegador `authenticated`. A migração não concedeu XP ou criou reconhecimentos para pessoas reais.
+
 ## Configuração e implantação
 
 Variáveis principais de Supabase, origem pública, cron e Discord foram confirmadas por nome/ambiente; valores secretos não foram publicados ou copiados para este documento. O cron de Trilhas já existia na produção anterior. Canais e políticas não foram ativados pela reformulação; nenhuma chamada manual à rotina de envio será usada como teste de publicação.
