@@ -88,7 +88,7 @@ beforeEach(async () => {
   await db.exec(`insert into academy_profiles values
     ('manager','Gestor','Suporte',null,'active','internal','2026-09-01'),
     ('a','Pessoa A',' Financeiro ','manager','active','internal','2026-09-01'),
-    ('b','Pessoa B',' suporte ',null,'active','internal','2026-10-08'),
+    ('b','Pessoa B',' suporte ',null,'active','internal','2026-10-08T15:00:00Z'),
     ('outside','Outra equipe','Suporte','other-manager','active','internal','2026-09-01'),
     ('accent','Outro departamento','Supórte',null,'active','internal','2026-09-01'),
     ('pending','Pendente','Suporte','manager','pending','internal','2026-09-01'),

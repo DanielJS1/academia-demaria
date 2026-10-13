@@ -1,5 +1,7 @@
 .git/
 .agents/
+.codex/
+brag-output/
 output/
 tmp/
 **/node_modules/
@@ -13,3 +15,7 @@ tmp/
 **/*.tsbuildinfo
 **/*.log
 .legacy/
+platform/reports/
+platform/scripts/proficiency-refinement-content.mjs
+platform/scripts/refine-proficiency-*
+platform/scripts/test-trails-live.mjs
