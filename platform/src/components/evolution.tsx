@@ -66,20 +66,20 @@ export function Evolution() {
 
   return (
     <div className="page-enter evolution-page">
-      <div className="evolution-top">
       <PageHeading
         variant="compact"
         eyebrow="SEU CONHECIMENTO DEIXA MARCAS"
         title="Toda evolução conta."
-        description="Celebre seu caminho e descubra o que vem depois."
+        description="Acompanhe seu nível, sua faixa na temporada e suas conquistas."
       >
         <span className="season-pill">
           <span /> Temporada {DEMO_SEASON}
         </span>
       </PageHeading>
 
+      <div className="evolution-top">
       {/* Painel de Gestão de Perfil, Foto e Senha Exclusiva */}
-      <section className="evolution-profile-card">
+      <section className="evolution-profile-card" aria-label="Seu perfil">
         <div className="profile-card-left">
           <div className="profile-card-avatar-wrap">
             <div className={`profile-card-avatar tier-avatar ${tierClass(xp.annual)}`} title={`Faixa ${xp.tier.name}`}>
@@ -115,7 +115,7 @@ export function Evolution() {
                 title="Remover foto"
               >
                 <Trash2 size={14} />
-                <span>Remover</span>
+                <span>Remover foto</span>
               </Button>
             )}
           </div>
@@ -152,17 +152,16 @@ export function Evolution() {
           </div>
         </div>
       </section>
-      </div>
 
       {/* Hero de Trajetória da Gamificação */}
-      <section className="evolution-hero">
+      <section className="evolution-hero" aria-label="Sua trajetória">
         <span className="evolution-emblem">
           <Gem size={65} strokeWidth={1} />
         </span>
         <div>
           <div className="hero-eyebrow">SUA TRAJETÓRIA</div>
           <h2>Nível {xp.level} · Explorador</h2>
-          <p>Um passo de cada vez. Um novo mundo a descobrir.</p>
+          <p>Seu nível considera todo o XP acumulado, em todas as temporadas.</p>
           <Progress value={xp.levelProgress} label="Progresso para o próximo nível" />
           <p className="evolution-next-level">{400 - (xp.total % 400)} XP para o próximo nível</p>
         </div>
@@ -173,10 +172,11 @@ export function Evolution() {
           <small>experiência acumulada</small>
         </div>
       </section>
+      </div>
 
       <SectionHeading
-        title="Uma temporada de possibilidades"
-        description={`Sua faixa atual: ${xp.tier.name} · ${number(xp.annual)} XP nesta temporada`}
+        title="Sua faixa nesta temporada"
+        description={`Faixa atual: ${xp.tier.name} · ${number(xp.annual)} XP em ${DEMO_SEASON}`}
       />
       <div className="milestones">
         {tiers.map((tier, index) => {
