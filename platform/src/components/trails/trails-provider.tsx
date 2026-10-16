@@ -59,7 +59,8 @@ function LearningPopup() {
     // Failure never traps a collaborator behind the overlay; the server can offer the notice again later.
     dialog.current?.close(); const id = selected.id; setSelected(undefined); await command({ type: "ack", id });
   };
+  const isTeamNotice = selected && selected.subjectId !== selected.userId;
   return <dialog ref={dialog} className="learning-dialog" aria-labelledby="learning-popup-title" aria-describedby="learning-popup-message" onCancel={event => { event.preventDefault(); void close(); }}>
-    {selected && <><span className="eyebrow">SUA JORNADA DE APRENDIZADO</span><h2 id="learning-popup-title">{selected.title}</h2><p id="learning-popup-message">{selected.message}</p><div className="trail-actions"><Button asChild><Link href={selected.link} onClick={() => void close()}>Abrir {selected.kind === "resume" ? "curso" : "trilhas"}</Link></Button><Button variant="secondary" disabled={saving} onClick={() => void close()}>Fechar aviso</Button></div></>}
+    {selected && <><span className="eyebrow">{isTeamNotice ? "ACOMPANHAMENTO DA SUA EQUIPE" : "SUA JORNADA DE APRENDIZADO"}</span><h2 id="learning-popup-title">{selected.title}</h2><p id="learning-popup-message">{selected.message}</p><div className="trail-actions"><Button asChild><Link href={selected.link} onClick={() => void close()}>{isTeamNotice ? "Acompanhar equipe" : selected.kind === "resume" ? "Retomar curso" : "Abrir minhas trilhas"}</Link></Button><Button variant="secondary" disabled={saving} onClick={() => void close()}>Fechar aviso</Button></div></>}
   </dialog>;
 }
