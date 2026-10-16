@@ -35,7 +35,13 @@
 .evolution-page .evolution-hero .progress-track { min-width: 0; }
 .evolution-page .evolution-emblem { width: 80px; height: 88px; }
 .evolution-page .evolution-emblem svg { width: 48px; height: 48px; }
-.evolution-page .evolution-rules-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.evolution-page .evolution-rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 18px; margin-bottom: 28px; }
+.evolution-rule-card { display: grid; align-content: start; gap: 14px; min-width: 0; padding: 22px; }
+.evolution-rule-heading { display: flex; align-items: center; gap: 12px; }
+.evolution-rule-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-subtle); color: var(--primary); }
+.evolution-rule-heading h3 { margin: 0; font-size: 18px; line-height: 1.4; }
+.evolution-rule-card p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
+.evolution-rule-card strong { color: var(--ink); font-weight: 600; }
 @media (min-width: 1200px) {
   .evolution-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
