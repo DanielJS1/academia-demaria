@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { isCourseComplete } from "@/lib/rewards";
 import Link from "next/link";
-import { ArrowRight, Award, Camera, ChevronLeft, ChevronRight, Flame, Gem, KeyRound, Medal, Shield, Sparkles, Trash2, Trophy } from "lucide-react";
+import { ArrowRight, Award, CalendarDays, Camera, ChevronLeft, ChevronRight, Flame, Gem, KeyRound, Medal, Shield, Sparkles, Trash2, Trophy } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, PageHeading, Progress, SectionHeading } from "./shared";
@@ -196,52 +196,44 @@ export function Evolution() {
         })}
       </div>
 
+      <section className="evolution-guide" aria-label="Entenda como funciona sua evolução">
       <SectionHeading
         title="Entenda como funciona sua evolução"
-        description="Nível e Faixa têm propósitos diferentes: um valoriza seu legado permanente e o outro mede seu ritmo na temporada."
+        description="O nível acompanha seu histórico. A faixa acompanha o ano atual."
       />
-      <div
-        className="evolution-rules-grid"
-        style={{
-          display: "grid",
-          gap: 18,
-          marginBottom: 28,
-        }}
-      >
-        <div className="panel" style={{ padding: 22, borderLeft: "4px solid var(--primary)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Gem size={20} style={{ color: "var(--primary)" }} />
-            <h3 style={{ fontSize: 15, margin: 0 }}>Como você sobe de NÍVEL</h3>
+      <div className="evolution-rules-grid">
+        <article className="panel evolution-rule-card">
+          <div className="evolution-rule-heading">
+            <span className="evolution-rule-icon" aria-hidden="true"><Gem size={22} /></span>
+            <h3>Nível</h3>
           </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7, margin: 0 }}>
-            O <strong>Nível</strong> representa sua trajetória <strong>permanente e vitalícia</strong>. A cada{" "}
-            <strong>400 XP</strong> acumulados em qualquer atividade na Academia DeMaria, você sobe um nível. Seu Nível e todo o
-            XP acumulado <strong>nunca são zerados ou perdidos</strong>.
+          <p>
+            É seu <strong>progresso acumulado</strong>. A cada <strong>400 XP</strong> conquistados,
+            você sobe um nível. Ele continua na virada do ano.
           </p>
-        </div>
-        <div className="panel" style={{ padding: 22, borderLeft: "4px solid #b7791f" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Medal size={20} style={{ color: "#b7791f" }} />
-            <h3 style={{ fontSize: 15, margin: 0 }}>Como você sobe de FAIXA</h3>
+        </article>
+        <article className="panel evolution-rule-card">
+          <div className="evolution-rule-heading">
+            <span className="evolution-rule-icon" aria-hidden="true"><Medal size={22} /></span>
+            <h3>Faixa</h3>
           </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7, margin: 0 }}>
-            A <strong>Faixa</strong> mede seu ritmo na <strong>temporada anual</strong>: Bronze (0 XP) → Prata (800 XP) →
-            Ouro (2.000 XP) → Platina (3.500 XP) → Diamante (5.000 XP). Ela reflete suas reciclagens e participação no ano
-            vigente.
+          <p>
+            Mostra seu <strong>progresso no ano</strong>, de Bronze a Diamante.
+            Depende do XP da temporada atual. Veja as faixas e os pontos necessários logo acima.
           </p>
-        </div>
-        <div className="panel" style={{ padding: 22, borderLeft: "4px solid #319795" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Sparkles size={20} style={{ color: "#319795" }} />
-            <h3 style={{ fontSize: 15, margin: 0 }}>Virada de Temporada e Reciclagem</h3>
+        </article>
+        <article className="panel evolution-rule-card">
+          <div className="evolution-rule-heading">
+            <span className="evolution-rule-icon" aria-hidden="true"><CalendarDays size={22} /></span>
+            <h3>Temporada</h3>
           </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7, margin: 0 }}>
-            Ao término da temporada anual, <strong>a sua faixa atual cairá duas categorias</strong> (exemplo: quem alcançou
-            Diamante recomeça em Ouro; Platina em Prata; Ouro em Bronze). No entanto,{" "}
-            <strong>seu Nível e todo o XP continuam 100% mantidos</strong>.
+          <p>
+            Vai de <strong>janeiro a dezembro</strong>. No novo ano, a faixa considera o XP da nova temporada.
+            Seu nível e suas conquistas continuam no histórico.
           </p>
-        </div>
+        </article>
       </div>
+      </section>
 
       <div className="dashboard-bottom">
         <section className="panel ranking-card achievements-card">
@@ -320,9 +312,7 @@ export function Evolution() {
       </div>
 
       <div className="info-note section-space">
-        <Sparkles size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Seu histórico permanece. Cada nova
-        temporada oferece uma nova jornada. O fechamento anual e as reciclagens serão implementados na etapa de
-        gamificação.
+        <Sparkles size={16} style={{ display: "inline", verticalAlign: "middle" }} aria-hidden="true" /> Seu XP acumulado e suas conquistas continuam no histórico entre temporadas.
       </div>
 
       <ProfilePhotoModal isOpen={isPhotoModalOpen} onClose={() => setIsPhotoModalOpen(false)} />
