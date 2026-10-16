@@ -11,6 +11,21 @@ describe("BC: PostgreSQL real, RPC e RLS", () => {
   let aid:string, version=1, sid:string,rid:string;
   const rpc=async(actor:string|null,cmd:object)=>asLocal(db,actor,async tx=>(await tx.query<{id:string}>("select kb_mutate($1::jsonb) id",[JSON.stringify(cmd)])).rows[0].id);
   beforeAll(async()=>{await initializeLocal(db);},30000); afterAll(async()=>{await db.close();});
+  it.each(["public","private"])("permite revisão por gestor e impede autor de publicar artigo %s",async visibility=>{
+    const manager="77777777-7777-4777-8777-777777777777";
+    await db.query("insert into academy_profiles values($1,'Gestor piloto','manager','active','internal') on conflict do nothing",[manager]);
+    const id=await rpc(author,{action:"create",document:doc});
+    await rpc(author,{action:"save",articleId:id,expectedVersion:1,document:doc,visibility});
+    await rpc(author,{action:"submit",articleId:id,expectedVersion:2});
+    const submission=(await db.query<{id:string;revision_id:string}>("select id,revision_id from kb_submissions where article_id=$1 and status='pending'",[id])).rows[0];
+    const command={action:"publish",articleId:id,expectedVersion:3,submissionId:submission.id,revisionId:submission.revision_id,visibility};
+    for(const actor of [author,pilotProfiles[2].id,pilotProfiles[3].id,null])await expect(rpc(actor,command)).rejects.toThrow();
+    expect((await asLocal(db,manager,async tx=>(await tx.query("select id from kb_notifications where article_id=$1",[id])).rows)).length).toBeGreaterThan(0);
+    await rpc(manager,command);
+    const visible=await asLocal(db,null,async tx=>(await tx.query("select visibility from kb_publications where article_id=$1",[id])).rows);
+    expect(visible).toEqual(visibility==="public"?[{visibility}]:[]);
+    await rpc(manager,{action:"unpublish",articleId:id,expectedVersion:4});
+  });
   it("saves the version 5 institutional template with 12px dates through the SQL validator",async()=>{
     const model=institutionalTemplate();model.metadata.title="Modelo institucional atualizado";
     const id=await rpc(author,{action:"create",document:model});

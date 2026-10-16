@@ -35,7 +35,7 @@ export async function mutate(ctx: KbContext, input: unknown) {
   if (cmd.action !== "create" && (!cmd.articleId || !cmd.expectedVersion)) throw new ApiError("Informe o artigo e sua versão.");
   if (["withdraw","publish","return"].includes(cmd.action) && (!cmd.revisionId || !cmd.submissionId)) throw new ApiError("Informe a revisão exata analisada.");
   if (!ctx.me || ctx.me.status !== "active" || ctx.me.audience !== "internal") throw new ApiError("Operação não autorizada.",403);
-  if (["publish","return","unpublish","visibility"].includes(cmd.action) && ctx.me.role !== "admin") throw new ApiError("Somente administradores publicam e revisam.",403);
+  if (["publish","return","unpublish","visibility"].includes(cmd.action) && !["admin","manager"].includes(ctx.me.role)) throw new ApiError("Somente administradores e gestores publicam e revisam.",403);
   if (ctx.local) return asLocal(ctx.db,ctx.actor, async tx => (await tx.query<{ id: string }>("select public.kb_mutate($1::jsonb) as id",[JSON.stringify(cmd)])).rows[0].id);
   const result = await ctx.client.rpc("kb_mutate",{cmd}); if (result.error) throw new Error(result.error.message); return result.data as string;
 }

@@ -120,7 +120,8 @@
 .kb-resource-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .kb .kb-resource-nav a{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:8px 12px;text-decoration:none;border-radius:8px;color:var(--kb-muted);font-size:14px;font-weight:600;transition:background-color .18s,color .18s}
 .kb .kb-resource-nav a:hover,.kb .kb-resource-nav a[aria-current=page]{color:var(--kb-teal);background:var(--kb-hover)}
-.kb-internal-navigation{display:flex;justify-content:flex-end;padding-bottom:16px}
+.kb-internal-navigation{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px}
+.kb .kb-knowledge-back{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;text-underline-offset:4px}
 .kb-public-site .kb-portal>.kb-brand-search,.kb-public-site .kb-resource-hero{width:100%;max-width:none;border-radius:0;margin:0;border-inline:0;box-shadow:none}
 .kb-resource-hero p{margin-bottom:0}
 .kb-resource-content{max-width:1152px;margin:32px auto;padding:0 24px}
