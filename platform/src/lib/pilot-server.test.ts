@@ -48,6 +48,54 @@ describe("API: isolamento de dados",()=>{
   expect(state.people.find(p=>p.id===me.id)?.streak).toBe(1);
  });
  it("recusa comandos administrativos antes de acessar o banco",async()=>{
+  const {db,me}=fixture();await expect(executeCommand(db,me,{type:"course-availability",courseId:"course",availability:"inactive",expectedAvailability:"active",expectedVersion:1})).rejects.toMatchObject({status:403});
+ });
+ it.each(["inactive", "development"])("oculta cursos %s dos alunos e mantém a gestão administrativa",async availability=>{
+  const {db,me,tables}=fixture();tables.academy_resources[0].published.availability=availability;
+  expect((await readAcademy(db,me)).state.courses).toHaveLength(0);
+  expect((await readAcademy(db,{...me,role:"admin"})).state.courses).toHaveLength(1);
+  await expect(executeCommand(db,me,{type:"complete",courseId:"course",version:1,lessonId:initialState.courses[0].lessons[0].id})).rejects.toMatchObject({status:403});
+ });
+ it("exige conteúdo válido para reativar um curso",async()=>{
+  const {db,me,tables}=fixture();tables.academy_resources[0].published.lessons=[];
+  await expect(executeCommand(db,{...me,role:"admin"},{type:"course-availability",courseId:"course",availability:"active",expectedAvailability:"development",expectedVersion:1})).rejects.toThrow("Adicione ao menos uma aula");
+ });
+ it("recusa convites administrativos feitos por alunos",async()=>{
   const {db,me}=fixture();await expect(executeCommand(db,me,{type:"invite",name:"Teste",email:"test@example.test",department:"Geral",managerId:"",role:"admin"})).rejects.toMatchObject({status:403});
+ });
+ it("executa prova de proficiência e aprova com dispensa integral de aulas",async()=>{
+  const {db,me,tables}=fixture();
+  const course=tables.academy_resources[0].published;
+  course.hasProficiencyTest=true;
+  course.proficiencyScore=80;
+  course.proficiencyQuestions=[
+   {id:"q1",prompt:"Q1",type:"choice",options:["A","B"],correct:"A"}
+  ];
+  const dbAny=db as any;
+  dbAny.from=(table:string)=>{
+   let rows=tables[table]??[];let single=false;
+   const chain:any={
+    select(){return chain;},
+    eq(key:string,value:unknown){rows=rows.filter(r=>r[key]===value);return chain;},
+    single(){single=true;return chain;},
+    maybeSingle(){single=true;return chain;},
+    async upsert(row:any){tables[table]=tables[table]??[];const idx=tables[table].findIndex(r=>r.lesson_id===row.lesson_id&&r.course_id===row.course_id);if(idx>=0)tables[table][idx]=row;else tables[table].push(row);return {error:null};},
+    async insert(row:any){tables[table]=tables[table]??[];tables[table].push(row);return {error:null};},
+    then(resolve:any){return Promise.resolve({data:single?rows[0]??null:rows,error:null}).then(resolve);}
+   };
+   return chain;
+  };
+  dbAny.rpc=async()=>({error:null});
+
+  await executeCommand(dbAny,me,{
+   type:"proficiency",
+   courseId:"course",
+   version:1,
+   score:100,
+   answers:{q1:"A"}
+  });
+
+  expect(tables.academy_progress.filter(p=>p.user_id===me.id&&p.done)).toHaveLength(course.lessons.length);
+  expect(tables.academy_attempts.some(a=>a.user_id===me.id&&a.status==="approved"&&a.quiz_id==="proficiency")).toBe(true);
  });
 });

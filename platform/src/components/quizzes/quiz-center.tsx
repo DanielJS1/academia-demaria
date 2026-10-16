@@ -22,7 +22,7 @@ export function QuizCenter() {
   const available = data?.available ?? [];
   const completed = data?.completed ?? [];
   return <div className="quiz-center page-enter">
-    <PageHeading eyebrow="APRENDA E EVOLUA" title="Desafios" description="Teste seus conhecimentos e acompanhe seus resultados. Uma tentativa oficial por edição.">
+    <PageHeading variant="compact" eyebrow="APRENDA E EVOLUA" title="Desafios" description="Teste seus conhecimentos e acompanhe seus resultados. Uma tentativa oficial por edição.">
       <span className="quiz-center-count" role="status"><Zap size={17} aria-hidden="true"/>{simulated ? "Acesso pessoal" : loading && !data ? "Carregando…" : error ? "Consulta indisponível" : `${available.length} ${available.length === 1 ? "desafio disponível" : "desafios disponíveis"}`}</span>
     </PageHeading>
     <QuizNotificationControl/>

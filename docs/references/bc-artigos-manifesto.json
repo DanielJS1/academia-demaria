@@ -1,0 +1,483 @@
+{
+  "analyzed_on": "2026-10-08",
+  "scope": "Static HTML inventory and visual inspection of supplied PDFs; no editor roundtrip, remote requests, publication or production validation performed. Source files preserved outside repository.",
+  "summary": {
+    "articles": 5,
+    "pdf_pages": 34,
+    "html_bytes": 50761,
+    "image_occurrences": 28,
+    "unique_image_urls": 23,
+    "empty_alt_occurrences": 28,
+    "remote_image_bytes": null,
+    "native_html_tables": 0
+  },
+  "articles": [
+    {
+      "html_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Conferência de Atos e Subtipos do TJ-AL na Tabela de Emolumentos.txt",
+      "pdf_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Conferência de Atos e Subtipos do TJ-AL na Tabela de Emolumentos e.pdf",
+      "pdf_sha256": "753b561ee87ee2925b8e70ac938b3e02d462e70a13e52ee4b4c4b7f676ac13e1",
+      "pdf_bytes": 1392022,
+      "pdf_pages": 6,
+      "pdf_extracted_text_characters": 0,
+      "html_analysis": {
+        "file": "Conferência de Atos e Subtipos do TJ-AL na Tabela de Emolumentos.txt",
+        "sha256": "a47116d1068b106531102ba70263e7f9c1c1ae0dbe83ffa900396cf71981398b",
+        "bytes": 8817,
+        "tags": {
+          "p": 14,
+          "span": 42,
+          "strong": 34,
+          "br": 6,
+          "img": 6,
+          "ul": 14,
+          "li": 25,
+          "em": 4
+        },
+        "styles": {
+          "font-family: calibri": 4,
+          "font-size: 18pt": 1,
+          "color: #000000": 5,
+          "font-family: calibri, arial, helvetica, sans-serif": 1,
+          "font-size: 12px": 3,
+          "font-size: 24px": 5,
+          "color: #333333": 21,
+          "font-size: 16px": 27,
+          "text-align: justify": 19,
+          "font-size: 20px": 1,
+          "list-style-type: none": 5
+        },
+        "max_list_depth": 2,
+        "images": [
+          {
+            "class": "size-full wp-image-35 alignright",
+            "src": "http://bc.demaria.com.br/wp-content/uploads/2018/05/logo.png",
+            "alt": "",
+            "width": "108",
+            "height": "89",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12572 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/10/1-1.png",
+            "alt": "",
+            "width": "429",
+            "height": "445",
+            "list_depth": 0
+          },
+          {
+            "class": "size-full wp-image-12561 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/10/image-3.png",
+            "alt": "",
+            "width": "405",
+            "height": "207",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12562 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/10/image-4.png",
+            "alt": "",
+            "width": "489",
+            "height": "351",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12566 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/10/image-5.png",
+            "alt": "",
+            "width": "450",
+            "height": "281",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12568 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/10/image-6.png",
+            "alt": "",
+            "width": "550",
+            "height": "180",
+            "list_depth": 0
+          }
+        ],
+        "links": [],
+        "classes": {
+          "size-full": 2,
+          "wp-image-35": 1,
+          "alignright": 1,
+          "wp-image-12572": 1,
+          "aligncenter": 5,
+          "wp-image-12561": 1,
+          "wp-image-12562": 1,
+          "wp-image-12566": 1,
+          "wp-image-12568": 1
+        }
+      }
+    },
+    {
+      "html_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Inclusão dos grupos IBS CBS da NFS-e (Nota Fiscal Eletrônica).txt",
+      "pdf_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Inclusão dos grupos IBS CBS da NFS-e (Nota Fiscal Eletrônica).pdf",
+      "pdf_sha256": "8b41ecf5fef37eb0177cb4196ecce26f1cf431ad9c51b5dcc12a2061b74e3a23",
+      "pdf_bytes": 637647,
+      "pdf_pages": 5,
+      "pdf_extracted_text_characters": 0,
+      "html_analysis": {
+        "file": "Inclusão dos grupos IBS CBS da NFS-e (Nota Fiscal Eletrônica).txt",
+        "sha256": "10a8a201a6a295094a7e3ffd7b175d3ab7c8ee9cb86a99719ee9693373fa450c",
+        "bytes": 3129,
+        "tags": {
+          "p": 12,
+          "span": 20,
+          "strong": 16,
+          "br": 3,
+          "img": 4,
+          "ul": 5,
+          "li": 5
+        },
+        "styles": {
+          "font-family: calibri": 1,
+          "font-size: 18pt": 1,
+          "color: #000000": 4,
+          "font-family: calibri, arial, helvetica, sans-serif": 1,
+          "font-size: 12px": 2,
+          "font-size: 24px": 3,
+          "color: #333333": 3,
+          "font-size: 16px": 9,
+          "font-size: 20px": 1
+        },
+        "max_list_depth": 2,
+        "images": [
+          {
+            "class": "size-full wp-image-35 alignright",
+            "src": "http://bc.demaria.com.br/wp-content/uploads/2018/05/logo.png",
+            "alt": "",
+            "width": "108",
+            "height": "89",
+            "list_depth": 0
+          },
+          {
+            "class": "size-full wp-image-12546 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/10/1.png",
+            "alt": "",
+            "width": "1128",
+            "height": "749",
+            "list_depth": 0
+          },
+          {
+            "class": "size-full wp-image-12538 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/10/image-1.png",
+            "alt": "",
+            "width": "645",
+            "height": "42",
+            "list_depth": 0
+          },
+          {
+            "class": "size-full wp-image-12547 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/10/2.png",
+            "alt": "",
+            "width": "1108",
+            "height": "690",
+            "list_depth": 0
+          }
+        ],
+        "links": [],
+        "classes": {
+          "size-full": 4,
+          "wp-image-35": 1,
+          "alignright": 1,
+          "wp-image-12546": 1,
+          "aligncenter": 3,
+          "wp-image-12538": 1,
+          "wp-image-12547": 1
+        }
+      }
+    },
+    {
+      "html_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Selo Digital BA.txt",
+      "pdf_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Selo Digital – BA.pdf",
+      "pdf_sha256": "f38470c6bb311059427355e8d89b97ebfeb1479c9d1cfa1960bc0729acde2a03",
+      "pdf_bytes": 1095691,
+      "pdf_pages": 6,
+      "pdf_extracted_text_characters": 0,
+      "html_analysis": {
+        "file": "Selo Digital BA.txt",
+        "sha256": "61dcfd8461b64e16cb97e71ecfa00c3693b6fea901ac2f44659ff1cca54b295a",
+        "bytes": 10234,
+        "tags": {
+          "p": 11,
+          "span": 72,
+          "strong": 30,
+          "br": 9,
+          "img": 5,
+          "ul": 13,
+          "li": 52
+        },
+        "styles": {
+          "font-family: calibri": 1,
+          "font-size: 18pt": 1,
+          "color: #000000": 54,
+          "font-family: calibri, arial, helvetica, sans-serif": 1,
+          "font-size: 12px": 3,
+          "font-size: 24px": 5,
+          "color: #333333": 4,
+          "font-size: 16px": 55,
+          "font-size: 20px": 1,
+          "list-style-type: none": 1
+        },
+        "max_list_depth": 3,
+        "images": [
+          {
+            "class": "size-full wp-image-35 alignright",
+            "src": "http://bc.demaria.com.br/wp-content/uploads/2018/05/logo.png",
+            "alt": "",
+            "width": "108",
+            "height": "89",
+            "list_depth": 0
+          },
+          {
+            "class": " wp-image-12238 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-25.png",
+            "alt": "",
+            "width": "667",
+            "height": "296",
+            "list_depth": 0
+          },
+          {
+            "class": " wp-image-12239 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-26.png",
+            "alt": "",
+            "width": "620",
+            "height": "299",
+            "list_depth": 3
+          },
+          {
+            "class": "alignnone size-full wp-image-12240",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-27.png",
+            "alt": "",
+            "width": "1221",
+            "height": "554",
+            "list_depth": 3
+          },
+          {
+            "class": "size-full wp-image-12241 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-28.png",
+            "alt": "",
+            "width": "307",
+            "height": "180",
+            "list_depth": 3
+          }
+        ],
+        "links": [],
+        "classes": {
+          "size-full": 3,
+          "wp-image-35": 1,
+          "alignright": 1,
+          "wp-image-12238": 1,
+          "aligncenter": 3,
+          "wp-image-12239": 1,
+          "alignnone": 1,
+          "wp-image-12240": 1,
+          "wp-image-12241": 1
+        }
+      }
+    },
+    {
+      "html_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Selo Digital PB.txt",
+      "pdf_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Selo Digital PB.pdf",
+      "pdf_sha256": "9a37b9267e98cd78331a20a394fc873cbb1c4877558ba24a1518976e4a11ecfb",
+      "pdf_bytes": 1185107,
+      "pdf_pages": 7,
+      "pdf_extracted_text_characters": 0,
+      "html_analysis": {
+        "file": "Selo Digital PB.txt",
+        "sha256": "15033741cd885e829af4653dab8014bec937b8d7e9720dbda34f63f420b7e2b3",
+        "bytes": 11426,
+        "tags": {
+          "p": 14,
+          "span": 68,
+          "strong": 54,
+          "br": 3,
+          "img": 6,
+          "ul": 24,
+          "li": 57
+        },
+        "styles": {
+          "font-family: calibri": 1,
+          "font-size: 18pt": 1,
+          "color: #000000": 52,
+          "font-family: calibri, arial, helvetica, sans-serif": 1,
+          "font-size: 12px": 3,
+          "font-size: 24px": 5,
+          "color: #333333": 4,
+          "font-size: 16px": 53,
+          "font-size: 20px": 1,
+          "list-style-type: none": 7
+        },
+        "max_list_depth": 3,
+        "images": [
+          {
+            "class": "size-full wp-image-35 alignright",
+            "src": "http://bc.demaria.com.br/wp-content/uploads/2018/05/logo.png",
+            "alt": "",
+            "width": "108",
+            "height": "89",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12251 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-29.png",
+            "alt": "",
+            "width": "652",
+            "height": "326",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12254 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-32.png",
+            "alt": "",
+            "width": "698",
+            "height": "320",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12256 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-34.png",
+            "alt": "",
+            "width": "710",
+            "height": "323",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12258 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-35.png",
+            "alt": "",
+            "width": "697",
+            "height": "318",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12259 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-36.png",
+            "alt": "",
+            "width": "689",
+            "height": "445",
+            "list_depth": 0
+          }
+        ],
+        "links": [],
+        "classes": {
+          "size-full": 1,
+          "wp-image-35": 1,
+          "alignright": 1,
+          "wp-image-12251": 1,
+          "aligncenter": 5,
+          "wp-image-12254": 1,
+          "wp-image-12256": 1,
+          "wp-image-12258": 1,
+          "wp-image-12259": 1
+        }
+      }
+    },
+    {
+      "html_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Selo Digital PR.txt",
+      "pdf_path": "C:\\Users\\Daniel José\\Desktop\\artigos\\Selo Digital PR.pdf",
+      "pdf_sha256": "6c339847ea9aab0ed2f2bbd761a7389f018a5b10599d67bb77e0528a74cfc0b9",
+      "pdf_bytes": 2197936,
+      "pdf_pages": 10,
+      "pdf_extracted_text_characters": 0,
+      "html_analysis": {
+        "file": "Selo Digital PR.txt",
+        "sha256": "07bd7a756921c75cefdb7a69bd81132017a577cea3f3d811b31f08d448059a85",
+        "bytes": 17155,
+        "tags": {
+          "p": 16,
+          "span": 103,
+          "strong": 58,
+          "br": 5,
+          "img": 7,
+          "ul": 27,
+          "li": 87
+        },
+        "styles": {
+          "font-family: calibri": 2,
+          "font-size: 18pt": 1,
+          "color: #000000": 86,
+          "font-family: calibri, arial, helvetica, sans-serif": 1,
+          "font-size: 12px": 3,
+          "font-size: 24px": 5,
+          "font-size: 16px": 84,
+          "font-size: 20px": 1,
+          "list-style-type: none": 8
+        },
+        "max_list_depth": 3,
+        "images": [
+          {
+            "class": "size-full wp-image-35 alignright",
+            "src": "http://bc.demaria.com.br/wp-content/uploads/2018/05/logo.png",
+            "alt": "",
+            "width": "108",
+            "height": "89",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12281 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-37.png",
+            "alt": "",
+            "width": "711",
+            "height": "304",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12282 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-38.png",
+            "alt": "",
+            "width": "700",
+            "height": "364",
+            "list_depth": 0
+          },
+          {
+            "class": "size-full wp-image-12284 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-39.png",
+            "alt": "",
+            "width": "551",
+            "height": "705",
+            "list_depth": 0
+          },
+          {
+            "class": " wp-image-12286 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-41.png",
+            "alt": "",
+            "width": "378",
+            "height": "362",
+            "list_depth": 0
+          },
+          {
+            "class": " wp-image-12284 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-39.png",
+            "alt": "",
+            "width": "340",
+            "height": "435",
+            "list_depth": 0
+          },
+          {
+            "class": "wp-image-12285 aligncenter",
+            "src": "https://bc.demaria.com.br/wp-content/uploads/2026/05/image-40.png",
+            "alt": "",
+            "width": "658",
+            "height": "301",
+            "list_depth": 0
+          }
+        ],
+        "links": [],
+        "classes": {
+          "size-full": 2,
+          "wp-image-35": 1,
+          "alignright": 1,
+          "wp-image-12281": 1,
+          "aligncenter": 6,
+          "wp-image-12282": 1,
+          "wp-image-12284": 2,
+          "wp-image-12286": 1,
+          "wp-image-12285": 1
+        }
+      }
+    }
+  ]
+}

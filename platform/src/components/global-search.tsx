@@ -20,8 +20,11 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [notes, setNotes] = useState<Record<string, Record<string, string>>>({});
-  const [libraryResults, setLibraryResults] = useState<Result[]>([]);
+  const [notesSnapshot, setNotes] = useState<{ userId: string; data: Record<string, Record<string, string>> }>();
+  const notes = notesSnapshot?.userId === userId ? notesSnapshot.data : {};
+  const [librarySnapshot, setLibrarySnapshot] = useState<{ userId: string; query: string; results?: Result[]; error?: string }>();
+  const currentLibrary = librarySnapshot?.userId === userId && librarySnapshot.query === query.trim() ? librarySnapshot : undefined;
+  const libraryResults = currentLibrary?.results ?? [];
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -35,16 +38,18 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
   }, []);
 
   useEffect(() => {
-    if (scope === "notes" && open) setNotes(getAllUserNotes(userId));
+    if (scope === "notes" && open) setNotes({ userId, data: getAllUserNotes(userId) });
   }, [scope, open, userId]);
 
   useEffect(() => {
-    setLibraryResults([]);
+    setLibrarySnapshot(undefined);
     if (scope !== "library" || query.trim().length < 2) return;
     const controller = new AbortController();
-    const timer = setTimeout(() => { void searchArticles(query.trim(), controller.signal).then(setLibraryResults).catch(() => {}); }, 250);
+    const timer = setTimeout(() => { void searchArticles(query.trim(), controller.signal, userId)
+      .then(results => { if (!controller.signal.aborted) setLibrarySnapshot({ userId, query: query.trim(), results }); })
+      .catch(error => { if (!controller.signal.aborted) setLibrarySnapshot({ userId, query: query.trim(), error: error instanceof Error ? error.message : "Busca indisponível." }); }); }, 250);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [scope, query]);
+  }, [scope, query, userId]);
 
   const term = normalize(query.trim());
   const results: Result[] = !term ? [] : scope === "library" ? libraryResults.slice(0, 6) : scope === "courses"
@@ -61,9 +66,9 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
     if (activeIndex >= 0 && results[activeIndex]) {
       router.push(results[activeIndex].href);
     } else if (scope === "notes") {
-      router.push("/conhecimento?aba=anotacoes");
+      router.push(`/conhecimento?aba=anotacoes&tipo=notes&busca=${encodeURIComponent(query.trim())}`);
     } else if (scope === "library") {
-      router.push(`/conhecimento?aba=biblioteca&busca=${encodeURIComponent(query.trim())}`);
+      router.push(`/conhecimento?aba=biblioteca&tipo=forum&busca=${encodeURIComponent(query.trim())}`);
     } else {
       router.push(`/aprender?busca=${encodeURIComponent(query.trim())}`);
     }
@@ -75,10 +80,10 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
       onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) { setOpen(false); setActiveIndex(-1); } }}>
       <div className="global-search-field">
         <Search size={18} aria-hidden="true" />
-        <input ref={inputRef} role="combobox" aria-label={scope === "courses" ? "Buscar em Aprender" : scope === "library" ? "Buscar na Biblioteca" : "Buscar em Minhas Anotações"}
+        <input ref={inputRef} role="combobox" aria-label={scope === "courses" ? "Buscar em Aprender" : scope === "library" ? "Buscar no Fórum" : "Buscar em Minhas Anotações"}
           aria-autocomplete="list" aria-expanded={open && !!term} aria-controls={listId}
           aria-activedescendant={activeIndex >= 0 && results[activeIndex] ? `${listId}-${activeIndex}` : undefined}
-          placeholder={scope === "courses" ? "O que você quer aprender?" : scope === "library" ? "Buscar na Biblioteca" : "Buscar nas minhas anotações"}
+          placeholder={scope === "courses" ? "O que você quer aprender?" : scope === "library" ? "Buscar no Fórum" : "Buscar nas minhas anotações"}
           value={query} onFocus={() => setOpen(true)}
           onChange={event => { setQuery(event.target.value); setActiveIndex(-1); setOpen(true); }}
           onKeyDown={event => {
@@ -91,7 +96,7 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
         <select className="global-search-scope" aria-label="Onde buscar" value={scope}
           onChange={event => { setScope(event.target.value as Scope); setActiveIndex(-1); setOpen(true); inputRef.current?.focus(); }}>
           <option value="courses">Aprender</option>
-          <option value="library">Biblioteca</option>
+          <option value="library">Fórum</option>
           <option value="notes">Minhas Anotações</option>
         </select>
       </div>
@@ -104,9 +109,9 @@ export function GlobalSearch({ courses, userId }: { courses: Course[]; userId: s
               {scope === "notes" ? <StickyNote size={17} aria-hidden="true" /> : <BookOpen size={17} aria-hidden="true" />}
               <span><strong>{result.title}</strong><small>{result.detail}</small></span>
             </Link>
-          )) : <p className="global-search-empty">Nenhum resultado. Tente outro termo.</p>}
+          )) : <p className="global-search-empty" role="status">{scope === "library" ? query.trim().length < 2 ? "Digite pelo menos 2 caracteres." : currentLibrary?.error ?? (!currentLibrary ? "Pesquisando no fórum…" : "Nenhum resultado. Tente outro termo.") : "Nenhum resultado. Tente outro termo."}</p>}
           <button type="submit" className="global-search-all" onMouseEnter={() => setActiveIndex(-1)}>
-            {scope === "courses" ? "Ver busca em Aprender" : scope === "library" ? "Ver busca na Biblioteca" : "Ver minhas anotações"}
+            {scope === "courses" ? "Ver busca em Aprender" : scope === "library" ? "Ver busca no Fórum" : "Ver minhas anotações"}
           </button>
         </div>
       )}

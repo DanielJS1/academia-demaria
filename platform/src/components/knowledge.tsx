@@ -1,56 +1,36 @@
 "use client";
 import Link from "next/link";
+import { KB_PUBLIC_SITE } from "@/lib/kb/public-links";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, FolderOpen, PenLine, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
-import { EmptyState, SectionHeading } from "./shared";
+import { EmptyState, SectionHeading, PageHeading } from "./shared";
 import { normalize } from "@/lib/utils";
 import { getAllUserNotes, exportCourseNotesTxt } from "./lesson-notepad";
 import { CommunityLibrary } from "./community/community-library";
 import { CommunityArticle } from "./community/community-article";
-import { searchArticles } from "./community/article-client";
+import { TechnicalMaterials } from "./technical-materials";
+import { salesAssistants, sealAssistants, windowsAssistants } from "./knowledge/assistants";
+import { KnowledgeSearchResults } from "./knowledge/search-results";
+import { useKnowledgeNavigation, type KnowledgeArea } from "./knowledge/use-knowledge-navigation";
 
-const salesAssistants = [
-  {
-    title: "Assistente de Vendas",
-    tag: "COMERCIAL",
-    description: "Auxílio a consultores e colaboradores para tirar dúvidas sobre produtos e responder clientes",
-    href: "https://chatgpt.com/g/g-6848257ecf708191b1934dad5ec8719f-assistente-de-vendas-demaria",
-  },
-];
-
-const sealAssistants = [
-  { uf: "PE", state: "Pernambuco", href: "https://chatgpt.com/g/g-68a91bfa0f3c8191848220e103b92286-selo-digital-de-pe" },
-  { uf: "AL", state: "Alagoas", href: "https://chatgpt.com/g/g-68a92b5ed904819187b4881f8efc9366-selo-digital-de-al" },
-  { uf: "SP", state: "São Paulo", href: "https://chatgpt.com/g/g-68addbc7209c8191ab9790c3931d9f22-selo-digital-de-sp" },
-  { uf: "BA", state: "Bahia", href: "https://chatgpt.com/g/g-68ade97d7b6881919b7bbb268a857440-selo-digital-de-ba" },
-  { uf: "PB", state: "Paraíba", href: "https://chatgpt.com/g/g-68af66930f3c81918a284c26b4cdf264-selo-digital-de-pb" },
-  { uf: "RJ", state: "Rio de Janeiro", href: "https://chatgpt.com/g/g-68d581cf1d6c81919d7664a561d7f902-selo-digital-de-rj" },
-  { uf: "PI", state: "Piauí", href: "https://chatgpt.com/g/g-6931930e09ec8191b9abeae7fd8b99ab-selo-digital-do-pi" },
-];
-
-const windowsAssistants = [
-  { title: "Procurações e Escrituras", href: "https://chatgpt.com/g/g-68b7aa636fc88191a6b20baf55ad5425-procuracoes-e-escrituras" },
-  { title: "Preferências", href: "https://chatgpt.com/g/g-68b85c218248819192b205d84bf879bc-preferencias" },
-];
-
-export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "anotacoes" | "biblioteca" | "consulta"; initialSearch?: string }) {
+export function Knowledge({ initialTab, initialSearch = "", initialSource, initialPage, initialMaterialId }: {
+  initialTab?: KnowledgeArea; initialSearch?: string; initialSource?: string; initialPage?: number; initialMaterialId?: string;
+}) {
   const { state, me, notify } = useAcademy();
-  const [search, setSearch] = useState(initialSearch);
-  const [tab, setTab] = useState<"Consulta assistida" | "Biblioteca" | "Anotações">(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : "Biblioteca");
-  const [matchedIds, setMatchedIds] = useState<string[] | null>(null);
-  useEffect(() => { setSearch(initialSearch); setTab(initialTab === "anotacoes" ? "Anotações" : initialTab === "consulta" ? "Consulta assistida" : "Biblioteca"); }, [initialSearch, initialTab]);
-  useEffect(() => {
-    if (tab !== "Biblioteca" || search.trim().length < 2) { setMatchedIds(null); return; }
-    setMatchedIds(null);
-    const controller = new AbortController();
-    const timer = setTimeout(() => { void searchArticles(search.trim(), controller.signal).then(results => setMatchedIds(results.map(item => item.id))).catch(() => {}); }, 250);
-    return () => { clearTimeout(timer); controller.abort(); };
-  }, [tab, search]);
+  const navigation = useKnowledgeNavigation({ initialTab, initialSearch, initialSource, initialPage, initialMaterialId, audience: me.audience });
+  const { search, setSearch, tab, setTab, clearSearch } = navigation;
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
 
-  const userNotes = getAllUserNotes(me.id);
+  const [notesSnapshot, setNotesSnapshot] = useState<{ userId: string; notes: Record<string, Record<string, string>> }>();
+  useEffect(() => {
+    const load = () => setNotesSnapshot({ userId: me.id, notes: getAllUserNotes(me.id) });
+    load();
+    window.addEventListener("storage", load); window.addEventListener("academy:notes-changed", load);
+    return () => { window.removeEventListener("storage", load); window.removeEventListener("academy:notes-changed", load); };
+  }, [me.id]);
+  const userNotes = notesSnapshot?.userId === me.id ? notesSnapshot.notes : {};
   const coursesWithNotes = state.courses.filter(c => userNotes[c.id] && Object.values(userNotes[c.id]).some(t => t && t.trim()));
 
   const q = normalize(search);
@@ -60,52 +40,44 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
   const hasResults = filteredSales.length > 0 || filteredWindows.length > 0 || filteredSeals.length > 0;
 
   const published = state.articles.filter(article => article.status === "published");
-  const articles = published.filter(article => normalize(`${article.title} ${article.content} ${article.product}`).includes(q));
+  const isSearching = search.trim().length >= 2;
 
   return (
-    <div className="page-enter">
-      <section className="knowledge-hero">
-        <span className="knowledge-symbol"><Sparkles size={29}/></span>
-        <div className="eyebrow">SABER MAIS, IR ALÉM</div>
-        <h1>Todo conhecimento começa<br/>com uma boa pergunta.</h1>
-        <p>Consulte nossos assistentes especializados de IA e encontre orientações para o seu dia a dia.</p>
-        <div className="field-search knowledge-search">
+    <div className="page-enter knowledge-page">
+      <PageHeading variant="compact" title="Conhecimento" description="Encontre respostas e compartilhe experiências.">
+        {me.audience !== "client" && <Button asChild variant="secondary"><Link href="/conhecimento/oficial"><PenLine size={16} aria-hidden="true" />Gerenciar base oficial</Link></Button>}
+      </PageHeading>
+        <div className="field-search knowledge-unified-search" role="search">
           <Search size={20}/>
           <input
-            aria-label="Pesquisar assistentes e temas"
-            placeholder="Busque por assunto, produto ou estado (ex: Vendas, SP, Escrituras)..."
+            aria-label="Pesquisar no conhecimento"
+            placeholder="Busque em todas as fontes de conhecimento..."
+            maxLength={120}
             value={search}
             onChange={event => setSearch(event.target.value)}
           />
+          {search && <button type="button" aria-label="Limpar busca" onClick={clearSearch}><X size={17} /></button>}
         </div>
-        <div className="knowledge-hints">
-          {["Vendas", "DOC-Windows", "São Paulo", "Pernambuco"].map(term => (
-            <button key={term} onClick={() => setSearch(term)}>{term}</button>
-          ))}
-          {search && (
-            <button type="button" onClick={() => setSearch("")} style={{ color: "var(--primary)", fontWeight: 600 }}>
-              Limpar busca
-            </button>
-          )}
-        </div>
-      </section>
-
-      <div className="tabs">
+      {isSearching ? <KnowledgeSearchResults query={search.trim()} source={navigation.source} page={navigation.page}
+        userId={me.id} audience={me.audience} courses={state.courses} onSource={navigation.setSource} onPage={navigation.setPage} /> : search.trim() ?
+        <p className="knowledge-search-help" role="status">Digite pelo menos 2 caracteres para pesquisar.</p> : <>
+      <div className="tabs knowledge-tabs" role="group" aria-label="Áreas do conhecimento">
+        {me.audience !== "client" &&
         <button
           type="button"
           className={tab === "Biblioteca" ? "selected" : ""}
           aria-pressed={tab === "Biblioteca"}
           onClick={() => setTab("Biblioteca")}
         >
-          <BookOpen size={16}/> Biblioteca ({published.length})
-        </button>
+          <BookOpen size={20}/><span><strong>Fórum ({published.length})</strong><small>Artigos da comunidade</small></span>
+        </button>}
         <button
           type="button"
           className={tab === "Consulta assistida" ? "selected" : ""}
           aria-pressed={tab === "Consulta assistida"}
           onClick={() => setTab("Consulta assistida")}
         >
-          <Sparkles size={16}/> Consulta assistida
+          <Sparkles size={20}/><span><strong>Assistentes</strong><small>Consulta especializada</small></span>
         </button>
         <button
           type="button"
@@ -113,10 +85,15 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
           aria-pressed={tab === "Anotações"}
           onClick={() => setTab("Anotações")}
         >
-          <FileText size={16}/> Minhas Anotações ({coursesWithNotes.length})
+          <FileText size={20}/><span><strong>Minhas anotações ({coursesWithNotes.length})</strong><small>Seu caderno de estudos</small></span>
         </button>
+        {me.audience !== "client" && <button type="button" className={tab === "Materiais técnicos" ? "selected" : ""} aria-pressed={tab === "Materiais técnicos"} onClick={() => setTab("Materiais técnicos")}>
+          <FolderOpen size={20}/><span><strong>Materiais técnicos</strong><small>Manuais e vídeos de consulta</small></span>
+        </button>}
+        <Link className="knowledge-area-link" href="/conhecimento/base"><span className="knowledge-official-symbol" aria-hidden="true" /><span><strong>Base oficial</strong><small>Procedimentos e orientações</small></span></Link>
       </div>
 
+      <a className="knowledge-public-link" href={KB_PUBLIC_SITE} target="_blank" rel="noopener noreferrer">Base oficial: site público para clientes<ExternalLink size={14} aria-hidden="true"/><span className="sr-only"> (abre em nova aba)</span></a>
       {tab === "Anotações" ? (
         <section className="notes-directory">
           <SectionHeading
@@ -201,8 +178,10 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
             </EmptyState>
           )}
         </section>
+      ) : tab === "Materiais técnicos" && me.audience !== "client" ? (
+        <TechnicalMaterials search="" initialMaterialId={navigation.materialId} />
       ) : tab === "Biblioteca" ? (
-        <CommunityLibrary search={search} matchedIds={matchedIds} clearSearch={() => setSearch("")} />
+        <CommunityLibrary search="" matchedIds={null} clearSearch={clearSearch} />
       ) : (
         <section className="assistant-directory">
           <div className="assistant-intro panel">
@@ -319,6 +298,7 @@ export function Knowledge({ initialTab, initialSearch = "" }: { initialTab?: "an
           </div>
         </section>
       )}
+      </>}
     </div>
   );
 }

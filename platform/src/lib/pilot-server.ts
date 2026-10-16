@@ -1,10 +1,10 @@
-import { courseValidationError, normalizeCourse } from "./course-activities";
+import { courseValidationError, normalizeCourse, isChoiceAnswerCorrect } from "./course-activities";
 import { createClient } from "@supabase/supabase-js";
 import { isAllowedCompanyEmail, normalizeEmail, pendingStudentProfile } from "./registration-security";
-import { courseXp } from "./rewards";
+import { courseXp, lessonXp } from "./rewards";
 import { commandSchema } from "./pilot-contract";
 import { executeCommunity, readCommunity } from "./community-server";
-import { normalizeStoredCourseLevel, courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
+import { normalizeStoredCourseLevel, courseSchema, articleSchema, vimeoEmbed, safeImage, isCourseActive, isCourseAvailableForCartorio, type AcademyState, type Course, type Article, type Cartorio } from "./model";
 import { isStoredMediaUrl } from "./storage-service";
 import { readQuizNotifications, setQuizNotifications } from "./quiz-notifications-server";
 import { mergeQuizNotices } from "./quiz-notifications";
@@ -16,13 +16,15 @@ export function database(){
  return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 }
 export type Profile={id:string;name:string;email:string;department:string;manager_id:string|null;role:"admin"|"manager"|"student";status:"active"|"pending"|"inactive";audience?:"client"|"internal";cartorio_id?:string|null;avatar?:string|null};
-export async function authenticate(request:Request){
+export async function authenticate(request:Request,options:{createMissingProfile?:boolean}={}){
  const token=request.headers.get("authorization")?.match(/^Bearer (.+)$/)?.[1];
  if(!token)throw new ApiError("Entre na sua conta para continuar.",401);
  const db=database();const {data,error}=await db.auth.getUser(token);
  if(error||!data.user)throw new ApiError("Sua sessão expirou. Entre novamente.",401);
  let profile=await db.from("academy_profiles").select("id,name,email,department,manager_id,role,status,audience,cartorio_id,avatar").eq("id",data.user.id).maybeSingle();
  let currentProfile: Profile | null = (profile.data as Profile) ?? null;
+ if(profile.error)throw new ApiError("Não foi possível conferir seu perfil.",503);
+ if(!currentProfile&&options.createMissingProfile===false)throw new ApiError("Seu perfil não está disponível para esta consulta.",403);
  if(!currentProfile){
   if(!data.user.email||!isAllowedCompanyEmail(data.user.email))throw new ApiError("Este e-mail não pertence a um domínio autorizado.",403);
   const name=(data.user.user_metadata?.name as string)||data.user.email?.split("@")[0]||"Colaborador";
@@ -37,7 +39,7 @@ export async function authenticate(request:Request){
 }
 function ensure(result:{error:unknown}){if(result.error)throw new ApiError("Não foi possível consultar o banco. Confira a configuração ou tente novamente.",503);}
 export async function canAccessCourse(db:ReturnType<typeof database>,me:Profile,course:Course):Promise<boolean>{
- if(course.status!=="published")return false;
+ if(!isCourseActive(course))return false;
  if(me.audience!=="client")return course.audience!=="client";
  if(!me.cartorio_id||course.audience==="internal")return false;
  const result=await db.from("academy_cartorios").select("id,modules,status,uf").eq("id",me.cartorio_id).maybeSingle();ensure(result);
@@ -62,7 +64,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
   all("academy_progress","user_id,course_id,version,lesson_id,done,position,duration,updated_at",me.audience==="client"?"user_id":undefined,me.id),
   all("academy_attempts","id,user_id,course_id,version,quiz_id,snapshot,answers,status,feedback,score,submitted_at,retry_allowed,correct_text_ids,partial_text_ids",me.audience==="client"||me.role==="student"?"user_id":undefined,me.id),
   all("academy_attempts","user_id,submitted_at",me.audience==="client"?"user_id":undefined,me.id),
-  all("academy_xp","id,user_id,amount,season,label",me.audience==="client"?"user_id":undefined,me.id),db.from("academy_preferences").select("bookmarks,read_notices").eq("user_id",me.id).maybeSingle(),
+  all("academy_xp","id,user_id,amount,season,label,course_id,event_key,created_at",me.audience==="client"?"user_id":undefined,me.id),db.from("academy_preferences").select("bookmarks,read_notices").eq("user_id",me.id).maybeSingle(),
   all("academy_cartorios","id,name,city,uf,cns,modules,key_user_id,key_user_name,key_user_email,status,created_at",me.audience==="client"?"id":undefined,me.cartorio_id??"__none__"), all("academy_recognitions","id,user_id,manager_id,title,message,created_at",me.audience==="client"?"user_id":undefined,me.id), all("academy_pdi_notes","id,user_id,manager_id,content,created_at",me.audience==="client"?"user_id":undefined,me.id),
  ]);
  results.forEach(ensure);
@@ -75,7 +77,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const collaborationNotices=(pendingSuggestions?.data??[]).map(row=>({id:`suggestion:${row.id}`,userId:me.id,title:`Nova sugestão: ${authoredArticles.find(article=>article.id===row.article_id)?.title??"artigo"}`,message:row.proposed_text.slice(0,180),link:`/conhecimento/${encodeURIComponent(row.article_id)}/editar?proposta=${encodeURIComponent(row.id)}`,read:false,createdAt:row.created_at}));
  const published:Course[]=(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.published).map((r: any)=>({...r.published,level:normalizeStoredCourseLevel(r.published.level),xp:courseXp(r.published)}));
  const ownCartorio=(cartoriosResult.data??[]).find((row:any)=>row.id===me.cartorio_id);
- const courses=published.filter(course=>course.status==="published"&&(me.audience==="client"
+ const courses=published.filter(course=>course.status==="published"&&(me.role==="admin"||isCourseActive(course))&&(me.audience==="client"
   ? ownCartorio?.status==="active"&&isCourseAvailableForCartorio(course,ownCartorio as Cartorio)
   : course.audience!=="client"));
  const visibleCourses=courses.map(course=>me.role==="admin"?course:{...course,questions:course.questions.map(question=>({...question,correct:""})),lessons:course.lessons.map(l=>({...l,questions:l.questions?.map(q=>({...q,correct:""}))})),proficiencyQuestions:course.proficiencyQuestions?.map(q=>({...q,correct:""}))});
@@ -123,7 +125,7 @@ export async function readAcademy(db:ReturnType<typeof database>,me:Profile){
  const visibleAttempts=(attempts.data??[]).filter((a: any)=>managedIds.has(a.user_id)&&courses.some(c=>c.id===a.course_id));
  const state:AcademyState={schema:1,courses:visibleCourses,courseDrafts:me.role==="admin"&&me.audience!=="client"?(resources.data??[]).filter((r: any)=>r.kind==="course"&&r.draft).map((r: any)=>({...r.draft,level:normalizeStoredCourseLevel(r.draft.level)})):[],articles:community.articles,articleDrafts:community.articleDrafts,people,departments:me.audience==="client"?[]:settings.data.departments,products:me.audience==="client"?[...new Set(courses.map(c=>c.product))]:settings.data.products,completed:completion,videoProgress,bookmarks:preferences.data?.bookmarks??[],readNotices:preferences.data?.read_notices??[],notifications:collaborationNotices,
   attempts:visibleAttempts.sort((a: any,b: any)=>a.submitted_at.localeCompare(b.submitted_at)).map((a: any)=>({id:a.id,userId:a.user_id,courseId:a.course_id,courseTitle:a.snapshot.title,courseVersion:a.version,quizId:a.quiz_id || a.snapshot.quizId || a.snapshot.lessons?.find((l:Course["lessons"][number])=>l.type==="quiz")?.id,questions:a.snapshot.questions.map((q:Course["questions"][number])=>me.role==="admin"?q:{...q,correct:""}),answers:a.answers,status:a.status,feedback:a.feedback,score:a.score,passingScore:a.snapshot.passingScore,xp:a.snapshot.xp,submittedAt:a.submitted_at,retryPolicy:a.snapshot.retryPolicy,retryAllowed:a.retry_allowed,correctTextIds:a.correct_text_ids??[],partialTextIds:a.partial_text_ids??[]})),
-  xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label})),
+  xpEvents:(xp.data??[]).filter((x: any)=>x.user_id===me.id).map((x: any)=>({id:x.id,amount:x.amount,season:x.season,label:x.label,courseId:x.course_id??undefined,eventKey:x.event_key,createdAt:x.created_at})),
   teamProgress,cartorios,recognitions,pdiNotes,quizNotifications:quizNotices.quizNotifications};
  state.notifications=mergeQuizNotices(state.notifications,quizNotices.notifications);
  state.readNotices=quizNotices.readNotices;
@@ -133,7 +135,7 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  const parsed=commandSchema.safeParse(input);if(!parsed.success)throw new ApiError("Revise os campos enviados. Há valores inválidos.");
  const command=parsed.data;
  if(command.type==="quiz-notifications"){await setQuizNotifications(db,me,command.enabled);return;}
- if(command.type==="video"||command.type==="complete"||command.type==="submit")await requireCourseAccess(db,me,command.courseId);
+ if(command.type==="video"||command.type==="complete"||command.type==="submit"||command.type==="proficiency")await requireCourseAccess(db,me,command.courseId);
  if(command.type==="avatar"){
   if(command.avatar && (!isStoredMediaUrl(command.avatar,"academy-avatars") || !new URL(command.avatar).pathname.includes(`/${me.id}/`)))throw new ApiError("URL de avatar inválida.");
   const {error}=await db.from("academy_profiles").update({avatar:command.avatar}).eq("id",me.id);
@@ -174,7 +176,17 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
   }
   return;
  }
- if(["save-resource","review","unlock","profile","settings","delete-setting","invite"].includes(command.type)&&me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
+ if(["course-availability","save-resource","review","unlock","profile","settings","delete-setting","invite"].includes(command.type)&&me.role!=="admin")throw new ApiError("Somente administradores podem executar esta ação.",403);
+ if(command.type==="course-availability"){
+  if(command.availability==="active"){
+   const result=await db.from("academy_resources").select("published").eq("id",command.courseId).eq("kind","course").maybeSingle();ensure(result);
+   if(!result.data?.published)throw new ApiError("Publique o curso pelo editor antes de ativá-lo.");
+   const course=courseSchema.parse({...result.data.published,level:normalizeStoredCourseLevel(result.data.published.level),availability:"active"});
+   const problem=courseValidationError(course,true);if(problem)throw new ApiError(problem);
+  }
+  const {error}=await db.rpc("academy_set_course_availability",{actor:me.id,command});
+  if(error)throw new ApiError(error.message);return;
+ }
  if(command.type==="save-resource"){
   const body=command.kind==="course"?courseSchema.parse(command.data):articleSchema.parse(command.data);
   if(command.kind==="course"){
@@ -310,6 +322,157 @@ export async function executeCommand(db:ReturnType<typeof database>,me:Profile,i
  if(command.type==="video"){
   const {error}=await db.rpc("academy_save_video_progress",{actor:me.id,command});
   if(error)throw new ApiError(error.message);return;
+ }
+ if(command.type==="proficiency"){
+  const resource=await db.from("academy_resources").select("id,revision,published").eq("id",command.courseId).eq("kind","course").single();
+  if(resource.error||!resource.data?.published)throw new ApiError("Curso não encontrado ou não publicado.");
+  const course=resource.data.published as Course;
+  const questions=(course.proficiencyQuestions && course.proficiencyQuestions.length>0)
+   ? course.proficiencyQuestions
+   : course.lessons.flatMap(l=>l.questions||[]);
+  if(!questions.length)throw new ApiError("Prova de proficiência sem questões configuradas.");
+
+  let correctCount=0;
+  for(const q of questions){
+   if(q.type==="choice"){
+    if(isChoiceAnswerCorrect(command.answers[q.id],q.correct,q.multiple))correctCount++;
+   }else if(q.type==="text" && (command.answers[q.id]?.trim().length??0)>=10){
+    correctCount++;
+   }
+  }
+  const score=Math.round((correctCount/questions.length)*100);
+  const passingScore=course.proficiencyScore||85;
+  const passed=score>=passingScore;
+
+  if(!passed){
+   await db.from("academy_attempts").insert({
+    user_id:me.id,
+    course_id:course.id,
+    version:resource.data.revision,
+    quiz_id:"proficiency",
+    snapshot:{...course,proficiency:true,quizId:"proficiency",title:`${course.title} · Prova de Proficiência`,questions,passingScore},
+    answers:command.answers,
+    status:"retry",
+    score,
+    feedback:`Aproveitamento de ${score}%. O mínimo para dispensa por proficiência é ${passingScore}%.`,
+    retry_allowed:true,
+    submitted_at:new Date().toISOString()
+   });
+   return;
+  }
+
+  for(const l of course.lessons){
+   const duration=(l.minutes||5)*60;
+   await db.from("academy_progress").upsert({
+    user_id:me.id,
+    course_id:course.id,
+    version:resource.data.revision,
+    lesson_id:l.id,
+    done:true,
+    ranges:[[0,duration]],
+    duration,
+    updated_at:new Date().toISOString()
+   },{onConflict:"user_id,course_id,version,lesson_id"});
+
+   if(l.type!=="quiz"){
+    const pts=lessonXp(l.minutes||5);
+    await db.rpc("academy_award_xp",{
+     learner:me.id,
+     course:course.id,
+     event:`lesson:${l.id}`,
+     points:pts,
+     description:`Aula concluída · ${l.title}`
+    });
+   }
+  }
+
+  for(const q of questions){
+   const isCorrect=q.type==="choice"
+    ? isChoiceAnswerCorrect(command.answers[q.id],q.correct,q.multiple)
+    : (command.answers[q.id]?.trim().length??0)>=10;
+   if(isCorrect){
+    await db.rpc("academy_award_xp",{
+     learner:me.id,
+     course:course.id,
+     event:`question:${q.id}`,
+     points:q.type==="choice"?5:8,
+     description:`Acerto · ${course.title}`
+    });
+   }
+  }
+
+  await db.rpc("academy_award_xp",{
+   learner:me.id,
+   course:course.id,
+   event:"approval:proficiency",
+   points:30,
+   description:`Prova de proficiência aprovada · ${course.title}`
+  });
+  await db.rpc("academy_award_xp",{
+   learner:me.id,
+   course:course.id,
+   event:"completion",
+   points:30,
+   description:`Curso concluído · ${course.title}`
+  });
+
+  await db.from("academy_attempts").insert({
+   user_id:me.id,
+   course_id:course.id,
+   version:resource.data.revision,
+   quiz_id:"proficiency",
+   snapshot:{
+    ...course,
+    proficiency:true,
+    quizId:"proficiency",
+    title:`${course.title} · Prova de Proficiência`,
+    questions,
+    passingScore,
+    xp:course.xp,
+    retryPolicy:"free",
+    lessons:course.lessons
+   },
+   answers:command.answers,
+   status:"approved",
+   score,
+   feedback:`Aprovado com ${score}% na Prova de Proficiência. Dispensa integral das aulas e certificação concedida.`,
+   reviewed_at:new Date().toISOString(),
+   reviewed_by:me.id,
+   retry_allowed:false,
+   submitted_at:new Date().toISOString()
+  });
+
+  for(const qLesson of course.lessons.filter(l=>l.type==="quiz")){
+   const existing=await db.from("academy_attempts").select("id").eq("user_id",me.id).eq("course_id",course.id).eq("quiz_id",qLesson.id).eq("status","approved").maybeSingle();
+   if(!existing.data){
+    await db.from("academy_attempts").insert({
+     user_id:me.id,
+     course_id:course.id,
+     version:resource.data.revision,
+     quiz_id:qLesson.id,
+     snapshot:{
+      ...course,
+      quizId:qLesson.id,
+      title:`${course.title} · ${qLesson.title}`,
+      questions:qLesson.questions||[],
+      passingScore:course.passingScore||60,
+      xp:30,
+      retryPolicy:"free"
+     },
+     answers:{},
+     status:"approved",
+     score:100,
+     feedback:"Dispensado por aprovação na Prova de Proficiência do curso.",
+     reviewed_at:new Date().toISOString(),
+     reviewed_by:me.id,
+     retry_allowed:false,
+     submitted_at:new Date().toISOString()
+    });
+   }
+  }
+
+  await db.from("academy_audit").insert({actor:me.id,action:"proficiency",resource:course.id});
+  return;
  }
  const {error}=await db.rpc("academy_mutate",{actor:me.id,command});if(error)throw new ApiError(error.message);
 }

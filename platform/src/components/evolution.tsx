@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { isCourseComplete } from "@/lib/rewards";
 import Link from "next/link";
-import { ArrowRight, Award, Camera, ChevronLeft, ChevronRight, Flame, Gem, KeyRound, Medal, Shield, Sparkles, Trash2, Trophy } from "lucide-react";
+import { ArrowRight, Award, CalendarDays, Camera, ChevronLeft, ChevronRight, Flame, Gem, KeyRound, Medal, Shield, Sparkles, Trash2, Trophy } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, PageHeading, Progress, SectionHeading } from "./shared";
@@ -17,18 +17,18 @@ export function Evolution() {
   const xp = experience(state);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [rankingExpanded, setRankingExpanded] = useState(false);
   const [rankingPage, setRankingPage] = useState(1);
+  const [achievementsPage, setAchievementsPage] = useState(1);
 
   const people = state.people
     .filter((person) => person.status === "active" && person.audience !== "client")
     .map((person) => (person.id === me.id ? { ...person, xp: xp.annual } : person))
     .sort((a, b) => b.xp - a.xp);
-  const rankingPages = Math.max(1, Math.ceil(people.length / 10));
+  const rankingPages = Math.max(1, Math.ceil(people.length / 5));
   const currentPage = Math.min(rankingPage, rankingPages);
-  const visiblePeople = rankingExpanded ? people.slice((currentPage - 1) * 10, currentPage * 10) : people.slice(0, 5);
+  const visiblePeople = people.slice((currentPage - 1) * 5, currentPage * 5);
 
-  const approved = state.attempts.filter(
+  const approved = [...state.attempts].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)).filter(
     (attempt, index, attempts) =>
       attempt.status === "approved" &&
       attempt.userId === me.id &&
@@ -39,23 +39,47 @@ export function Evolution() {
   );
 
   const withoutQuiz = state.courses.filter(
-    (course) => !course.lessons.some((l) => l.type === "quiz") && isCourseComplete(course, state, me.id)
+    (course) => !course.lessons.some((l) => l.type === "quiz") && isCourseComplete(course, state, me.id) && !approved.some((a) => a.courseId === course.id)
   );
+  const completedAt = (courseId: string) => state.xpEvents.find(event => event.courseId === courseId && (event.eventKey === "completion" || event.eventKey === "legacy"))?.createdAt ?? "";
+  const achievements = [
+    ...state.recognitions.filter(item => item.userId === me.id).map(item => ({
+      id: `recognition:${item.id}`, title: item.title, date: item.createdAt, recognition: true,
+      subtitle: `Reconhecimento de liderança · ${new Date(item.createdAt).toLocaleDateString("pt-BR")} · Concedido por ${item.managerName}`,
+      detail: item.message,
+    })),
+    ...withoutQuiz.map(course => ({
+      id: `course:${course.id}`, title: course.title, date: completedAt(course.id), recognition: false,
+      subtitle: `Curso concluído · sem avaliação · versão ${course.version}`, detail: "",
+    })),
+    ...approved.map(attempt => ({
+      id: `attempt:${attempt.id}`, title: attempt.courseTitle, date: completedAt(attempt.courseId) || attempt.submittedAt, recognition: false,
+      subtitle: `Aprovado com ${attempt.score}% · versão ${attempt.courseVersion}`,
+      detail: attempt.quizId === "proficiency" || (attempt as any).snapshot?.proficiency
+        ? "Aprovação por Prova de Proficiência · dispensa integral de aulas"
+        : "Aprovação registrada · emissão de certificado em preparação",
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+  const achievementsPages = Math.max(1, Math.ceil(achievements.length / 5));
+  const currentAchievementsPage = Math.min(achievementsPage, achievementsPages);
+  const visibleAchievements = achievements.slice((currentAchievementsPage - 1) * 5, currentAchievementsPage * 5);
 
   return (
-    <div className="page-enter">
+    <div className="page-enter evolution-page">
       <PageHeading
+        variant="compact"
         eyebrow="SEU CONHECIMENTO DEIXA MARCAS"
         title="Toda evolução conta."
-        description="Celebre seu caminho e descubra o que vem depois."
+        description="Acompanhe seu nível, sua faixa na temporada e suas conquistas."
       >
         <span className="season-pill">
           <span /> Temporada {DEMO_SEASON}
         </span>
       </PageHeading>
 
+      <div className="evolution-top">
       {/* Painel de Gestão de Perfil, Foto e Senha Exclusiva */}
-      <section className="evolution-profile-card">
+      <section className="evolution-profile-card" aria-label="Seu perfil">
         <div className="profile-card-left">
           <div className="profile-card-avatar-wrap">
             <div className={`profile-card-avatar tier-avatar ${tierClass(xp.annual)}`} title={`Faixa ${xp.tier.name}`}>
@@ -91,7 +115,7 @@ export function Evolution() {
                 title="Remover foto"
               >
                 <Trash2 size={14} />
-                <span>Remover</span>
+                <span>Remover foto</span>
               </Button>
             )}
           </div>
@@ -114,21 +138,6 @@ export function Evolution() {
         </div>
 
         <div className="profile-card-right">
-          <div className="profile-card-stats">
-            <div className="profile-stat-box">
-              <span className="stat-label">Nível</span>
-              <strong className="stat-value level-stat">
-                <Gem size={15} /> Nível {xp.level}
-              </strong>
-            </div>
-            <div className="profile-stat-box">
-              <span className="stat-label">Experiência</span>
-              <strong className="stat-value xp-stat">
-                {number(xp.total)} <small>XP</small>
-              </strong>
-            </div>
-          </div>
-
           <div className="profile-card-security">
             <Button
               type="button"
@@ -145,16 +154,16 @@ export function Evolution() {
       </section>
 
       {/* Hero de Trajetória da Gamificação */}
-      <section className="evolution-hero">
+      <section className="evolution-hero" aria-label="Sua trajetória">
         <span className="evolution-emblem">
           <Gem size={65} strokeWidth={1} />
         </span>
         <div>
           <div className="hero-eyebrow">SUA TRAJETÓRIA</div>
           <h2>Nível {xp.level} · Explorador</h2>
-          <p>Um passo de cada vez. Um novo mundo a descobrir.</p>
+          <p>Seu nível considera todo o XP acumulado, em todas as temporadas.</p>
           <Progress value={xp.levelProgress} label="Progresso para o próximo nível" />
-          <p style={{ marginTop: 8, fontSize: 9 }}>{400 - (xp.total % 400)} XP para o próximo nível</p>
+          <p className="evolution-next-level">{400 - (xp.total % 400)} XP para o próximo nível</p>
         </div>
         <div className="evolution-xp">
           <strong>
@@ -163,10 +172,11 @@ export function Evolution() {
           <small>experiência acumulada</small>
         </div>
       </section>
+      </div>
 
       <SectionHeading
-        title="Uma temporada de possibilidades"
-        description={`Sua faixa atual: ${xp.tier.name} · ${number(xp.annual)} XP nesta temporada`}
+        title="Sua faixa nesta temporada"
+        description={`Faixa atual: ${xp.tier.name} · ${number(xp.annual)} XP em ${DEMO_SEASON}`}
       />
       <div className="milestones">
         {tiers.map((tier, index) => {
@@ -186,97 +196,66 @@ export function Evolution() {
         })}
       </div>
 
+      <section className="evolution-guide" aria-label="Entenda como funciona sua evolução">
       <SectionHeading
         title="Entenda como funciona sua evolução"
-        description="Nível e Faixa têm propósitos diferentes: um valoriza seu legado permanente e o outro mede seu ritmo na temporada."
+        description="O nível acompanha seu histórico. A faixa acompanha o ano atual."
       />
-      <div
-        className="evolution-rules-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 18,
-          marginBottom: 28,
-        }}
-      >
-        <div className="panel" style={{ padding: 22, borderLeft: "4px solid var(--primary)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Gem size={20} style={{ color: "var(--primary)" }} />
-            <h3 style={{ fontSize: 15, margin: 0 }}>Como você sobe de NÍVEL</h3>
+      <div className="evolution-rules-grid">
+        <article className="panel evolution-rule-card">
+          <div className="evolution-rule-heading">
+            <span className="evolution-rule-icon" aria-hidden="true"><Gem size={22} /></span>
+            <h3>Nível</h3>
           </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7, margin: 0 }}>
-            O <strong>Nível</strong> representa sua trajetória <strong>permanente e vitalícia</strong>. A cada{" "}
-            <strong>400 XP</strong> acumulados em qualquer atividade na Academia DeMaria, você sobe um nível. Seu Nível e todo o
-            XP acumulado <strong>nunca são zerados ou perdidos</strong>.
+          <p>
+            É seu <strong>progresso acumulado</strong>. A cada <strong>400 XP</strong> conquistados,
+            você sobe um nível. Ele continua na virada do ano.
           </p>
-        </div>
-        <div className="panel" style={{ padding: 22, borderLeft: "4px solid #b7791f" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Medal size={20} style={{ color: "#b7791f" }} />
-            <h3 style={{ fontSize: 15, margin: 0 }}>Como você sobe de FAIXA</h3>
+        </article>
+        <article className="panel evolution-rule-card">
+          <div className="evolution-rule-heading">
+            <span className="evolution-rule-icon" aria-hidden="true"><Medal size={22} /></span>
+            <h3>Faixa</h3>
           </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7, margin: 0 }}>
-            A <strong>Faixa</strong> mede seu ritmo na <strong>temporada anual</strong>: Bronze (0 XP) → Prata (800 XP) →
-            Ouro (2.000 XP) → Platina (3.500 XP) → Diamante (5.000 XP). Ela reflete suas reciclagens e participação no ano
-            vigente.
+          <p>
+            Mostra seu <strong>progresso no ano</strong>, de Bronze a Diamante.
+            Depende do XP da temporada atual. Veja as faixas e os pontos necessários logo acima.
           </p>
-        </div>
-        <div className="panel" style={{ padding: 22, borderLeft: "4px solid #319795" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Sparkles size={20} style={{ color: "#319795" }} />
-            <h3 style={{ fontSize: 15, margin: 0 }}>Virada de Temporada e Reciclagem</h3>
+        </article>
+        <article className="panel evolution-rule-card">
+          <div className="evolution-rule-heading">
+            <span className="evolution-rule-icon" aria-hidden="true"><CalendarDays size={22} /></span>
+            <h3>Temporada</h3>
           </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7, margin: 0 }}>
-            Ao término da temporada anual, <strong>a sua faixa atual cairá duas categorias</strong> (exemplo: quem alcançou
-            Diamante recomeça em Ouro; Platina em Prata; Ouro em Bronze). No entanto,{" "}
-            <strong>seu Nível e todo o XP continuam 100% mantidos</strong>.
+          <p>
+            Vai de <strong>janeiro a dezembro</strong>. No novo ano, a faixa considera o XP da nova temporada.
+            Seu nível e suas conquistas continuam no histórico.
           </p>
-        </div>
+        </article>
       </div>
+      </section>
 
       <div className="dashboard-bottom">
-        <section>
+        <section className="panel ranking-card achievements-card">
           <SectionHeading
             title="Aprendizados que viram conquistas"
             description="Seus cursos concluídos, com ou sem avaliação."
           />
-          {state.recognitions.filter(item => item.userId === me.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(item => (
-            <article className="certificate-row leadership-recognition" key={item.id}>
-              <Medal size={30} aria-hidden="true" />
-              <div>
-                <strong>{item.title}</strong>
-                <small>Reconhecimento de liderança · {new Date(item.createdAt).toLocaleDateString("pt-BR")} · Concedido por {item.managerName}</small>
-                <p>{item.message}</p>
-              </div>
-              <span className="recognition-xp">+100 XP</span>
-            </article>
-          ))}
-          {withoutQuiz.map((course) => (
-            <div className="certificate-row" key={course.id}>
-              <Award size={30} />
-              <div>
-                <strong>{course.title}</strong>
-                <small>
-                  Curso concluído · sem avaliação · versão {course.version}
-                </small>
-              </div>
-            </div>
-          ))}
-          {approved.length ? (
-            approved.map((attempt) => (
-              <div className="certificate-row" key={attempt.id}>
-                <Award size={30} />
+          <div id="achievements-list" className="achievements-list" role="region" aria-label="Histórico de conquistas">
+            {visibleAchievements.map(item => (
+              <article className={`certificate-row ${item.recognition ? "leadership-recognition" : ""}`} key={item.id}>
+                {item.recognition ? <Medal size={30} aria-hidden="true" /> : <Award size={30} aria-hidden="true" />}
                 <div>
-                  <strong>{attempt.courseTitle}</strong>
-                  <small>
-                    Aprovado com {attempt.score}% · versão {attempt.courseVersion}
-                    <br />
-                    Aprovação registrada · emissão de certificado em preparação
-                  </small>
+                  <strong>{item.title}</strong>
+                  <small>{item.subtitle}</small>
+                  {item.detail && (item.recognition ? <p>{item.detail}</p> : <small>{item.detail}</small>)}
                 </div>
-              </div>
-            ))
-          ) : withoutQuiz.length || state.recognitions.some(item => item.userId === me.id) ? null : (
+                {item.recognition && <span className="recognition-xp">+100 XP</span>}
+              </article>
+            ))}
+          </div>
+          {achievementsPages > 1 && <nav className="ranking-pagination" aria-label="Páginas das conquistas"><Button type="button" variant="secondary" size="sm" disabled={currentAchievementsPage === 1} onClick={() => setAchievementsPage(currentAchievementsPage - 1)} aria-label="Página anterior"><ChevronLeft size={16} /></Button><span aria-live="polite">Página {currentAchievementsPage} de {achievementsPages}</span><Button type="button" variant="secondary" size="sm" disabled={currentAchievementsPage === achievementsPages} onClick={() => setAchievementsPage(currentAchievementsPage + 1)} aria-label="Próxima página"><ChevronRight size={16} /></Button></nav>}
+          {!achievements.length && (
             <EmptyState
               icon={<Award size={30} />}
               title="Sua primeira conquista está por vir."
@@ -296,7 +275,7 @@ export function Evolution() {
             description="Ranking anual · XP de aulas, acertos e conclusões"
           />
           {visiblePeople.map((person, index) => {
-            const rank = rankingExpanded ? (currentPage - 1) * 10 + index + 1 : index + 1;
+            const rank = (currentPage - 1) * 5 + index + 1;
             return (
             <div
               className="ranking-row"
@@ -328,15 +307,12 @@ export function Evolution() {
               </span>
             </div>
           );})}
-          {people.length > 5 && <div className="ranking-actions"><Button type="button" variant="secondary" onClick={() => { setRankingExpanded(value => !value); setRankingPage(1); }}>{rankingExpanded ? "Mostrar apenas Top 5" : `Ver ranking completo (${people.length})`}</Button></div>}
-          {rankingExpanded && rankingPages > 1 && <nav className="ranking-pagination" aria-label="Páginas do ranking"><Button type="button" variant="secondary" size="sm" disabled={currentPage === 1} onClick={() => setRankingPage(currentPage - 1)} aria-label="Página anterior"><ChevronLeft size={16} /></Button><span aria-live="polite">Página {currentPage} de {rankingPages}</span><Button type="button" variant="secondary" size="sm" disabled={currentPage === rankingPages} onClick={() => setRankingPage(currentPage + 1)} aria-label="Próxima página"><ChevronRight size={16} /></Button></nav>}
+          {rankingPages > 1 && <nav className="ranking-pagination" aria-label="Páginas do ranking"><Button type="button" variant="secondary" size="sm" disabled={currentPage === 1} onClick={() => setRankingPage(currentPage - 1)} aria-label="Página anterior"><ChevronLeft size={16} /></Button><span aria-live="polite">Página {currentPage} de {rankingPages}</span><Button type="button" variant="secondary" size="sm" disabled={currentPage === rankingPages} onClick={() => setRankingPage(currentPage + 1)} aria-label="Próxima página"><ChevronRight size={16} /></Button></nav>}
         </section>
       </div>
 
       <div className="info-note section-space">
-        <Sparkles size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Seu histórico permanece. Cada nova
-        temporada oferece uma nova jornada. O fechamento anual e as reciclagens serão implementados na etapa de
-        gamificação.
+        <Sparkles size={16} style={{ display: "inline", verticalAlign: "middle" }} aria-hidden="true" /> Seu XP acumulado e suas conquistas continuam no histórico entre temporadas.
       </div>
 
       <ProfilePhotoModal isOpen={isPhotoModalOpen} onClose={() => setIsPhotoModalOpen(false)} />

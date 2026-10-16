@@ -29,9 +29,21 @@ export const lessonSchema = z.object({
   attachmentName: z.string().max(200).optional(),
   ufFilter: z.array(z.string()).optional(),
 });
+export const courseAvailabilitySchema = z.enum(["active", "inactive", "development"]);
+export type CourseAvailability = z.infer<typeof courseAvailabilitySchema>;
+export const courseAvailabilityLabels: Record<CourseAvailability, string> = {
+  active: "Ativo", inactive: "Inativo", development: "Em desenvolvimento",
+};
+export function getCourseAvailability(course: { status: string; availability?: CourseAvailability }): CourseAvailability {
+  return course.availability ?? (course.status === "published" ? "active" : "development");
+}
+export function isCourseActive(course: { status: string; availability?: CourseAvailability }) {
+  return course.status === "published" && getCourseAvailability(course) === "active";
+}
 export const courseSchema = z.object({
   id: z.string(), title: z.string().min(3).max(120), description: z.string(), product: z.string().min(1), category: z.string(), level: courseLevelSchema,
   accent: z.enum(["violet", "mint", "peach", "blue", "pink", "slate"]), status: z.enum(["draft", "published"]),
+  availability: courseAvailabilitySchema.optional(),
   xp: z.number().int().min(0).max(10000), required: z.boolean(), banner: z.string(), logoUrl: z.string().optional(), author: z.string(),
   department: z.string().optional(),
   audience: z.enum(["internal", "client", "both"]).optional().default("internal"),
@@ -110,7 +122,7 @@ export const stateSchema = z.object({
   courseDrafts: z.array(courseSchema).default([]), articleDrafts: z.array(articleSchema).default([]),
   departments: z.array(z.string()), products: z.array(z.string()), completed: z.record(z.string(), z.array(z.string())),
   videoProgress: z.record(z.string(), z.record(z.string(), z.object({ position: z.number(), duration: z.number(), updatedAt: z.string() }))).default({}),
-  bookmarks: z.array(z.string()), attempts: z.array(attemptSchema), xpEvents: z.array(z.object({ id: z.string(), amount: z.number(), season: z.string(), label: z.string() })),
+  bookmarks: z.array(z.string()), attempts: z.array(attemptSchema), xpEvents: z.array(z.object({ id: z.string(), amount: z.number(), season: z.string(), label: z.string(), courseId: z.string().optional(), eventKey: z.string().optional(), createdAt: z.string().optional() })),
   readNotices: z.array(z.string()),
   notifications: z.array(notificationSchema).default([]),
   quizNotifications: quizNotificationPreferenceSchema.optional(),
@@ -147,7 +159,7 @@ export function vimeoEmbed(url: string): string | null {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" || !["vimeo.com", "www.vimeo.com", "player.vimeo.com"].includes(parsed.hostname)) return null;
-    const match = parsed.pathname.match(/^\/(?:video\/)?(\d+)(?:\/([a-zA-Z0-9]+))?\/?$/);
+    const match = parsed.pathname.match(/^\/(?:(?:manage\/)?videos?\/)?(\d+)(?:\/([a-zA-Z0-9]+))?\/?$/);
     if (!match) return null;
     const hash = match[2] || parsed.searchParams.get("h");
     return `https://player.vimeo.com/video/${match[1]}${hash ? `?h=${encodeURIComponent(hash)}` : ""}`;

@@ -1,18 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, BookOpen, CheckCircle2, Clock3, Search, SlidersHorizontal, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Bookmark, BookOpen, CheckCircle2, Clock3, PlayCircle, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { CourseCard, EmptyState, PageHeading } from "./shared";
 import { Button } from "./ui/button";
-import { courseLevels, isCourseAvailableForCartorio } from "@/lib/model";
+import { courseLevels, isCourseActive, isCourseAvailableForCartorio } from "@/lib/model";
 import { isCourseComplete } from "@/lib/rewards";
 import { normalize } from "@/lib/utils";
+import { LiveCatalog } from "./live/live-catalog";
+import { useLive } from "./live/live-provider";
 
-export type CatalogTab = "all" | "in_progress" | "available" | "completed" | "saved";
+export type CatalogTab = "all" | "in_progress" | "available" | "completed" | "saved" | "recordings";
 
 export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   const { state, isClientEnvironment, activeCartorio, me } = useAcademy();
+  const { data: liveData } = useLive();
   const [search, setSearch] = useState(initialSearch);
   const [product, setProduct] = useState("Todos");
   const [selectedTab, setTab] = useState<CatalogTab | null>(null);
@@ -20,7 +24,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   const [pendingOnly, setPendingOnly] = useState(false);
 
   const published = state.courses.filter(course => {
-    if (course.status !== "published") return false;
+    if (!isCourseActive(course)) return false;
     if (isClientEnvironment) {
       if (!activeCartorio) return course.audience === "client" || course.audience === "both";
       return isCourseAvailableForCartorio(course, activeCartorio);
@@ -50,6 +54,7 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
     { id: "available", label: "Disponíveis", icon: Sparkles, count: availableCount },
     { id: "completed", label: "Concluídos", icon: CheckCircle2, count: completedCount },
     { id: "saved", label: "Salvos", icon: Bookmark, count: savedCount },
+    { id: "recordings", label: "Aulas gravadas", icon: PlayCircle, count: liveData.events.filter(event => event.status === "recorded" || event.status === "processing").length },
     { id: "all", label: "Todos os cursos", icon: BookOpen, count: published.length },
   ];
 
@@ -75,8 +80,9 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
   });
 
   return (
-    <div className="page-enter">
+    <div className="page-enter catalog-page">
       <PageHeading
+        variant="compact"
         eyebrow={
           isClientEnvironment
             ? `CAPACITAÇÃO DE CLIENTES · ${activeCartorio?.uf || "DEMARIA"}`
@@ -86,37 +92,18 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
         description={
           isClientEnvironment
             ? "Cursos oficiais liberados conforme a contratação de módulos da sua serventia."
-            : "Cursos e experiências para transformar conhecimento em possibilidades."
+            : "Uma jornada para cada descoberta. Explore os produtos DeMaria e desenvolva novas habilidades."
         }
       >
-        <span className="round-heading-icon">
-          <BookOpen size={26} />
+        <span className="catalog-summary">
+          {published.length} {published.length === 1 ? "curso no catálogo" : "cursos no catálogo"}
+          {isClientEnvironment && <small>{activeCartorio?.name || "Cartório Parceiro"} · módulos ativos</small>}
         </span>
       </PageHeading>
 
-      <div className="catalog-banner">
-        <span className="mini-icon">
-          <Sparkles size={22} />
-        </span>
-        <div>
-          <strong>
-            {isClientEnvironment
-              ? `Capacitação · ${activeCartorio?.name || "Cartório Parceiro"}`
-              : "Uma jornada para cada descoberta."}
-          </strong>
-          <p>
-            {isClientEnvironment
-              ? `${published.length} curso(s) habilitado(s) para os módulos ativos.`
-              : "Explore os produtos DeMaria e desenvolva novas habilidades."}
-          </p>
-        </div>
-        <span className="catalog-count">
-          {published.length}
-          <small>cursos disponíveis</small>
-        </span>
-      </div>
+      <LiveCatalog />
 
-      <div className="tabs" role="tablist" aria-label="Filtrar cursos por status de aprendizado">
+      <div className="tabs" role="tablist" aria-label="Categorias do catálogo de aprendizado">
         {tabs.map(item => {
           const isSelected = tab === item.id;
           const Icon = item.icon;
@@ -137,6 +124,18 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
         })}
       </div>
 
+      {tab === "recordings" ? (
+        <>
+          <div className="filter-bar">
+            <div className="field-search">
+              <Search size={18} />
+              <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Buscar aula gravada, assunto ou apresentador..." aria-label="Pesquisar aulas gravadas" />
+            </div>
+          </div>
+          <LiveCatalog recordingsOnly search={search} />
+        </>
+      ) : (
+        <>
       <div className="filter-bar">
         <div className="field-search">
           <Search size={18} />
@@ -247,6 +246,8 @@ export function Catalog({ initialSearch = "" }: { initialSearch?: string }) {
               : "Limpar busca"}
           </Button>
         </EmptyState>
+      )}
+        </>
       )}
     </div>
   );

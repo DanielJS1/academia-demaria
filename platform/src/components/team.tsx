@@ -34,6 +34,7 @@ import { formatActiveTime, formatLastAccess, type EngagementMember } from "@/lib
 import { EngagementControls, MemberEngagement, useTeamEngagement } from "./team-engagement";
 import { managedPeople } from "@/lib/team-scope";
 import { tierClass } from "@/lib/gamification";
+import { ManagementPage } from "./management/management-page";
 
 // Determina se o curso é voltado especificamente para o departamento do colaborador
 function isCourseForSector(course: Course, department: string): boolean {
@@ -123,6 +124,11 @@ function analyzeAttempt(attempt: Attempt): {
 }
 
 export function Team() {
+  return <ManagementPage />;
+}
+
+// Preserve the former implementation for migration comparison; the route mounts ManagementPage.
+function LegacyTeam() {
   const { state, me, notify, isClientEnvironment } = useAcademy();
   const engagement = useTeamEngagement(me.id, !isClientEnvironment && me.role !== "student");
   const [activeTab, setActiveTab] = useState<"people" | "courses" | "assessments">("people");
@@ -138,7 +144,7 @@ export function Team() {
 
   // Filtra pessoas monitoradas por este usuário (Admin vê todos; Gestor vê quem tem seu managerId ou do seu mesmo setor)
   const currentDept = me.department || state.people.find(p => p.id === me.id)?.department || "";
-  const people = useMemo(() => managedPeople(state.people, me), [state.people, me]);
+  const people = useMemo(() => managedPeople(state.people, me, "operational"), [state.people, me]);
 
   const publishedCourses = useMemo(() => {
     return state.courses.filter(c => c.status === "published");
@@ -337,6 +343,7 @@ export function Team() {
         title="Minha gestão"
         description="Acompanhe a jornada de aprendizagem dos seus colaboradores e identifique onde apoiar cada pessoa."
       >
+        <Button asChild variant="secondary"><Link href="/equipe/trilhas">Trilhas e avisos</Link></Button>
         <Button asChild><Link href="/equipe/relatorios"><BarChart3 size={16} /> Gerar relatório</Link></Button>
       </PageHeading>
 

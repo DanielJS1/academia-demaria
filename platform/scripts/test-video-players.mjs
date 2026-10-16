@@ -32,14 +32,14 @@ window.YT={Player:class {constructor(id,{events}){window.instances=(window.insta
 getCurrentTime(){return this.pos}getDuration(){return 100}seekTo(t){this.pos=t}destroy(){}emit(state,t){this.pos=t;this.events.onStateChange({data:state})}}};
 const Component=params.has('youtube')?YouTubeLesson:VimeoLesson;
 createRoot(document.getElementById('root')).render(<Component course={{id:'course',version:1}} lesson={{id:'lesson',title:'Aula teste',minutes:1,videoUrl:params.has('youtube')?'https://youtu.be/abcdefghijk':'https://vimeo.com/123456'}} preview={params.has('preview')} initialPosition={params.has('resume')?100:0}/>);`;
-const server=await createServer({root,configFile:false,server:{host:'127.0.0.1',port:4189,strictPort:true,fs:{allow:[root]}},resolve:{alias:{'@':path.join(root,'src')}},plugins:[{name:'player-fixture',enforce:'pre',resolveId(id){if(id==='@vimeo/player')return '\0sdk';if(id.endsWith('/academy-provider')||id==='./academy-provider')return '\0provider';if(id.endsWith('/supabase-browser'))return '\0auth';if(id==='/test-entry.tsx')return path.join(root,'src/__player-entry.tsx')},load(id){if(id.endsWith('/__player-entry.tsx'))return entry;if(id==='\0sdk')return sdk;if(id==='\0provider')return provider;if(id==='\0auth')return 'export const browserAuth=()=>null;'},configureServer(s){s.middlewares.use(async(req,res,next)=>{if(req.url.split('?')[0]==='/'){res.setHeader('Content-Type','text/html');res.end('<div id="root"></div><script type="module" src="/test-entry.tsx"></script>')}else if(req.url==='/test-entry.tsx'){const result=await s.transformRequest('/test-entry.tsx');res.setHeader('Content-Type','application/javascript');res.end(result?.code||'')}else next()})}}]});
+const server=await createServer({root,configFile:false,server:{host:'127.0.0.1',port:4189,strictPort:true,fs:{allow:[root]}},resolve:{dedupe:['react','react-dom'],alias:{'@':path.join(root,'src')}},optimizeDeps:{include:['react','react-dom/client','react/jsx-dev-runtime','lucide-react','zod']},plugins:[{name:'player-fixture',enforce:'pre',resolveId(id){if(id==='@vimeo/player')return '\0sdk';if(id.endsWith('/academy-provider')||id==='./academy-provider')return '\0provider';if(id.endsWith('/supabase-browser'))return '\0auth';if(id==='/test-entry.tsx')return path.join(root,'src/__player-entry.tsx')},load(id){if(id.endsWith('/__player-entry.tsx'))return entry;if(id==='\0sdk')return sdk;if(id==='\0provider')return provider;if(id==='\0auth')return 'export const browserAuth=()=>null;'},configureServer(s){s.middlewares.use(async(req,res,next)=>{if(req.url.split('?')[0]==='/'){res.setHeader('Content-Type','text/html');res.end('<div id="root"></div><script type="module" src="/test-entry.tsx"></script>')}else if(req.url==='/test-entry.tsx'){const result=await s.transformRequest('/test-entry.tsx');res.setHeader('Content-Type','application/javascript');res.end(result?.code||'')}else next()})}}]});
 await server.listen();
 const browser=await chromium.launch({headless:process.env.HEADLESS === "true" || !!process.env.CI});
-let page;
+let page;const runtimeErrors=[];
 async function open(query=''){
  if(page)await page.close();page=await browser.newPage();
- page.on('pageerror',e=>console.error('PAGE ERROR',e.message));
- page.on('console',msg=>{if(msg.type()==='error')console.error('CONSOLE',msg.text())});await page.route(/player.vimeo.com|youtube.com\/embed/,route=>route.fulfill({body:'<html></html>',contentType:'text/html'}));
+ page.on('pageerror',e=>{runtimeErrors.push(e.message);console.error('PAGE ERROR',e.message)});
+ page.on('console',msg=>{if(msg.type()==='error'){runtimeErrors.push(msg.text());console.error('CONSOLE',msg.text())}});await page.route(/player.vimeo.com|youtube.com\/embed/,route=>route.fulfill({body:'<html></html>',contentType:'text/html'}));
  await page.clock.install();await page.goto('http://127.0.0.1:4189/'+query,{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.player&&window.calls);
 
@@ -83,5 +83,5 @@ try{
  for(let t=10.25;t<=20;t+=.25)await tick(t);
  await page.evaluate(()=>window.player.emit('ended',100));await expect(page.getByText('Aula concluída!')).toBeVisible();
  results.push('Vimeo: rever trecho não diminui o tempo já assistido; ended conclui');
- console.log(JSON.stringify({passed:results},null,2));
+ expect(runtimeErrors).toEqual([]);console.log(JSON.stringify({passed:results,runtimeErrors},null,2));
 }catch(error){console.error(error);process.exitCode=1;}finally{await browser.close();await server.close();process.exit(process.exitCode||0);}

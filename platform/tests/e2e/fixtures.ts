@@ -17,6 +17,9 @@ function credentials(role: Role) {
 export async function login(browser: Browser, role: Role): Promise<AuthSession> {
   const context = await browser.newContext();
   const page = await context.newPage();
+  await page.addLocatorHandler(page.locator("dialog.learning-dialog[open]"), async dialog => {
+    await dialog.getByRole("button", { name: "Fechar aviso", exact: true }).click();
+  });
   const { email, password } = credentials(role);
   await page.goto("/acesso", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Bom ter você por aqui." })).toBeVisible({ timeout: 30_000 });

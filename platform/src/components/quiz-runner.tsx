@@ -43,7 +43,7 @@ export function QuizRunner({
   onComplete?: (result: { passed: boolean; score: number }) => void;
   onCancel?: () => void;
 }) {
-  const { update, mutate, notify, busy } = useAcademy();
+  const { update, mutate, notify, busy, refresh } = useAcademy();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -176,31 +176,33 @@ export function QuizRunner({
       const passed = score >= passingScore;
 
       if (passed) {
-        await update(current => {
-          let updatedState = current;
-          for (const l of course.lessons) {
-            if (l.type !== "quiz") {
-              updatedState = completeActivity(updatedState, course.id, l.id);
-            }
-          }
-          return updatedState;
-        });
-
-        await mutate({
-          type: "submit",
+        const ok = await mutate({
+          type: "proficiency",
           courseId: course.id,
           version: course.version,
-          quizId: quizId || course.lessons.find(l => l.type === "quiz")?.id || "proficiency",
+          score,
           answers: { ...answers },
         });
 
-        setSubmittedResult({
-          passed: true,
-          score,
-          feedback: `Parabéns! Você alcançou ${score}% de aproveitamento (mínimo ${passingScore}%), comprovando proficiência integral neste curso. Todas as aulas foram concluídas e seu XP foi liberado!`,
-        });
-        notify(`Proficiência aprovada com ${score}%! Todo o XP do curso foi desbloqueado.`);
+        if (ok) {
+          if (refresh) void refresh();
+          setSubmittedResult({
+            passed: true,
+            score,
+            feedback: `Parabéns! Você alcançou ${score}% de aproveitamento (mínimo ${passingScore}%), comprovando proficiência integral neste curso. Todas as aulas foram concluídas e seu XP foi liberado!`,
+          });
+          notify(`Proficiência aprovada com ${score}%! Todo o XP do curso foi desbloqueado e o curso concluído.`);
+        } else {
+          notify("Não foi possível registrar a aprovação da proficiência no servidor. Tente novamente.");
+        }
       } else {
+        await mutate({
+          type: "proficiency",
+          courseId: course.id,
+          version: course.version,
+          score,
+          answers: { ...answers },
+        });
         setSubmittedResult({
           passed: false,
           score,

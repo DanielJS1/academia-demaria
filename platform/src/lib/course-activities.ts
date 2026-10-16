@@ -1,4 +1,4 @@
-import { courseSchema, safeImage, vimeoEmbed, youtubeEmbed, type Course, type Lesson, type Question } from "./model";
+import { courseSchema, getCourseAvailability, safeImage, vimeoEmbed, youtubeEmbed, type Course, type Lesson, type Question } from "./model";
 
 export function activityQuestions(course: Pick<Course,"lessons"|"questions">, lesson: Lesson) {
   if (lesson.type !== "quiz") return [];
@@ -39,6 +39,7 @@ export function isChoiceAnswerCorrect(answer: string | undefined, correct: strin
 }
 
 export function courseValidationError(course: Course, publish: boolean): string | null {
+  publish = publish && getCourseAvailability(course) === "active";
   const parsed=courseSchema.safeParse(course);
   if(!parsed.success){const issue=parsed.error.issues[0];const index=issue.path[0]==="lessons"?Number(issue.path[1])+1:null;return `${index?`Atividade ${index}: `:"Curso: "}${issue.message} (${issue.path.join(" → ")}).`;}
   if(!safeImage(course.banner))return "Banner: use um link HTTPS, caminho local (/...) ou Base64 de até 64 KB.";

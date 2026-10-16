@@ -1,0 +1,58 @@
+/* Scoped compact layouts; keep course, trail and gamification behavior intact. */
+.catalog-summary { display: grid; gap: 4px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.catalog-summary small { font-size: 13px; font-weight: 400; color: var(--muted); }
+.catalog-page .tabs { flex-wrap: wrap; }
+.catalog-page .tabs button { min-height: 44px; white-space: normal; }
+.catalog-page .filter-bar { grid-template-columns: minmax(0, 1fr); }
+.catalog-page .filter-bar > * { min-width: 0; max-width: 100%; }
+.catalog-page .field-search input { min-width: 0; }
+.my-trails-page { gap: 24px; }
+.my-trails-page .trail-grid { margin-block: 0; }
+.my-trails-page .page-heading.page-heading-compact,
+.quiz-center .page-heading.page-heading-compact { margin-bottom: 0; }
+.quiz-center { gap: 24px; }
+.quiz-center .quiz-notification-control { gap: 12px 20px; padding: 14px 16px; flex-wrap: wrap; }
+.quiz-notification-control > div { flex: 1 1 260px; min-width: 0; }
+.quiz-notification-control h2 { font-size: 16px; line-height: 1.5; margin-bottom: 4px; }
+.quiz-notification-control p { font-size: 14px; overflow-wrap: anywhere; }
+.quiz-notification-control .button { min-height: 44px; white-space: normal; font-size: 14px; }
+.evolution-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: stretch; margin-bottom: 24px; }
+.evolution-top .evolution-profile-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: center; gap: 16px; min-width: 0; padding: 24px; margin-bottom: 0; }
+.evolution-top .evolution-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: center; gap: 20px; margin-bottom: 0; }
+.evolution-top .evolution-xp { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; width: 100%; margin-left: 0; padding-top: 16px; border-top: 1px solid #ffffff1f; text-align: left; }
+.evolution-top .evolution-xp small { font-size: 12px; }
+.evolution-top .profile-card-right { grid-column: 2; align-items: flex-start; padding: 0; border: 0; }
+.evolution-top .profile-card-left { grid-row: span 2; }
+.evolution-top .profile-card-avatar-actions { flex-wrap: wrap; justify-content: center; max-width: 150px; }
+.evolution-top .profile-card-center { overflow-wrap: anywhere; }
+.evolution-top .profile-card-eyebrow { font-size: 12px; }
+.evolution-top .profile-card-email, .evolution-top .profile-tag { font-size: 14px; }
+.evolution-top .button { height: auto; min-height: 44px; font-size: 14px; white-space: normal; padding: 8px 12px; }
+.evolution-page .evolution-hero { flex-wrap: wrap; padding: 24px; gap: 24px; }
+.evolution-page .evolution-hero > div { min-width: 0; }
+.evolution-page .evolution-hero p { font-size: 14px; line-height: 1.5; }
+.evolution-page .evolution-next-level { margin-top: 8px; }
+.evolution-page .evolution-hero .progress-track { min-width: 0; }
+.evolution-page .evolution-emblem { width: 80px; height: 88px; }
+.evolution-page .evolution-emblem svg { width: 48px; height: 48px; }
+.evolution-page .evolution-rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 18px; margin-bottom: 28px; }
+.evolution-rule-card { display: grid; align-content: start; gap: 14px; min-width: 0; padding: 22px; }
+.evolution-rule-heading { display: flex; align-items: center; gap: 12px; }
+.evolution-rule-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-subtle); color: var(--primary); }
+.evolution-rule-heading h3 { margin: 0; font-size: 18px; line-height: 1.4; }
+.evolution-rule-card p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
+.evolution-rule-card strong { color: var(--ink); font-weight: 600; }
+@media (min-width: 1200px) {
+  .evolution-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (min-width: 900px) {
+  .catalog-page .filter-bar { grid-template-columns: minmax(200px, 1fr) repeat(2, minmax(140px, auto)) auto; align-items: center; }
+}
+@media (max-width: 600px) {
+  .quiz-notification-control > div { flex-basis: auto; }
+  .evolution-top .evolution-profile-card { grid-template-columns: minmax(0, 1fr); padding: 20px; }
+  .evolution-top .profile-card-left { grid-row: auto; align-items: flex-start; }
+  .evolution-top .profile-card-right { grid-column: auto; }
+  .evolution-top .profile-card-avatar-actions { justify-content: flex-start; max-width: none; }
+  .evolution-page .evolution-hero h2 { font-size: 24px; }
+}

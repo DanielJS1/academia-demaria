@@ -91,6 +91,8 @@ jobs:
         run: pnpm typecheck
       - name: Vitest
         run: pnpm test
+      - name: Presentation seed contract and production isolation
+        run: node --test scripts/presentation-data.test.mjs
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Start test server

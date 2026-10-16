@@ -1,0 +1,49 @@
+{
+  "cycles": [
+    {
+      "title": "Conferência de Atos e Subtipos do TJ-AL na Tabela de Emolumentos e Relatório do Livro Diário",
+      "cycles": 5,
+      "reopened": true,
+      "mobileKeyboardZoom": true,
+      "imageOccurrences": 5
+    },
+    {
+      "title": "Inclusão dos grupos IBS/CBS da NFS-e (Nota Fiscal Eletrônica)",
+      "cycles": 5,
+      "reopened": true,
+      "mobileKeyboardZoom": true,
+      "imageOccurrences": 3
+    },
+    {
+      "title": "Selo Digital - BA",
+      "cycles": 5,
+      "reopened": true,
+      "mobileKeyboardZoom": true,
+      "imageOccurrences": 4
+    },
+    {
+      "title": "Selo Digital - PB",
+      "cycles": 5,
+      "reopened": true,
+      "mobileKeyboardZoom": true,
+      "imageOccurrences": 5
+    },
+    {
+      "title": "Selo Digital PR",
+      "cycles": 5,
+      "reopened": true,
+      "mobileKeyboardZoom": true,
+      "imageOccurrences": 6
+    }
+  ],
+  "editorialJourney": "passed",
+  "publicSearch": "passed",
+  "viewports": [
+    375,
+    768,
+    1440
+  ],
+  "internalRequests": 0,
+  "errors": [],
+  "publicSlug": "artigo-1b6dcbf6-2db4-4312-ad10-b44e3c26219e"
+}

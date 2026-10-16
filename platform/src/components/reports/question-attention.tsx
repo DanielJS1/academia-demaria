@@ -1,0 +1,7 @@
+import type { ReportDataset } from "@/lib/reports/contracts";
+import { questionAttention } from "@/lib/reports/question-attention";
+import { formatMetric } from "@/lib/reports/presentation";
+export function QuestionAttention({ data }: { data: ReportDataset }) {
+  const all = questionAttention(data.rows); if (!all.length) return null;
+  return <section className="panel reports-table-section" aria-label="Pontos de atenção nas avaliações"><h2>Pontos de atenção nas avaliações</h2><p className="reports-help">Até dez questões com mais erros no recorte e na política de tentativas selecionados. Crédito parcial e correção pendente são separados; nenhum gabarito é exibido.</p><div className="reports-table-scroll" role="region" tabIndex={0} aria-label="Diagnóstico agregado por questão"><table className="reports-data-table"><thead><tr><th scope="col">Curso / atividade / questão</th><th scope="col">Erros / corrigidas</th><th scope="col">Taxa de erros</th><th scope="col">Crédito parcial</th><th scope="col">Pendentes / indisponíveis</th></tr></thead><tbody>{all.slice(0,10).map(row=><tr key={row.id}><td>{row.course}<br />{row.activity} · Questão {row.position}<details><summary>Identificador da questão</summary>{row.question}</details></td><td>{row.incorrect} / {row.graded}</td><td>{formatMetric(row.rate,"percent")}</td><td>{row.partial}</td><td>{row.pending} / {row.unavailable}</td></tr>)}</tbody></table></div></section>;
+}
