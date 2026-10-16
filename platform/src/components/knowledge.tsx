@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { KB_PUBLIC_SITE } from "@/lib/kb/public-links";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, FolderOpen, LibraryBig, PenLine, Search, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Briefcase, Clock3, Download, ExternalLink, FileText, FolderOpen, PenLine, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { EmptyState, SectionHeading, PageHeading } from "./shared";
@@ -45,7 +45,7 @@ export function Knowledge({ initialTab, initialSearch = "", initialSource, initi
   return (
     <div className="page-enter knowledge-page">
       <PageHeading variant="compact" title="Conhecimento" description="Encontre respostas e compartilhe experiências.">
-        {me.audience !== "client" && <Button asChild variant="secondary"><Link href="/conhecimento/oficial"><PenLine size={16} aria-hidden="true" />Gerenciar base</Link></Button>}
+        {me.audience !== "client" && <Button asChild variant="secondary"><Link href="/conhecimento/oficial"><PenLine size={16} aria-hidden="true" />Gerenciar base oficial</Link></Button>}
       </PageHeading>
         <div className="field-search knowledge-unified-search" role="search">
           <Search size={20}/>
@@ -71,7 +71,6 @@ export function Knowledge({ initialTab, initialSearch = "", initialSource, initi
         >
           <BookOpen size={20}/><span><strong>Fórum ({published.length})</strong><small>Artigos da comunidade</small></span>
         </button>}
-        <Link className="knowledge-area-link" href="/conhecimento/base"><LibraryBig size={20} aria-hidden="true" /><span><strong>Base oficial</strong><small>Procedimentos e orientações</small></span></Link>
         <button
           type="button"
           className={tab === "Consulta assistida" ? "selected" : ""}
@@ -91,6 +90,7 @@ export function Knowledge({ initialTab, initialSearch = "", initialSource, initi
         {me.audience !== "client" && <button type="button" className={tab === "Materiais técnicos" ? "selected" : ""} aria-pressed={tab === "Materiais técnicos"} onClick={() => setTab("Materiais técnicos")}>
           <FolderOpen size={20}/><span><strong>Materiais técnicos</strong><small>Manuais e vídeos de consulta</small></span>
         </button>}
+        <Link className="knowledge-area-link" href="/conhecimento/base"><span className="knowledge-official-symbol" aria-hidden="true" /><span><strong>Base oficial</strong><small>Procedimentos e orientações</small></span></Link>
       </div>
 
       <a className="knowledge-public-link" href={KB_PUBLIC_SITE} target="_blank" rel="noopener noreferrer">Base oficial: site público para clientes<ExternalLink size={14} aria-hidden="true"/><span className="sr-only"> (abre em nova aba)</span></a>

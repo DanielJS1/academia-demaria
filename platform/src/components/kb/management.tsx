@@ -1,7 +1,8 @@
 "use client";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback,useEffect,useState } from "react";
-import { Plus,Search } from "lucide-react";
+import { ArrowLeft,Plus,Search } from "lucide-react";
 import { kbJson } from "@/lib/kb/client";
 import type { Detail } from "./editor";
 import { KbNotices } from "./notices";
@@ -30,9 +31,11 @@ export function KbManagement({pilot=false}:{pilot?:boolean}){
  }
  return <div className="kb kb-management">
   {pilot?<section className="kb-pilot"><h2>Homologação local</h2><p>Contas sintéticas isoladas. Este acesso é desativado em produção.</p>{profiles.map(p=><button key={p.id} onClick={async()=>{await kbJson("/api/kb/pilot",{method:"POST",body:JSON.stringify({id:p.id})});setArticle(null);await load();}}>{p.name}</button>)}<button onClick={async()=>{await kbJson("/api/kb/pilot",{method:"POST",body:JSON.stringify({id:null})});setArticle(null);await load();}}>Visitante</button></section>:null}
-  <header className="kb-management-toolbar"><div><h1>Artigos</h1>{me&&!article&&<button className="kb-create-article" disabled={busy} onClick={()=>void create()}><Plus size={18}/>Criar artigo</button>}</div>{me&&<KbNotices refreshKey={`${me.id}-${article?.version||0}`} onOpen={id=>void open(id)}/>}</header>
+  {!article&&<Link className="kb-knowledge-back" href="/conhecimento"><ArrowLeft size={18} aria-hidden="true"/>Voltar para Conhecimento</Link>}
+  <header className="kb-management-toolbar"><div><h1>Base oficial · Artigos</h1>{me&&!article&&<button className="kb-create-article" disabled={busy} onClick={()=>void create()}><Plus size={18}/>Criar artigo</button>}</div>{me&&<KbNotices refreshKey={`${me.id}-${article?.version||0}`} onOpen={id=>void open(id)}/>}</header>
+  {!article&&<p className="kb-editorial-help">Crie artigos para a base de conhecimento oficial. Artigos públicos e privados só são publicados após aprovação de um administrador ou gestor.</p>}
   <p role="alert">{error}</p>{message&&<p className="kb-workspace-message" role="status">{message}</p>}
-  {article?<KbEditor key={`${article.id}-${article.version}`} article={article} admin={me?.role==="admin"} onDelete={()=>trash({id:article.id,title:article.document.metadata.title,version:article.version})} onRefresh={async()=>{await open(article.id);await load();}} onBack={()=>{setArticle(null);setMessage("");void load();}}/>:me?<>
+  {article?<KbEditor key={`${article.id}-${article.version}`} article={article} admin={me?.role==="admin"||me?.role==="manager"} onDelete={()=>trash({id:article.id,title:article.document.metadata.title,version:article.version})} onRefresh={async()=>{await open(article.id);await load();}} onBack={()=>{setArticle(null);setMessage("");void load();}}/>:me?<>
    <div className="kb-index-tools"><div className="kb-index-filters" role="group" aria-label="Filtrar artigos">{Object.entries(filters).map(([key,label])=><button key={key} aria-pressed={filter===key} disabled={busy} onClick={()=>{setFilter(key);setPage(1);setMessage("");}}>{label}<span>{counts[key]??0}</span></button>)}</div>
     <form className="kb-index-search" onSubmit={e=>{e.preventDefault();setQuery(search.trim());setPage(1);}}><label htmlFor="kb-editorial-query" className="sr-only">Buscar por título ou autor</label><input id="kb-editorial-query" type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Título ou autor"/><button type="submit" aria-label="Buscar artigos" disabled={busy}><Search size={18}/></button></form>
    </div>

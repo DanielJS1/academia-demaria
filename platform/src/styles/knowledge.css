@@ -1,3 +1,5 @@
+.knowledge-official-symbol { display: inline-block; width: 28px; height: 28px; flex: 0 0 28px; background: currentColor; mask: url("/brand/conhecimento-white.jpg") center / contain no-repeat; mask-mode: luminance; }
+
 /* Catalog Banner & Detailing */
 .round-heading-icon {
   width: 54px;
@@ -718,7 +720,7 @@
 .knowledge-page .knowledge-unified-search input { min-width: 0; font-size: 16px; }
 .knowledge-page .knowledge-unified-search button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
 .knowledge-page .knowledge-tabs { grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 12px; margin-bottom: 12px; }
-.knowledge-page .knowledge-tabs :is(button, .knowledge-area-link) { display: flex; align-items: flex-start; gap: 12px; min-height: 72px; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-align: left; }
+.knowledge-page .knowledge-tabs :is(button, .knowledge-area-link) { display: flex; align-items: flex-start; gap: 12px; min-height: 72px; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-align: left; white-space: normal; }
 .knowledge-page .knowledge-tabs button.selected { border-color: var(--primary); background: var(--lavender); }
 .knowledge-page .knowledge-tabs :is(button, .knowledge-area-link) span { display: grid; gap: 4px; min-width: 0; }
 .knowledge-page .knowledge-tabs :is(button, .knowledge-area-link) strong { font-size: 14px; line-height: 1.5; }
