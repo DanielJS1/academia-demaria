@@ -11,7 +11,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Check, Eye, Plus, Save, Trash2, X } from
 import { useAcademy } from "../academy-provider";
 import { Button } from "../ui/button";
 import { CourseArt, EmptyState, PageHeading } from "../shared";
-import { courseLevels, courseLevelSchema, normalizeStoredCourseLevel, courseSchema, safeImage, vimeoEmbed, type Course } from "@/lib/model";
+import { courseLevels, courseLevelSchema, normalizeStoredCourseLevel, courseSchema, courseAvailabilityLabels, getCourseAvailability, safeImage, vimeoEmbed, type Course, type CourseAvailability } from "@/lib/model";
 import { BRAZILIAN_UFS, ALL_MODULES_MAP } from "@/lib/cartorio-modules";
 
 const uuid = () => crypto.randomUUID();
@@ -32,6 +32,7 @@ export function CourseEditor({ id }: { id: string }) {
           level: "essencial",
           accent: "violet",
           status: "draft",
+          availability: "development",
           xp: 200,
           required: false,
           banner: "",
@@ -107,11 +108,12 @@ export function CourseEditor({ id }: { id: string }) {
       if (!publish) {
         return {
           ...current,
-          courseDrafts: [...current.courseDrafts.filter(item => item.id !== course.id), { ...course, xp: calculatedXp, status: "draft" }],
+          courseDrafts: [...current.courseDrafts.filter(item => item.id !== course.id), { ...course, availability: getCourseAvailability(course), xp: calculatedXp, status: "draft" }],
         };
       }
       const published: Course = {
         ...course,
+        availability: getCourseAvailability(course),
         status: "published",
         xp: calculatedXp,
         version: (current.courses.find(item => item.id === course.id)?.version || 0) + 1,
@@ -132,7 +134,7 @@ export function CourseEditor({ id }: { id: string }) {
     try { sessionStorage.removeItem(recoveryKey); } catch {}
     setError("");
     setSaved(true);
-    notify(publish ? "Curso publicado no catálogo." : "Rascunho salvo no servidor.");
+    notify(publish ? `Curso salvo como ${courseAvailabilityLabels[getCourseAvailability(course)].toLowerCase()}.` : "Rascunho salvo no servidor.");
     if (publish) router.push("/admin");
     else if (id === "novo") router.replace(`/admin/cursos/${course.id}`);
   };
@@ -609,6 +611,16 @@ export function CourseEditor({ id }: { id: string }) {
           <section className="panel form-panel" style={{ marginTop: 18 }}>
             <h2>Regras e publicação</h2>
             <label className="field">
+              <span>Disponibilidade do curso</span>
+              <select value={getCourseAvailability(course)} disabled={busy}
+                onChange={event => field("availability", event.target.value as CourseAvailability)}>
+                {Object.entries(courseAvailabilityLabels).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <small>Ativo: disponível aos alunos. Inativo: acesso suspenso. Em desenvolvimento: indisponível temporariamente enquanto o conteúdo é preparado.</small>
+            </label>
+            <label className="field">
               <span>XP automático · até {courseXp(course)} XP</span>
               <small>Aulas: 15 XP até 5 min; +5 XP por faixa de 5 min. Conclusão: +30 XP. Avaliação opcional: 5 XP por objetiva correta, 8 XP por dissertativa correta; aprovação +30 XP ou +10 XP após reprovação.</small>
             </label>
@@ -653,10 +665,10 @@ export function CourseEditor({ id }: { id: string }) {
             )}
             {error && <div className="form-error" role="alert">{error}</div>}
             <Button disabled={busy || uploads > 0} onClick={() => save(true)}>
-              <Check size={16} /> Publicar curso
+              <Check size={16} /> {getCourseAvailability(course) === "active" ? "Publicar curso ativo" : "Salvar curso indisponível"}
             </Button>
             <div className="info-note">
-              Todos os colaboradores veem o conteúdo publicado. Salve o rascunho antes de abrir a prévia. As alterações
+              Apenas cursos ativos aparecem para os alunos. Salvar rascunho não altera a disponibilidade atual; use o botão acima para aplicá-la. Salve o rascunho antes de abrir a prévia. As alterações
               são enviadas ao servidor; uma cópia temporária protege o preenchimento nesta aba.
             </div>
           </section>

@@ -7,10 +7,11 @@ import { useAcademy } from "./academy-provider";
 import { Button } from "./ui/button";
 import { CourseCard, EmptyState, PageHeading, SectionHeading } from "./shared";
 import { CertificateModal } from "./certificate-modal";
-import { isCourseAvailableForCartorio, courseProgress, type Cartorio, type Course } from "@/lib/model";
+import { isCourseActive, isCourseAvailableForCartorio, courseProgress, type Cartorio, type Course } from "@/lib/model";
 import { formatModuleName } from "@/lib/cartorio-modules";
 
 import { QuizDashboardAccess } from "./quizzes/quiz-dashboard-access";
+import { HeroCarousel } from "./hero-carousel";
 
 interface ClientDashboardProps {
   cartorio: Cartorio;
@@ -22,7 +23,7 @@ export function ClientDashboard({ cartorio }: ClientDashboardProps) {
 
   // Filter courses available for this cartório
   const clientCourses = state.courses.filter(course =>
-    course.status === "published" && isCourseAvailableForCartorio(course, cartorio)
+    isCourseActive(course) && isCourseAvailableForCartorio(course, cartorio)
   );
 
   // Completed courses
@@ -65,6 +66,7 @@ export function ClientDashboard({ cartorio }: ClientDashboardProps) {
         )}
       </PageHeading>
 
+      <HeroCarousel client ranking={{ season: "", rank: 0, gap: 0, xp: 0 }} />
       <QuizDashboardAccess/>
 
       {/* Certification Status Hero */}

@@ -1,113 +1,66 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { test, expect } from "./fixtures";
+import { reportFixture } from "./report-fixtures.mjs";
 
-test("gestor filtra, exporta CSV e gera PDF visível nos quatro relatórios", async ({ gestor }, testInfo) => {
-  const { page, token } = gestor;
+test("seis visões exportam o mesmo recorte, gráficos e todas as linhas", async ({ gestor }, testInfo) => {
+  const { page, token, userId } = gestor;
   const response = await page.request.get("/api/academy", { headers: { Authorization: `Bearer ${token}` } });
   expect(response.ok()).toBe(true);
   const payload = await response.json();
-  const firstId = "report-fixture-a";
-  const secondId = "report-fixture-b";
-  const courseId = "report-fixture-course";
-  const now = new Date().toISOString();
-  payload.state.people.push(
-    { id: firstId, name: "Pessoa Relatório Azul", email: "report-a@example.test", department: "E2E Gestão Azul", managerId: payload.me.id, status: "active", role: "student", xp: 100, progress: 40, audience: "internal" },
-    { id: secondId, name: "Pessoa Relatório Verde", email: "report-b@example.test", department: "E2E Gestão Verde", managerId: payload.me.id, status: "active", role: "student", xp: 200, progress: 100, audience: "internal" },
-  );
-  for (let index = 1; index <= 21; index++) {
-    payload.state.people.push({ id: `report-batch-${index}`, name: `Pessoa Relatório ${index}`, email: `report-${index}@example.test`, department: "E2E Gestão Muitos", managerId: payload.me.id, status: "active", role: "student", xp: 0, progress: 10, audience: "internal" });
-  }
-  payload.state.courses.push({ id: courseId, title: "Curso E2E Relatório", status: "published", audience: "internal", lessons: [{ id: "report-lesson", type: "reading", minutes: 5 }] });
-  payload.state.teamProgress = { ...payload.state.teamProgress, [firstId]: { [courseId]: ["report-lesson"] }, [secondId]: { [courseId]: [] } };
-  payload.state.attempts.push({ id: "report-attempt", userId: firstId, courseId, courseTitle: "Curso E2E Relatório", courseVersion: 1, questions: [{ id: "q1", type: "choice", correct: "Sim", prompt: "Questão E2E" }], answers: { q1: "Sim" }, status: "approved", feedback: "Bom resultado", score: 80, passingScore: 70, submittedAt: now });
+  const people = Array.from({ length: 32 }, (_, index) => ({ ...payload.state.people[0], id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`, name: index === 0 ? 'José, "Suporte";\nLinha 2' : `Pessoa Relatório ${index + 1}`, managerId: userId, department: index % 2 ? "Financeiro" : "Suporte", status: "active", role: "student", audience: "internal" }));
+  payload.state.people = people;
   await page.route("**/api/academy", route => route.request().method() === "GET" ? route.fulfill({ json: payload }) : route.continue());
-  await page.route("**/api/engagement?days=*", route => {
-    const days = Number(new URL(route.request().url()).searchParams.get("days"));
-    return route.fulfill({ json: { windowDays: days, collectedSince: now, generatedAt: now, members: [
-      { userId: firstId, lastAccessAt: now, activeDays: 3, activeSeconds: 3600, daily: [] },
-      { userId: secondId, lastAccessAt: null, activeDays: 0, activeSeconds: 0, daily: [] },
-    ] } });
+  let lastDataset: ReturnType<typeof reportFixture> | undefined;
+  let reportCalls = 0;
+  await page.route("**/api/reports?*", route => {
+    reportCalls++;
+    lastDataset = reportFixture(JSON.parse(new URL(route.request().url()).searchParams.get("query")!), userId, payload.state);
+    return route.fulfill({ json: lastDataset });
   });
-
   await page.goto("/equipe/relatorios");
-  await expect(page.getByRole("heading", { name: "Gerador de relatórios" })).toBeVisible();
-  await page.getByLabel("Departamento").selectOption("E2E Gestão Azul");
-  await expect(page.locator(".team-report-table tbody tr:visible")).toHaveCount(1);
-  await expect(page.locator(".team-report-table")).toContainText("Pessoa Relatório Azul");
-  await expect(page.locator(".team-report-table")).not.toContainText("Pessoa Relatório Verde");
-  await page.evaluate(() => { window.print = () => { document.documentElement.dataset.reportPrintCalled = "true"; }; });
-  await page.getByRole("button", { name: "Salvar em PDF" }).click();
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.reportPrintCalled)).toBe("true");
-
-  const verifyPdf = async (kind: string) => {
-    await page.emulateMedia({ media: "print" });
-    await expect(page.locator(".team-report-print")).toBeVisible();
-    const pdf = await page.pdf({ format: "A4", landscape: true, printBackground: true });
-    expect(pdf.length, `${kind} não pode gerar PDF vazio`).toBeGreaterThan(4000);
-    writeFileSync(testInfo.outputPath(`report-${kind}.pdf`), pdf);
-    await page.emulateMedia({ media: "screen" });
-  };
-  const verifyCsv = async (expected: string) => {
+  await expect(page.locator(".reports-table-section[aria-labelledby=report-table-title] .reports-data-table tbody tr")).toHaveCount(25);
+  await page.evaluate(() => { window.print = () => { window.dispatchEvent(new Event("beforeprint")); }; });
+  for (const [label, id] of [["Visão geral", "overview"], ["Presença", "presence"], ["Aprendizagem", "learning"], ["Desafios", "challenges"], ["Comunidade", "community"], ["XP", "xp"]]) {
+    await page.getByRole("navigation", { name: "Visões dos relatórios" }).getByRole("link", { name: label, exact: true }).click();
+    await expect.poll(() => lastDataset?.query.view).toBe(id);
+    await expect(page.locator(".reports-table-section[aria-labelledby=report-table-title] .reports-data-table tbody tr")).toHaveCount(25);
+    const calls = reportCalls, stamp = lastDataset!.meta.generatedAt;
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "Baixar CSV" }).click();
-    const download = await downloadPromise;
-    const csv = readFileSync(await download.path(), "utf8");
-    expect(csv).toContain(expected);
-    expect(csv).toContain("Pessoa Relatório Azul");
-    expect(csv).not.toContain("Pessoa Relatório Verde");
-  };
-
-  await verifyPdf("overview");
-  await verifyCsv("Progresso geral (%)");
-
-  await page.getByRole("button", { name: /Cursos Andamento/ }).click();
-  await page.getByRole("combobox", { name: "Curso", exact: true }).selectOption(courseId);
-  await expect(page.locator(".team-report-table")).toContainText("Curso E2E Relatório");
-  await verifyPdf("courses");
-  await verifyCsv("Aulas concluídas");
-
-  await page.getByRole("button", { name: /Avaliações Notas/ }).click();
-  await expect(page.locator(".team-report-table")).toContainText("Bom resultado");
-  await verifyPdf("assessments");
-  await verifyCsv("Acertos");
-
-  await page.getByRole("button", { name: /Presença Último acesso/ }).click();
-  await expect(page.locator(".team-report-table")).toContainText("3");
-  await page.getByLabel("Período de presença").selectOption("30");
-  await expect(page.locator(".team-report-table thead")).toContainText("30 dias");
-  await verifyPdf("presence");
-  await verifyCsv("Dias com acesso (30 dias)");
-
-  await page.getByLabel("Progresso geral").selectOption("completed");
-  await expect(page.getByRole("button", { name: "Salvar em PDF" })).toBeDisabled();
-
-  await page.getByLabel("Progresso geral").selectOption("all");
-  await page.getByLabel("Departamento").selectOption("E2E Gestão Muitos");
-  await page.getByLabel("Colaborador").selectOption("report-batch-1");
-  await expect(page.locator(".team-report-table tbody tr:visible")).toHaveCount(1);
-  await page.getByLabel("Colaborador").selectOption("all");
-  await expect(page.locator(".team-report-table tbody tr:visible")).toHaveCount(20);
-  await page.emulateMedia({ media: "print" });
-  await expect(page.locator(".team-report-table tbody tr:visible")).toHaveCount(21);
-  if (await page.locator(".toast").count()) await expect(page.locator(".toast")).toBeHidden();
-  const allRowsPdf = await page.pdf({ format: "A4", landscape: true, printBackground: true });
-  expect(allRowsPdf.length).toBeGreaterThan(4000);
-  writeFileSync(testInfo.outputPath("report-all-rows.pdf"), allRowsPdf);
-  await page.emulateMedia({ media: "screen" });
-  const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Baixar CSV" }).click();
-  const download = await downloadPromise;
-  const csv = readFileSync(await download.path(), "utf8");
-  expect(csv.split("\r\n")).toHaveLength(22);
-  expect(csv).toContain("Pessoa Relatório 21");
-
+    const csv = readFileSync((await (await downloadPromise).path())!, "utf8");
+    expect(csv.charCodeAt(0)).toBe(0xfeff); expect(csv).toContain(stamp); expect(csv).toContain('"total_registros"'); expect(csv).toContain(people[31].id);
+    await page.getByRole("button", { name: "Salvar em PDF" }).click();
+    await expect(page.locator(".reports-print-results tbody tr")).toHaveCount(32);
+    await expect(page.locator(".reports-print-kpis article")).toHaveCount(await page.locator(".reports-kpis article").count());
+    await expect(page.locator(".reports-print-document .reports-chart")).toHaveCount(await page.locator(".reports-charts > .reports-chart").count());
+    await page.emulateMedia({ media: "print" });
+    await expect(page.locator(".reports-print-document")).toBeVisible();
+    writeFileSync(testInfo.outputPath(`report-${id}.pdf`), await page.pdf({ preferCSSPageSize: true, printBackground: true }));
+    await page.emulateMedia({ media: "screen" });
+    await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    expect(reportCalls).toBe(calls);
+  }
+  await page.getByRole("navigation", { name: "Visões dos relatórios" }).getByRole("link", { name: "Aprendizagem", exact: true }).click();
+  await page.getByLabel("Análise", { exact: true }).selectOption("assessments");
+  await expect(page.locator('.reports-table-section[aria-labelledby=report-table-title] .reports-data-table tbody tr')).toHaveCount(25);
+  await expect(page.getByRole("region", { name: "Pontos de atenção nas avaliações" })).toBeVisible();
+  await page.getByRole("navigation", { name: "Visões dos relatórios" }).getByRole("link", { name: "XP", exact: true }).click();
+  await page.getByLabel("Departamento", { exact: true }).selectOption("suporte");
+  await expect(page.locator(".reports-table-section[aria-labelledby=report-table-title] .reports-data-table tbody tr")).toHaveCount(16);
+  await page.getByLabel("Colaborador", { exact: true }).selectOption(people[0].id);
+  await expect(page.locator(".reports-table-section[aria-labelledby=report-table-title] .reports-data-table tbody tr")).toHaveCount(1);
+  const downloadPromise = page.waitForEvent("download"); await page.getByRole("button", { name: "Baixar CSV" }).click();
+  const csv = readFileSync((await (await downloadPromise).path())!, "utf8");
+  expect(csv).toContain(people[0].id); expect(csv).not.toContain(people[1].id);
+  await page.getByRole("button", { name: "Salvar em PDF" }).click();
+  await expect(page.locator(".reports-print-results tbody tr")).toHaveCount(1);
   await page.evaluate(() => {
-    const overlay = document.createElement("div");
-    overlay.className = "cert-modal-overlay";
+    const overlay = document.createElement("div"); overlay.className = "cert-modal-overlay";
     overlay.innerHTML = '<div class="cert-modal-dialog"><div class="certificate-frame">Certificado E2E</div></div>';
     document.body.append(overlay);
   });
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".certificate-frame")).toBeVisible();
-  await expect(page.locator(".team-report-print")).toBeHidden();
+  await expect(page.locator(".reports-print-document")).toBeHidden();
+  writeFileSync(testInfo.outputPath("certificate-only.pdf"), await page.pdf({ preferCSSPageSize: true, printBackground: true }));
 });

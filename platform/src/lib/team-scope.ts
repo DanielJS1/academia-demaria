@@ -1,13 +1,8 @@
 import type { Person } from "./model";
-import { normalize } from "./utils";
+import { isManagedPerson, type ScopePopulation } from "./reports/scope";
 
-export function managedPeople(people: Person[], me: { id: string; role: "admin" | "manager" | "student"; department?: string }) {
+export function managedPeople(people: Person[], me: { id: string; role: "admin" | "manager" | "student"; department?: string; audience?: "internal" | "client"; status?: Person["status"] }, population: ScopePopulation = "active") {
   const department = me.department || people.find(person => person.id === me.id)?.department || "";
-  return people.filter(person =>
-    person.id !== me.id &&
-    person.audience !== "client" &&
-    person.status !== "inactive" &&
-    (me.role === "admin" || person.managerId === me.id ||
-      (me.role === "manager" && !person.managerId && Boolean(department) && normalize(person.department) === normalize(department)))
-  );
+  const actor = { ...me, department, status: me.status ?? people.find(person => person.id === me.id)?.status ?? "active" as const };
+  return people.filter(person => isManagedPerson(actor, person, population));
 }

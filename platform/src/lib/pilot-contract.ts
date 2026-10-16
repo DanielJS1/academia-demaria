@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { articleSchema, courseSchema, personSchema, cartorioSchema, type AcademyState } from "./model";
+import { articleSchema, courseSchema, courseAvailabilitySchema, personSchema, cartorioSchema, type AcademyState } from "./model";
 import { newPasswordSchema } from "./auth-policy";
 const id = z.string().min(1).max(100);
 export const commandSchema = z.discriminatedUnion("type", [
+ z.strictObject({ type:z.literal("course-availability"), courseId:id, availability:courseAvailabilitySchema, expectedAvailability:courseAvailabilitySchema, expectedVersion:z.number().int().nonnegative() }),
  z.strictObject({ type:z.literal("grant-recognition"), requestId:z.string().uuid(), userId:z.string().uuid(), title:z.string().trim().min(3).max(120), message:z.string().trim().min(5).max(2000) }),
  z.strictObject({ type:z.literal("add-pdi-note"), userId:z.string().uuid(), content:z.string().trim().min(3).max(2000) }),
  z.strictObject({ type:z.literal("community-save"), data:articleSchema, publish:z.boolean(), expectedVersion:z.number().int().nonnegative() }),
@@ -17,6 +18,7 @@ export const commandSchema = z.discriminatedUnion("type", [
  z.strictObject({ type:z.literal("complete"), courseId:id, version:z.number().int().positive(), lessonId:id }),
  z.strictObject({ type:z.literal("video"), courseId:id, version:z.number().int().positive(), lessonId:id, duration:z.number().positive().max(86400), position:z.number().nonnegative().max(86400).optional(), ranges:z.array(z.tuple([z.number().nonnegative(),z.number().nonnegative()])).max(2000) }),
  z.strictObject({ type:z.literal("submit"), quizId:id.optional(), courseId:id, version:z.number().int().positive(), answers:z.record(id,z.string().max(5000)) }),
+ z.strictObject({ type:z.literal("proficiency"), courseId:id, version:z.number().int().positive(), score:z.number().min(0).max(100), answers:z.record(id,z.string().max(5000)) }),
  z.strictObject({ type:z.literal("review"), id:z.string().uuid(), score:z.number().min(0).max(100), feedback:z.string().trim().min(1).max(10000), correctTextIds:z.array(id).default([]), partialTextIds:z.array(id).optional().default([]) }),
  z.strictObject({ type:z.literal("delete-user"), id:z.string().uuid() }),
  z.strictObject({ type:z.literal("reject-user"), id:z.string().uuid() }),

@@ -6,6 +6,7 @@ import { useAcademy } from "./academy-provider";
 import { uploadMedia } from "@/lib/storage-service";
 import { Button } from "./ui/button";
 import { tierClass } from "@/lib/gamification";
+import { useModalFocus } from "./layout/use-modal-focus";
 
 interface ProfilePhotoModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface ProfilePhotoModalProps {
 }
 
 export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
+  const dialogRef = useModalFocus(isOpen);
   const { me, avatar, setAvatar, notify, state } = useAcademy();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -72,7 +74,7 @@ export function ProfilePhotoModal({ isOpen, onClose }: ProfilePhotoModalProps) {
   };
 
   return (
-    <div className="profile-photo-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="profile-photo-title">
+    <div ref={dialogRef} tabIndex={-1} className="profile-photo-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="profile-photo-title">
       <div className="profile-photo-modal" onClick={(e) => e.stopPropagation()}>
         <div className="profile-photo-header">
           <div className="profile-photo-title-wrap">

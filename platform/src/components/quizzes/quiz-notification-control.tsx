@@ -20,7 +20,7 @@ export function QuizNotificationControl() {
   };
   return <section className="panel quiz-notification-control" aria-labelledby="quiz-notification-title" aria-busy={saving}>
     <div><h2 id="quiz-notification-title"><Bell size={18} aria-hidden="true"/> Avisar sobre novos desafios</h2>
-      <p>{enabled ? "Ativado: os avisos aparecerão no sino da plataforma enquanto o desafio estiver disponível." : "Receba no sino da plataforma avisos de desafios publicados após sua adesão."}</p>
+      <p><strong>{enabled ? "Ativados" : "Desativados"}</strong> · Novos desafios no sino da plataforma, após sua adesão.</p>
       {message && <p role={failed ? "alert" : "status"}>{message}</p>}</div>
     <Button type="button" variant={enabled ? "secondary" : "default"} disabled={busy || saving} onClick={() => void change()}>{saving ? "Salvando…" : enabled ? "Cancelar avisos" : "Habilitar avisos"}</Button>
   </section>;
