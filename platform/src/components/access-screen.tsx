@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, ShieldAlert, UserPlus } from "lucide-react";
 import { AcademyBrand } from "./academy-brand";
+import { DemoAccess } from "./access/demo-access";
 import { browserAuth } from "@/lib/supabase-browser";
 import { DEPARTMENTS } from "@/lib/departments";
 import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH, newPasswordSchema } from "@/lib/auth-policy";
@@ -199,6 +200,7 @@ export function AccessScreen({ configured, signedIn }: { configured: boolean; si
           </div>
         )}
 
+        {configured && !signedIn && mode === "login" && <DemoAccess />}
         {!signedIn && (
           <div className="portal-toggle-tabs">
             <button
