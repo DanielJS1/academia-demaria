@@ -752,6 +752,18 @@ textarea.input {
 .access-card .button { width: 100%; margin-bottom: 10px; }
 .access-card .info-note { margin-top: 12px !important; }
 .access-card .field { margin-bottom: 10px; }
+.access-demo { margin: 20px 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
+.access-demo h3 { font-size: 16px; margin: 0; }
+.access-demo-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.access-demo-option { display: flex; align-items: center; gap: 10px; min-height: 76px; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; }
+.access-demo-option > svg { flex-shrink: 0; color: var(--primary); }
+.access-demo-option span { display: grid; gap: 4px; min-width: 0; }
+.access-demo-option strong { font-size: 13px; overflow-wrap: anywhere; }
+.access-demo-option small { font-size: 11px; color: var(--muted); }
+.access-demo-option:hover:not(:disabled) { border-color: var(--primary); background: var(--lavender); }
+.access-demo-option:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.access-demo-option:disabled { opacity: .6; cursor: wait; }
+.access-card .access-demo-divider { text-align: center; margin: 18px 0 0; }
 .access-password-wrap { position: relative; }
 .access-password-wrap input { width: 100%; padding-right: 48px; }
 .access-password-wrap input::-ms-reveal,
