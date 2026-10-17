@@ -2,6 +2,12 @@
 
 Ambiente: https://academia-demaria-homologacao.vercel.app
 
+## Entrar na demonstração
+
+Na tela de acesso, os atalhos **Administrador**, **Gestor**, **Colaborador** e **Cartório** iniciam uma sessão com perfis fictícios de apresentação, sem digitar senha. Use **Sair** para voltar à tela de acesso e trocar de perfil. Os perfis internos usam a massa de apresentação; o cliente usa um cartório fictício próprio.
+
+Os atalhos exigem `DEMO_LOGIN_ENABLED=true` no projeto Vercel de homologação, `NEXT_PUBLIC_APP_ENV=homologacao` e o Supabase isolado `attnodzrjlhqydhrgqtr`. A API recusa produção mesmo que a flag seja habilitada por engano. As sessões são emitidas no servidor para uma lista fixa de contas ativas e o recurso não publica senhas nem envia emails.
+
 Projeto Vercel `academia-demaria-homologacao` (`prj_ohoQgLGFpsXAt0yphtEcNaVSzP3t`), raiz `platform`, Node 24, conectado ao mesmo repositório e branch `main` de produção. Ambos foram conferidos em `bdd0f0806a5522c0d39593547dc25a1eaeaf37a1`, com deploy READY. Assim, correções integradas em main publicam nos dois ambientes. O build de homologação recebe `NEXT_PUBLIC_APP_ENV=homologacao` e exibe identificação própria.
 
 Supabase exclusivo: `attnodzrjlhqydhrgqtr`. As 40 tabelas `academy_*` existem nos dois projetos; a migração de eventos analíticos foi aplicada em ambos. Segredos, sessões e dados de produção não foram copiados. Não se configuraram canais externos de email/Discord na homologação; políticas demo mantêm esses envios desligados. Integrações externas exigem credenciais de teste próprias para serem homologadas.
